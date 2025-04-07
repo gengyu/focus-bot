@@ -5,7 +5,10 @@
     </header>
     
     <main class="main-content">
-      <ConnectionStatus @connectionChange="handleConnectionChange" />
+      <ConnectionStatus 
+        :config="currentConfig" 
+        @connectionChange="handleConnectionChange" 
+      />
       <ServerConfig @save="handleConfigSave" />
       <LogViewer ref="logViewer" />
     </main>
@@ -27,12 +30,19 @@ interface MCPConfig {
 
 const logViewer = ref<InstanceType<typeof LogViewer> | null>(null);
 
+const currentConfig = ref<MCPConfig>({
+  serverUrl: '',
+  apiKey: '',
+  debug: false,
+  transport: 'http'
+});
+
 onMounted(() => {
-  // 从本地存储加载配置
   const savedConfig = localStorage.getItem('mcpConfig');
   if (savedConfig) {
     try {
       const config = JSON.parse(savedConfig);
+      currentConfig.value = config;
       handleConfigSave(config);
       logViewer.value?.addLog('info', '已加载本地配置');
     } catch (error) {
@@ -43,6 +53,7 @@ onMounted(() => {
 
 const handleConfigSave = (config: MCPConfig) => {
   try {
+    currentConfig.value = config;
     localStorage.setItem('mcpConfig', JSON.stringify(config));
     logViewer.value?.addLog('info', '配置已保存到本地存储');
   } catch (error) {
@@ -106,4 +117,4 @@ body {
   margin: 0 auto;
   width: 100%;
 }
-</style> 
+</style>
