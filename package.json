@@ -1,8 +1,8 @@
 {
   "name": "@mcp-connect/root",
   "private": true,
-  "version": "1.0.3",
-  "description": "一个轻量级的可拖动排序列表组件",
+  "version": "1.0.0",
+  "description": "MCP-Connect - A development and debugging toolkit for Model Context Protocol based systems",
   "scripts": {
     "build": "pnpm -r build",
     "dev": "pnpm -r dev",
@@ -18,11 +18,11 @@
     "packages/*"
   ],
   "keywords": [
-    "drag",
-    "sort",
-    "list",
-    "typescript",
-    "vue"
+    "mcp",
+    "protocol",
+    "development",
+    "debugging",
+    "typescript"
   ],
   "author": "",
   "license": "MIT",

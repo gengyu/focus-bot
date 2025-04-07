@@ -1,7 +1,7 @@
 {
-  "name": "@drag-list/vue-example",
-  "private": true,
-  "version": "1.0.3",
+  "name": "@mcp-connect/frontend",
+  "private": false,
+  "version": "1.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -9,7 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@drag-list/vue": "workspace:*",
+
     "vue": "^3.5.13"
   },
   "devDependencies": {
