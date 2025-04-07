@@ -1,17 +1,24 @@
 {
   "compilerOptions": {
-    "target": "es2020",
-    "module": "commonjs",
-    "lib": ["es2020"],
-    "outDir": "./dist",
-    "rootDir": "./src",
-    "strict": true,
-    "esModuleInterop": true,
-    "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true,
-    "declaration": true,
-    "sourceMap": true
+    "target": "ES2018", // 编译目标为 ES2018
+    "module": "ESNext", // 模块系统为 ESNext
+//    "lib": ["DOM", "DOM.Iterable", "ESNext"], // 使用的库包括 DOM、DOM.Iterable 和 ESNext
+    "declaration": true, // 生成声明文件
+    "declarationMap": true, // 生成声明文件的源映射
+    "sourceMap": true, // 生成源映射
+//    "moduleResolution": "node", // 模块解析策略为 node
+    "skipLibCheck": true, // 跳过库文件的类型检查
+    "strict": true, // 启用所有严格类型检查选项
+    "esModuleInterop": true, // 启用 ES 模块互操作性
+    "resolveJsonModule": true, // 允许导入 JSON 模块
+    "isolatedModules": true, // 将每个文件作为独立的模块进行编译
+    "noUnusedLocals": true, // 检查未使用的局部变量
+    "noUnusedParameters": true, // 检查未使用的参数
+    "noImplicitReturns": true, // 检查函数中是否有隐式返回
+    "noFallthroughCasesInSwitch": true, // 检查 switch 语句中的 fallthrough 情况
+    "outDir": "dist", // 输出目录为 dist
+    "types": ["vue"] // 添加对 .vue 文件的支持
   },
-  "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist", "**/*.test.ts"]
-} 
+  "include": ["src"], // 包含 src 目录下的文件
+  "exclude": ["node_modules", "dist"] // 排除 node_modules 和 dist 目录
+}

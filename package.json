@@ -1,44 +1,41 @@
 {
-  "name": "mcp-connect",
-  "version": "1.0.0",
-  "description": "A simple, easy-to-use library for developing and debugging MCP (Model Context Protocol) based systems",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "name": "@mcp-connect/root",
+  "private": true,
+  "version": "1.0.3",
+  "description": "一个轻量级的可拖动排序列表组件",
   "scripts": {
-    "build": "tsc",
-    "start": "node dist/index.js",
-    "dev": "nodemon --watch 'src/**/*.ts' --exec 'ts-node' src/index.ts",
-    "test": "jest",
-    "test:watch": "jest --watch"
+    "build": "pnpm -r build",
+    "dev": "pnpm -r dev",
+    "lint": "pnpm -r lint",
+    "test": "pnpm -r test",
+    "prunet": "pnpm store prune",
+    "up": "pnpm   -r up",
+    "prepublishOnly": "pnpm build",
+    "publish": "npm publish --registry https://registry.npmjs.org/",
+    "publish:beta": "npm publish --tag beta --registry https://registry.npmjs.org/"
   },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/gengyu/mcp-connect.git"
-  },
+  "workspaces": [
+    "packages/*"
+  ],
   "keywords": [
-    "mcp",
-    "protocol",
-    "api",
-    "client",
-    "typescript"
+    "drag",
+    "sort",
+    "list",
+    "typescript",
+    "vue"
   ],
   "author": "",
   "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/gengyu/mcp-connect/issues"
-  },
-  "homepage": "https://github.com/gengyu/mcp-connect#readme",
-  "dependencies": {
-    "axios": "^1.6.7",
-    "dotenv": "^16.4.5"
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
   },
   "devDependencies": {
-    "@types/jest": "^29.5.12",
-    "@types/node": "^20.11.19",
-    "jest": "^29.7.0",
-    "nodemon": "^3.0.3",
-    "ts-jest": "^29.1.2",
-    "ts-node": "^10.9.2",
-    "typescript": "^5.3.3"
+    "@types/node": "^20.17.29",
+    "autoprefixer": "^10.4.21",
+    "eslint": "^8.57.1",
+    "postcss": "^8.5.3",
+    "tsup": "^8.4.0",
+    "typescript": "^5.8.2"
   }
 }
