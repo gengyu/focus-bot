@@ -20,13 +20,8 @@ import { ref, onMounted } from 'vue';
 import ServerConfig from './components/ServerConfig.vue';
 import ConnectionStatus from './components/ConnectionStatus.vue';
 import LogViewer from './components/LogViewer.vue';
-
-interface MCPConfig {
-  serverUrl: string;
-  apiKey?: string;
-  debug?: boolean;
-  transport?: 'stdio' | 'http';
-}
+import { configAPI } from './services/api';
+import type { MCPConfig } from './types/config';
 
 const logViewer = ref<InstanceType<typeof LogViewer> | null>(null);
 
@@ -37,27 +32,23 @@ const currentConfig = ref<MCPConfig>({
   transport: 'http'
 });
 
-onMounted(() => {
-  const savedConfig = localStorage.getItem('mcpConfig');
-  if (savedConfig) {
-    try {
-      const config = JSON.parse(savedConfig);
-      currentConfig.value = config;
-      handleConfigSave(config);
-      logViewer.value?.addLog('info', '已加载本地配置');
-    } catch (error) {
-      logViewer.value?.addLog('error', '加载本地配置失败');
-    }
+onMounted(async () => {
+  try {
+    const config = await configAPI.loadConfig();
+    currentConfig.value = config;
+    logViewer.value?.addLog('info', '已从服务器加载配置');
+  } catch (error) {
+    logViewer.value?.addLog('error', `加载配置失败: ${error instanceof Error ? error.message : '未知错误'}`);
   }
 });
 
-const handleConfigSave = (config: MCPConfig) => {
+const handleConfigSave = async (config: MCPConfig) => {
   try {
     currentConfig.value = config;
-    localStorage.setItem('mcpConfig', JSON.stringify(config));
-    logViewer.value?.addLog('info', '配置已保存到本地存储');
+    await configAPI.saveConfig(config);
+    logViewer.value?.addLog('info', '配置已保存到服务器');
   } catch (error) {
-    logViewer.value?.addLog('error', '保存配置失败');
+    logViewer.value?.addLog('error', `保存配置失败: ${error instanceof Error ? error.message : '未知错误'}`);
   }
 };
 
