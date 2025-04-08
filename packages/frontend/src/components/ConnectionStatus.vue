@@ -25,7 +25,7 @@ interface MCPConfig {
 const props = defineProps<{
   config: MCPConfig;
 }>();
-
+  
 const isConnected = ref(false);
 const isLoading = ref(false);
 
