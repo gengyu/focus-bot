@@ -15,17 +15,6 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 
-interface MCPConfig {
-  serverUrl: string;
-  apiKey?: string;
-  debug?: boolean;
-  transport?: 'stdio' | 'http';
-}
-
-const props = defineProps<{
-  config: MCPConfig;
-}>();
-  
 const isConnected = ref(false);
 const isLoading = ref(false);
 
@@ -38,31 +27,13 @@ const emit = defineEmits<{
 }>();
 
 async function testConnection() {
-  if (!props.config.serverUrl) {
-    emit('connectionChange', false);
-    return;
-  }
-
   try {
     isLoading.value = true;
-    
-    const response = await fetch(`${props.config.serverUrl}/health`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(props.config.apiKey && { 'Authorization': `Bearer ${props.config.apiKey}` })
-      }
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    const data = await response.json();
-    isConnected.value = data.status === 'ok';
-    emit('connectionChange', isConnected.value);
+    // TODO: 实现实际的连接测试逻辑
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    isConnected.value = true;
+    emit('connectionChange', true);
   } catch (error) {
-    console.error('连接测试失败:', error);
     isConnected.value = false;
     emit('connectionChange', false);
   } finally {

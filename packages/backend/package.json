@@ -5,7 +5,8 @@
   "main": "dist/index.js",
   "scripts": {
     "dev": "vite",
-    "build": "vite build"
+    "build": "vite build",
+    "test": "jest"
   },
   "dependencies": {
     "@koa/cors": "^5.0.0",

@@ -1,4 +1,10 @@
+export interface MCPServerConfig {
+  command: string;
+  args: string[];
+}
+
 export interface MCPConfig {
+  mcpServers: Record<string, MCPServerConfig>;
   serverUrl: string;
   apiKey?: string;
   debug?: boolean;
