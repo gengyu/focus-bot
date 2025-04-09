@@ -1,63 +1,26 @@
+
 <template>
-  <div class="app-container">
-    <header class="app-header">
-      <h1>MCP 服务器配置</h1>
-    </header>
-    
-    <main class="main-content">
-      <ConnectionStatus 
-        :config="currentConfig" 
-        @connectionChange="handleConnectionChange" 
-      />
-      <ServerConfig @save="handleConfigSave" />
-      <LogViewer ref="logViewer" />
+  <div class="min-h-screen bg-base-200">
+    <nav class="bg-white shadow">
+      <div class="max-w-7xl mx-auto px-4">
+        <div class="flex justify-between h-16">
+          <div class="flex space-x-8">
+            <router-link to="/" class="inline-flex items-center px-1 pt-1 text-sm font-medium">首页</router-link>
+            <router-link to="/configs" class="inline-flex items-center px-1 pt-1 text-sm font-medium">配置管理</router-link>
+            <router-link to="/config" class="inline-flex items-center px-1 pt-1 text-sm font-medium">配置管理</router-link>
+          </div>
+        </div>
+      </div>
+    </nav>
+    <main class="max-w-7xl mx-auto py-6 px-4">
+      1111
+      <router-view />
     </main>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
-import ServerConfig from './components/ServerConfig.vue';
-import ConnectionStatus from './components/ConnectionStatus.vue';
-import LogViewer from './components/LogViewer.vue';
-import { configAPI } from './services/api';
-import type { MCPConfig } from './types/config';
 
-const logViewer = ref<InstanceType<typeof LogViewer> | null>(null);
-
-const currentConfig = ref<MCPConfig>({
-  serverUrl: '',
-  apiKey: '',
-  debug: false,
-  transport: 'http'
-});
-
-onMounted(async () => {
-  try {
-    const config = await configAPI.loadConfig();
-    currentConfig.value = config;
-    logViewer.value?.addLog('info', '已从服务器加载配置');
-  } catch (error) {
-    logViewer.value?.addLog('error', `加载配置失败: ${error instanceof Error ? error.message : '未知错误'}`);
-  }
-});
-
-const handleConfigSave = async (config: MCPConfig) => {
-  try {
-    currentConfig.value = config;
-    await configAPI.saveConfig(config);
-    logViewer.value?.addLog('info', '配置已保存到服务器');
-  } catch (error) {
-    logViewer.value?.addLog('error', `保存配置失败: ${error instanceof Error ? error.message : '未知错误'}`);
-  }
-};
-
-const handleConnectionChange = (status: boolean) => {
-  logViewer.value?.addLog(
-    status ? 'info' : 'error',
-    status ? '已成功连接到服务器' : '服务器连接失败'
-  );
-};
 </script>
 
 <style>
