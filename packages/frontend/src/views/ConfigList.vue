@@ -28,7 +28,14 @@
       </thead>
       <tbody>
         <tr v-for="config in configs" :key="config.id" class="hover">
-          <td>{{ config.name }}</td>
+          <td>
+            <router-link 
+              :to="`/config/${config.id}`" 
+              class="text-primary hover:underline cursor-pointer"
+            >
+              {{ config.name }}
+            </router-link>
+          </td>
           <td>
             <div class="flex items-center space-x-2">
               <div
