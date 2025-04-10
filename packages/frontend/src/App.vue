@@ -13,7 +13,6 @@
       </div>
     </nav>
     <main class="max-w-7xl mx-auto py-6 px-4">
-      1111
       <router-view />
     </main>
   </div>
