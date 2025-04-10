@@ -1,6 +1,6 @@
 import type { MCPConfig } from '../types/config';
 
-const API_BASE_URL = 'http://localhost:5000';
+const API_BASE_URL = 'http://localhost:3000';
 
 export class ConfigAPI {
   async saveConfig(config: MCPConfig): Promise<void> {

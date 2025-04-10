@@ -1,24 +1,7 @@
 {
-  "compilerOptions": {
-    "target": "ESNext",
-    "module": "ESNext",
-
-    /* Bundler mode */
-    "moduleResolution": "node",
-//    "allowImportingTsExtensions": true,
-    "resolveJsonModule": true,
-    "isolatedModules": true,
-    "jsx": "preserve",
-
-    /* Linting */
-    "strict": true,
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
-    "noFallthroughCasesInSwitch": true,
-    "paths": {
-      "@/*": ["src/*"]
-    }
-  },
-  "include": ["src/**/*.ts", "src/**/*.d.ts", "src/**/*.tsx", "src/**/*.vue"],
-  "references": [{ "path": "./tsconfig.node.json" }]
+  "files": [],
+  "references": [
+    { "path": "./tsconfig.app.json" },
+    { "path": "./tsconfig.node.json" }
+  ]
 }

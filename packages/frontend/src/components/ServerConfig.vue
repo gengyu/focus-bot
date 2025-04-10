@@ -46,7 +46,7 @@
           <div v-for="(server, id) in config.mcpServers" :key="id" class="server-item">
             <div class="server-header">
               <h4>{{ server.name }}</h4>
-              <button type="button" class="btn-danger" @click="removeServer(id)">删除</button>
+              <button type="button" class="btn btn-error btn-sm" @click="removeServer(id)">删除</button>
             </div>
             <div class="server-details">
               <div class="form-group">
@@ -80,12 +80,12 @@
             </div>
           </div>
         </div>
-        <button type="button" class="btn-secondary" @click="addServer">添加服务器</button>
+        <button type="button" class=" btn btn-outline" @click="addServer">添加服务器</button>
       </div>
 
       <div class="form-actions">
-        <button type="submit" class="btn-primary">保存配置</button>
-        <button type="button" @click="resetConfig" class="btn-secondary">重置</button>
+        <button type="submit" class="btn btn-primary">保存配置</button>
+        <button type="button" @click="resetConfig" class="btn btn-outline">重置</button>
       </div>
     </form>
   </div>
@@ -142,7 +142,7 @@ const updateServerArgs = (id: string) => {
 onMounted(async () => {
   try {
     const savedConfig = await configAPI.loadConfig();
-    config.value = savedConfig;
+    config.value = {...config.value, ...savedConfig};
     // 初始化参数字符串
     Object.entries(savedConfig.mcpServers || {}).forEach(([id, server]) => {
       argsString[id] = server.args.join(' ');
@@ -166,141 +166,65 @@ const resetConfig = () => {
 
 <style scoped>
 .server-config {
-  max-width: 600px;
-  margin: 0 auto;
-  padding: 20px;
+  @apply max-w-2xl mx-auto p-6;
 }
 
 .config-form {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
+  @apply flex flex-col gap-6;
 }
 
 .form-group {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+  @apply form-control;
 }
 
 label {
-  font-weight: 500;
-  color: #333;
+  @apply label;
 }
 
 input[type="text"],
 input[type="password"],
 select {
-  padding: 8px 12px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  font-size: 14px;
+  @apply input input-bordered w-full;
 }
 
 .checkbox-label,
 .radio-label {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  cursor: pointer;
+  @apply flex items-center gap-2 cursor-pointer;
 }
 
 .radio-group {
-  display: flex;
-  gap: 20px;
+  @apply flex gap-6;
 }
 
 .form-actions {
-  display: flex;
-  gap: 12px;
-  margin-top: 20px;
+  @apply flex gap-4 mt-6;
 }
 
 .server-list {
-  margin-top: 30px;
-  border-top: 1px solid var(--border-color);
-  padding-top: 20px;
+  @apply mt-8 pt-6 border-t border-base-200;
 }
 
 .server-items {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-  margin: 20px 0;
+  @apply flex flex-col gap-6 my-6;
 }
 
 .server-item {
-  border: 1px solid var(--border-color);
-  border-radius: 8px;
-  padding: 20px;
-  background-color: white;
+  @apply card bg-base-100 shadow-md p-6;
 }
 
 .server-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 15px;
+  @apply flex justify-between items-center mb-4;
 }
 
 .server-header h4 {
-  margin: 0;
-  color: var(--primary-color);
+  @apply m-0 text-primary;
 }
 
 .server-details {
-  display: grid;
-  gap: 15px;
+  @apply grid gap-4;
 }
 
-.btn-primary {
-  background-color: var(--primary-color);
-  color: white;
-  border: none;
-  padding: 10px 20px;
-  border-radius: 4px;
-  cursor: pointer;
-  font-weight: 500;
-  transition: background-color 0.2s;
-}
-
-.btn-primary:hover {
-  background-color: #43a047;
-}
-
-.btn-secondary {
-  background-color: #f5f5f5;
-  color: #333;
-  border: 1px solid #ddd;
-  padding: 10px 20px;
-  border-radius: 4px;
-  cursor: pointer;
-  font-weight: 500;
-  transition: all 0.2s;
-}
-
-.btn-secondary:hover {
-  background-color: #e0e0e0;
-}
-
-.btn-danger {
-  background-color: #dc3545;
-  color: white;
-  border: none;
-  padding: 6px 12px;
-  border-radius: 4px;
-  cursor: pointer;
-  font-weight: 500;
-  transition: background-color 0.2s;
-}
-
-.btn-danger:hover {
-  background-color: #c82333;
-}
 
 .form-actions {
-  display: flex;
-  gap: 10px;
-  justify-content: flex-end;
-  margin-top: 20px;
+  @apply flex gap-3 justify-end mt-6;
 }</style>
