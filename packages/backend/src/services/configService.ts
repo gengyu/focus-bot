@@ -1,9 +1,10 @@
 import fs from 'fs';
 import path from 'path';
-import { MCPConfig, ConfigService, ConfigValidationResult, ConfigValidationError, ConfigStorageOptions } from '../types/config';
+import { MCPConfig, ConfigService, ConfigValidationResult, ConfigValidationError, ConfigStorageOptions, MCPConfigListItem } from '../types/config';
 
 export class FileConfigService implements ConfigService {
   private filePath: string;
+  private runningMCPs: Set<string> = new Set();
 
   constructor(options?: ConfigStorageOptions) {
     this.filePath = options?.filePath || path.join(process.cwd(), 'config.json');
@@ -46,10 +47,58 @@ export class FileConfigService implements ConfigService {
         return {
           serverUrl: 'http://localhost:5000',
           transport: 'http',
-          debug: false
+          debug: false,
+          mcpServers: {}
         };
       }
       throw new Error(`Failed to load config: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  }
+
+  async getConfigList(): Promise<MCPConfigListItem[]> {
+    try {
+      const config = await this.loadConfig();
+      const configList: MCPConfigListItem[] = [];
+      
+      // 将配置转换为列表项
+      Object.entries(config.mcpServers || {}).forEach(([id, serverConfig]) => {
+        configList.push({
+          id,
+          name: serverConfig.name || `MCP配置${id}`,
+          isRunning: this.runningMCPs.has(id)
+        });
+      });
+      
+      return configList;
+    } catch (error) {
+      throw new Error(`Failed to get config list: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  }
+
+  async toggleMCPStatus(id: string): Promise<boolean> {
+    try {
+      // 检查配置是否存在
+      const config = await this.loadConfig();
+      if (!config.mcpServers || !config.mcpServers[id]) {
+        throw new Error(`MCP configuration with ID ${id} not found`);
+      }
+      
+      // 切换运行状态
+      const isCurrentlyRunning = this.runningMCPs.has(id);
+      
+      if (isCurrentlyRunning) {
+        this.runningMCPs.delete(id);
+        // 这里可以添加实际停止MCP服务的逻辑
+        console.log(`Stopping MCP server: ${id}`);
+      } else {
+        this.runningMCPs.add(id);
+        // 这里可以添加实际启动MCP服务的逻辑
+        console.log(`Starting MCP server: ${id}`);
+      }
+      
+      return !isCurrentlyRunning; // 返回新的运行状态
+    } catch (error) {
+      throw new Error(`Failed to toggle MCP status: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 

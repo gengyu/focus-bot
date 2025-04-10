@@ -1,6 +1,24 @@
 <template>
   <div class="bg-white shadow rounded-lg overflow-hidden">
-    <table class="table w-full">
+    <!-- 加载状态显示 -->
+    <div v-if="loading" class="p-4 text-center">
+      <div class="loading loading-spinner loading-md"></div>
+      <p class="mt-2">正在加载配置列表...</p>
+    </div>
+
+    <!-- 错误提示 -->
+    <div v-else-if="error" class="p-4 text-center text-error">
+      <p>{{ error }}</p>
+      <button class="btn btn-sm btn-outline mt-2" @click="fetchConfigs">重试</button>
+    </div>
+
+    <!-- 空数据提示 -->
+    <div v-else-if="configs.length === 0" class="p-4 text-center">
+      <p>暂无MCP配置</p>
+    </div>
+
+    <!-- 配置列表 -->
+    <table v-else class="table w-full">
       <thead>
         <tr>
           <th>配置名称</th>
@@ -85,21 +103,46 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
+import { configAPI, type ConfigListItem } from '../services/api';
 
-interface Config {
-  id: string;
-  name: string;
-  isRunning: boolean;
-}
+interface Config extends ConfigListItem {}
 
-const configs = ref<Config[]>([
-  { id: '1', name: 'MCP配置1', isRunning: true },
-  { id: '2', name: 'MCP配置2', isRunning: false },
-]);
+const configs = ref<Config[]>([]);
+const loading = ref(true);
+const error = ref<string | null>(null);
 
-const toggleMCP = (config: Config) => {
-  config.isRunning = !config.isRunning;
-  // TODO: 实现实际的MCP启动/停止逻辑
+// 获取配置列表
+const fetchConfigs = async () => {
+  loading.value = true;
+  error.value = null;
+  
+  try {
+    configs.value = await configAPI.getConfigList();
+  } catch (err) {
+    error.value = err instanceof Error ? err.message : '获取配置列表失败';
+    console.error('获取配置列表失败:', err);
+  } finally {
+    loading.value = false;
+  }
 };
+
+// 切换MCP状态
+const toggleMCP = async (config: Config) => {
+  try {
+    // 调用后端API切换状态
+    const newStatus = await configAPI.toggleMCPStatus(config.id);
+    // 更新本地状态
+    config.isRunning = newStatus;
+  } catch (err) {
+    console.error('切换MCP状态失败:', err);
+    // 显示错误提示
+    error.value = err instanceof Error ? err.message : '切换MCP状态失败';
+  }
+};
+
+// 组件挂载时获取配置列表
+onMounted(() => {
+  fetchConfigs();
+});
 </script>

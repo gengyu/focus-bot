@@ -50,6 +50,33 @@ router.post('/config', async (ctx) => {
   }
 });
 
+// 获取MCP配置列表
+router.get('/config/list', async (ctx) => {
+  try {
+    const configList = await configService.getConfigList();
+    ctx.body = configList;
+  } catch (error) {
+    ctx.status = 500;
+    ctx.body = {
+      error: error instanceof Error ? error.message : 'Failed to get configuration list'
+    };
+  }
+});
+
+// 切换MCP状态
+router.post('/config/toggle/:id', async (ctx) => {
+  try {
+    const id = ctx.params.id;
+    const newStatus = await configService.toggleMCPStatus(id);
+    ctx.body = { id, isRunning: newStatus };
+  } catch (error) {
+    ctx.status = 400;
+    ctx.body = {
+      error: error instanceof Error ? error.message : 'Failed to toggle MCP status'
+    };
+  }
+});
+
 // 注册路由
 app.use(router.routes()).use(router.allowedMethods());
 

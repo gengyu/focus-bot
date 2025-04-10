@@ -5,6 +5,12 @@ export interface MCPConfig {
   transport?: 'stdio' | 'http';
 }
 
+export interface MCPConfigListItem {
+  id: string;
+  name: string;
+  isRunning: boolean;
+}
+
 export interface ConfigValidationResult {
   isValid: boolean;
   errors?: string[];
@@ -26,4 +32,6 @@ export interface ConfigService {
   saveConfig(config: MCPConfig): Promise<void>;
   loadConfig(): Promise<MCPConfig>;
   validateConfig(config: MCPConfig): ConfigValidationResult;
+  getConfigList(): Promise<MCPConfigListItem[]>;
+  toggleMCPStatus(id: string): Promise<boolean>;
 }
