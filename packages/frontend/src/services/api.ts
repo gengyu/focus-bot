@@ -22,6 +22,20 @@ export class ConfigAPI {
       throw new Error(`获取配置列表失败: ${error instanceof Error ? error.message : '未知错误'}`);
     }
   }
+  
+  async getConfigById(id: string): Promise<MCPConfig> {
+    try {
+      const response = await fetch(`${API_BASE_URL}/config/${id}`);
+      
+      if (!response.ok) {
+        throw new Error(`获取配置详情失败: ${response.statusText}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      throw new Error(`获取配置详情失败: ${error instanceof Error ? error.message : '未知错误'}`);
+    }
+  }
 
   async toggleMCPStatus(id: string): Promise<boolean> {
     try {

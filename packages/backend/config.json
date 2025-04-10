@@ -5,9 +5,13 @@
   "transport": "http",
   "mcpServers": {
     "server-1744297701108": {
-      "name": "新服务器",
+      "name": "新服务器 filesystem",
       "command": "npx",
-      "args": []
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-filesystem",
+        "/Users/gengyu/github/mcp-connect"
+      ]
     }
   }
 }

@@ -111,7 +111,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
-import { configAPI, type ConfigListItem } from '../services/api';
+import { configAPI, type ConfigListItem } from '../services/api.ts';
 
 interface Config extends ConfigListItem {}
 

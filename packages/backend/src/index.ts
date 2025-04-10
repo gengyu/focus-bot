@@ -36,19 +36,6 @@ router.get('/config', async (ctx) => {
   }
 });
 
-// 保存配置
-router.post('/config', async (ctx) => {
-  try {
-    const config: MCPConfig = ctx.request.body;
-    await configService.saveConfig(config);
-    ctx.body = { message: 'Configuration saved successfully' };
-  } catch (error) {
-    ctx.status = 400;
-    ctx.body = {
-      error: error instanceof Error ? error.message : 'Failed to save configuration'
-    };
-  }
-});
 
 // 获取MCP配置列表
 router.get('/config/list', async (ctx) => {
@@ -63,6 +50,40 @@ router.get('/config/list', async (ctx) => {
   }
 });
 
+// 根据ID获取配置
+router.get('/config/:id', async (ctx) => {
+  try {
+    const id = ctx.params.id;
+    const config = await configService.loadConfig();
+    
+    if (!config.mcpServers || !config.mcpServers[id]) {
+      ctx.status = 404;
+      ctx.body = { error: `MCP configuration with ID ${id} not found` };
+      return;
+    }
+    
+    // 构建单个配置的详细信息
+    const serverConfig = config.mcpServers[id];
+    const isRunning = await configService.isMCPRunning(id);
+    
+    ctx.body = {
+      ...config,
+      id,
+      name: serverConfig.name,
+      isRunning,
+      selectedServer: { [id]: serverConfig }
+    };
+  } catch (error) {
+    ctx.status = 500;
+    ctx.body = {
+      error: error instanceof Error ? error.message : 'Failed to get configuration'
+    };
+  }
+});
+
+
+
+
 // 切换MCP状态
 router.post('/config/toggle/:id', async (ctx) => {
   try {
@@ -73,6 +94,20 @@ router.post('/config/toggle/:id', async (ctx) => {
     ctx.status = 400;
     ctx.body = {
       error: error instanceof Error ? error.message : 'Failed to toggle MCP status'
+    };
+  }
+});
+
+// 保存配置
+router.post('/config', async (ctx) => {
+  try {
+    const config: MCPConfig = ctx.request.body;
+    await configService.saveConfig(config);
+    ctx.body = { message: 'Configuration saved successfully' };
+  } catch (error) {
+    ctx.status = 400;
+    ctx.body = {
+      error: error instanceof Error ? error.message : 'Failed to save configuration'
     };
   }
 });

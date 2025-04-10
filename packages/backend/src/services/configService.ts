@@ -1,10 +1,12 @@
 import fs from 'fs';
 import path from 'path';
+import { spawn, ChildProcess } from 'child_process';
 import { MCPConfig, ConfigService, ConfigValidationResult, ConfigValidationError, ConfigStorageOptions, MCPConfigListItem } from '../types/config';
 
 export class FileConfigService implements ConfigService {
   private filePath: string;
   private runningMCPs: Set<string> = new Set();
+  private mcpProcesses: Map<string, ChildProcess> = new Map();
 
   constructor(options?: ConfigStorageOptions) {
     this.filePath = options?.filePath || path.join(process.cwd(), 'config.json');
@@ -88,18 +90,66 @@ export class FileConfigService implements ConfigService {
       
       if (isCurrentlyRunning) {
         this.runningMCPs.delete(id);
-        // 这里可以添加实际停止MCP服务的逻辑
-        console.log(`Stopping MCP server: ${id}`);
+        // 停止MCP服务
+        const process = this.mcpProcesses.get(id);
+        if (process) {
+          process.kill();
+          this.mcpProcesses.delete(id);
+          console.log(`Stopping MCP server: ${id}`);
+        }
       } else {
-        this.runningMCPs.add(id);
-        // 这里可以添加实际启动MCP服务的逻辑
-        console.log(`Starting MCP server: ${id}`);
+        // 启动MCP服务
+        const serverConfig = config.mcpServers[id];
+        if (!serverConfig.command) {
+          throw new Error(`MCP server configuration is missing command: ${id}`);
+        }
+        
+        try {
+          const process = spawn(serverConfig.command, serverConfig.args || [], {
+            stdio: 'pipe',
+            detached: false
+          });
+          
+          // 处理进程输出
+          process.stdout?.on('data', (data) => {
+            console.log(`[MCP ${id}] ${data.toString().trim()}`);
+          });
+          
+          process.stderr?.on('data', (data) => {
+            console.error(`[MCP ${id}] Error: ${data.toString().trim()}`);
+          });
+          
+          // 处理进程退出
+          process.on('exit', (code) => {
+            console.log(`MCP server ${id} exited with code ${code}`);
+            this.runningMCPs.delete(id);
+            this.mcpProcesses.delete(id);
+          });
+          
+          process.on('error', (err) => {
+            console.error(`Failed to start MCP server ${id}: ${err.message}`);
+            this.runningMCPs.delete(id);
+            this.mcpProcesses.delete(id);
+          });
+          
+          // 保存进程引用
+          this.mcpProcesses.set(id, process);
+          this.runningMCPs.add(id);
+          console.log(`Starting MCP server: ${id}`);
+        } catch (err) {
+          this.runningMCPs.delete(id);
+          throw new Error(`Failed to start MCP server: ${err instanceof Error ? err.message : 'Unknown error'}`);
+        }
       }
       
       return !isCurrentlyRunning; // 返回新的运行状态
     } catch (error) {
       throw new Error(`Failed to toggle MCP status: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
+  }
+
+  async isMCPRunning(id: string): Promise<boolean> {
+    return this.runningMCPs.has(id);
   }
 
   validateConfig(config: MCPConfig): ConfigValidationResult {

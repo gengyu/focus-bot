@@ -1,7 +1,10 @@
 <template>
   <div class="app-container">
     <header class="app-header">
-      <h1>MCP 服务器配置</h1>
+      <div class="flex justify-between items-center">
+        <h1>MCP 服务器配置</h1>
+        <router-link to="/configs" class="btn btn-sm btn-outline">返回列表</router-link>
+      </div>
     </header>
 
     <main class="main-content">
@@ -17,7 +20,8 @@
 
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, watch } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 import ServerConfig from '../components/ServerConfig.vue';
 import ConnectionStatus from '../components/ConnectionStatus.vue';
 import LogViewer from '../components/LogViewer.vue';
@@ -25,6 +29,9 @@ import { configAPI } from '../services/api';
 import type { MCPConfig } from '../types/config';
 
 const logViewer = ref<InstanceType<typeof LogViewer> | null>(null);
+const route = useRoute();
+const router = useRouter();
+const configId = ref<string | undefined>(route.params.id as string | undefined);
 
 const currentConfig = ref<MCPConfig>({
   serverUrl: '',
@@ -34,14 +41,33 @@ const currentConfig = ref<MCPConfig>({
   mcpServers: {}
 });
 
-onMounted(async () => {
+const loading = ref(false);
+
+// 加载配置信息
+const loadConfig = async (id?: string) => {
   try {
-    const config = await configAPI.loadConfig();
+    loading.value = true;
+    // 如果有ID，则加载特定配置，否则加载默认配置
+    const config = id 
+      ? await configAPI.getConfigById(id)
+      : await configAPI.loadConfig();
     currentConfig.value = config;
     logViewer.value?.addLog('info', '已从服务器加载配置');
   } catch (error) {
     logViewer.value?.addLog('error', `加载配置失败: ${error instanceof Error ? error.message : '未知错误'}`);
+  } finally {
+    loading.value = false;
   }
+};
+
+// 监听路由参数变化
+watch(() => route.params.id, (newId) => {
+  configId.value = newId as string | undefined;
+  loadConfig(configId.value);
+});
+
+onMounted(() => {
+  loadConfig(configId.value);
 });
 
 const handleConfigSave = async (config: MCPConfig) => {

@@ -1,8 +1,15 @@
+export interface MCPServerConfig {
+  command: string;
+  args: string[];
+  name: string;
+}
+
 export interface MCPConfig {
   serverUrl: string;
   apiKey?: string;
   debug?: boolean;
   transport?: 'stdio' | 'http';
+  mcpServers: Record<string, MCPServerConfig>;
 }
 
 export interface MCPConfigListItem {
@@ -34,4 +41,5 @@ export interface ConfigService {
   validateConfig(config: MCPConfig): ConfigValidationResult;
   getConfigList(): Promise<MCPConfigListItem[]>;
   toggleMCPStatus(id: string): Promise<boolean>;
+  isMCPRunning(id: string): Promise<boolean>;
 }

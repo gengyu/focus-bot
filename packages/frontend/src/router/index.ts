@@ -1,5 +1,4 @@
 import {createRouter, createWebHistory, type RouteRecordRaw} from 'vue-router'
-import ConfigList from '@/components/ConfigList.vue'
 
 const routes: RouteRecordRaw[] = [
     {
@@ -8,15 +7,18 @@ const routes: RouteRecordRaw[] = [
         component: () => import('@/views/HomeView.vue')
     },
     {
-        path: '/config',
+        path: '/config/:id?',
         name: 'ConfigView',
-        component: () => import('@/views/ConfigView.vue')
+        component: () => import('@/views/ConfigView.vue'),
+        props: true
     },
     {
         path: '/configs',
-        name: 'Configs',
-        component: ConfigList
-    }
+        name: 'ConfigList',
+        component: () => import('@/views/ConfigList.vue'),
+        props: true
+    },
+
 ]
 
 const router = createRouter({
