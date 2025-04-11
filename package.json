@@ -5,7 +5,7 @@
   "description": "MCP-Connect - A development and debugging toolkit for Model Context Protocol based systems",
   "scripts": {
     "build": "pnpm -r build",
-    "dev": "pnpm -r dev",
+    "dev": "pnpm  -r --parallel dev",
     "lint": "pnpm -r lint",
     "test": "pnpm -r test",
     "prunet": "pnpm store prune",

@@ -6,9 +6,9 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "build": "tsc",
+    "build": "vite build",
     "start": "node dist/index.js",
-    "dev": "nodemon --watch 'src/**/*.ts' --exec 'ts-node' src/index.ts",
+    "dev": "vite build --watch",
     "test": "jest",
     "test:watch": "jest --watch"
   },
@@ -40,6 +40,8 @@
     "nodemon": "^3.1.9",
     "ts-jest": "^29.3.1",
     "ts-node": "^10.9.2",
-    "typescript": "^5.8.3"
+    "typescript": "^5.8.3",
+    "vite": "^5.4.17",
+    "vite-plugin-dts": "^3.9.1"
   }
 }

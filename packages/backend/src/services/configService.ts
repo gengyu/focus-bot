@@ -2,7 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import { spawn, ChildProcess } from 'child_process';
 import { MCPConfig, ConfigService, ConfigValidationResult, ConfigValidationError, ConfigStorageOptions, MCPConfigListItem } from '../types/config';
-
+import {MCPClient} from '@mcp-connect/core'
 export class FileConfigService implements ConfigService {
   private filePath: string;
   private runningMCPs: Set<string> = new Set();
@@ -124,8 +124,16 @@ export class FileConfigService implements ConfigService {
     return this.runningMCPs.has(id);
   }
 
+
   private async startMCPProcess(id: string, serverConfig: { command: string; args?: string[] }): Promise<void> {
     console.log(`Starting MCP server: id, ${serverConfig}`)
+    new MCPClient({
+      config: {
+        serverUrl: serverConfig.command,
+        transport: 'http',
+        debug: true
+      },
+    });
     const process = spawn(serverConfig.command, serverConfig.args || [], {
       stdio: 'pipe',
       detached: false
