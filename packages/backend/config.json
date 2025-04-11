@@ -10,7 +10,7 @@
       "args": [
         "-y",
         "@modelcontextprotocol/server-filesystem",
-        "/Users/gengyu/github/mcp-connect"
+        "/Users/gengyu/github"
       ]
     }
   }

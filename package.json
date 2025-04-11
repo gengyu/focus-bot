@@ -29,13 +29,5 @@
   "publishConfig": {
     "access": "public",
     "registry": "https://registry.npmjs.org/"
-  },
-  "devDependencies": {
-    "@types/node": "^20.17.30",
-    "autoprefixer": "^10.4.21",
-    "eslint": "^8.57.1",
-    "postcss": "^8.5.3",
-    "tsup": "^8.4.0",
-    "typescript": "^5.8.3"
   }
 }

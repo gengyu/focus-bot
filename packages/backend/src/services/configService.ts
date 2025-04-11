@@ -63,7 +63,7 @@ export class FileConfigService implements ConfigService {
       const configList: MCPConfigListItem[] = [];
       
       // 将配置转换为列表项
-      Object.entries(config.mcpServers || {}).forEach(([id, serverConfig]) => {
+      Object.entries(config.mcpServers).forEach(([id, serverConfig]) => {
         configList.push({
           id,
           name: serverConfig.name || `MCP配置${id}`,
@@ -105,36 +105,8 @@ export class FileConfigService implements ConfigService {
         }
         
         try {
-          const process = spawn(serverConfig.command, serverConfig.args || [], {
-            stdio: 'pipe',
-            detached: false
-          });
-          
-          // 处理进程输出
-          process.stdout?.on('data', (data) => {
-            console.log(`[MCP ${id}] ${data.toString().trim()}`);
-          });
-          
-          process.stderr?.on('data', (data) => {
-            console.error(`[MCP ${id}] Error: ${data.toString().trim()}`);
-          });
-          
-          // 处理进程退出
-          process.on('exit', (code) => {
-            console.log(`MCP server ${id} exited with code ${code}`);
-            this.runningMCPs.delete(id);
-            this.mcpProcesses.delete(id);
-          });
-          
-          process.on('error', (err) => {
-            console.error(`Failed to start MCP server ${id}: ${err.message}`);
-            this.runningMCPs.delete(id);
-            this.mcpProcesses.delete(id);
-          });
-          
-          // 保存进程引用
-          this.mcpProcesses.set(id, process);
-          this.runningMCPs.add(id);
+          // 调用启动MCP进程的方法
+          await this.startMCPProcess(id, serverConfig);
           console.log(`Starting MCP server: ${id}`);
         } catch (err) {
           this.runningMCPs.delete(id);
@@ -150,6 +122,40 @@ export class FileConfigService implements ConfigService {
 
   async isMCPRunning(id: string): Promise<boolean> {
     return this.runningMCPs.has(id);
+  }
+
+  private async startMCPProcess(id: string, serverConfig: { command: string; args?: string[] }): Promise<void> {
+    console.log(`Starting MCP server: id, ${serverConfig}`)
+    const process = spawn(serverConfig.command, serverConfig.args || [], {
+      stdio: 'pipe',
+      detached: false
+    });
+    
+    // 处理进程输出
+    process.stdout?.on('data', (data) => {
+      console.log(`[MCP ${id}] ${data.toString().trim()}`);
+    });
+    
+    process.stderr?.on('data', (data) => {
+      console.error(`[MCP ${id}] Error: ${data.toString().trim()}`);
+    });
+    
+    // 处理进程退出
+    process.on('exit', (code) => {
+      console.log(`MCP server ${id} exited with code ${code}`);
+      this.runningMCPs.delete(id);
+      this.mcpProcesses.delete(id);
+    });
+    
+    process.on('error', (err) => {
+      console.error(`Failed to start MCP server ${id}: ${err.message}`);
+      this.runningMCPs.delete(id);
+      this.mcpProcesses.delete(id);
+    });
+    
+    // 保存进程引用
+    this.mcpProcesses.set(id, process);
+    this.runningMCPs.add(id);
   }
 
   validateConfig(config: MCPConfig): ConfigValidationResult {

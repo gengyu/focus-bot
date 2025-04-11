@@ -116,7 +116,7 @@ router.post('/config', async (ctx) => {
 app.use(router.routes()).use(router.allowedMethods());
 
 // 启动服务器
-
+console.log('running on http://localhost:3000', import.meta.env.PROD);
 if (import.meta.env.PROD) {
   app.listen(3000);
   console.log('running on http://localhost:3000');
