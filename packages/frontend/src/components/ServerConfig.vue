@@ -177,9 +177,6 @@ const resetConfig = () => {
   @apply form-control;
 }
 
-label {
-  @apply label;
-}
 
 input[type="text"],
 input[type="password"],

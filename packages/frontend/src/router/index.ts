@@ -15,7 +15,7 @@ const routes: RouteRecordRaw[] = [
     {
         path: '/configs',
         name: 'ConfigList',
-        component: () => import('@/views/ConfigList.vue'),
+        component: () => import('../views/ConfigList.vue'),
         props: true
     },
 

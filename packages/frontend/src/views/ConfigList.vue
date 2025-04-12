@@ -1,5 +1,15 @@
 <template>
   <div class="bg-white shadow rounded-lg overflow-hidden">
+    <!-- 搜索框 -->
+    <div class="p-4">
+      <input
+          v-model="searchQuery"
+          type="text"
+          placeholder="搜索配置..."
+          class="input input-bordered w-full"
+      />
+    </div>
+
     <!-- 加载状态显示 -->
     <div v-if="loading" class="p-4 text-center">
       <div class="loading loading-spinner loading-md"></div>
@@ -13,117 +23,123 @@
     </div>
 
     <!-- 空数据提示 -->
-    <div v-else-if="configs.length === 0" class="p-4 text-center">
-      <p>暂无MCP配置</p>
+    <div v-else-if="filteredConfigs.length === 0" class="p-4 text-center">
+      <p>暂无配置</p>
     </div>
 
     <!-- 配置列表 -->
-    <table v-else class="table w-full">
-      <thead>
-        <tr>
-          <th>配置名称</th>
-          <th>状态</th>
-          <th>操作</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr v-for="config in configs" :key="config.id" class="hover">
-          <td>
-            <router-link 
-              :to="`/config/${config.id}`" 
-              class="text-primary hover:underline cursor-pointer"
-            >
-              {{ config.name }}
-            </router-link>
-          </td>
-          <td>
-            <div class="flex items-center space-x-2">
-              <div
+    <div v-else class="divide-y">
+
+      <ul class="list bg-base-100 rounded-box shadow-md">
+
+        <li class="p-4 pb-2 text-xs opacity-60 tracking-wide">mcp服务列表</li>
+
+        <li v-for="config in filteredConfigs"
+            :key="config.id"
+            class="list-row items-center">
+          <div class="list-col-grow">{{ config.name }}</div>
+
+          <div class="flex items-center space-x-2">
+            <div
                 class="h-3 w-3 rounded-full"
                 :class="config.isRunning ? 'bg-success animate-pulse' : 'bg-error'"
-              ></div>
-              <span
+            ></div>
+            <span
                 class="text-sm font-medium"
                 :class="config.isRunning ? 'text-success' : 'text-error'"
-              >
-                {{ config.isRunning ? '运行中' : '已停止' }}
-              </span>
-            </div>
-          </td>
-          <td>
-            <div class="flex items-center space-x-2">
-              <button
-                class="btn btn-sm btn-circle btn-ghost"
-                :class="{ 'text-success': !config.isRunning, 'text-error': config.isRunning }"
-                @click="toggleMCP(config)"
-                :title="config.isRunning ? '停止' : '启动'"
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  class="h-5 w-5"
-                  :class="{ 'hidden': config.isRunning }"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"
-                  />
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                  />
-                </svg>
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  class="h-5 w-5"
-                  :class="{ 'hidden': !config.isRunning }"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                  />
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M9 10a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z"
-                  />
-                </svg>
-              </button>
-            </div>
-          </td>
-        </tr>
-      </tbody>
-    </table>
+            >
+              {{ config.isRunning ? '运行中' : '已停止' }}
+            </span>
+          </div>
+          <button class="btn  btn-square btn-sm btn-ghost "  @click="toggleMCP(config)">
+            <StopIcon class="size-6 text-error" v-if=" config.isRunning"></StopIcon>
+            <PlayIcon class="size-6 text-success " v-else></PlayIcon>
+          </button>
+          <button class="btn  btn-square btn-sm btn-ghost "
+                  @click="deleteConfig(config.id)"
+                  title="删除">
+            <TrashIcon class="size-6 text-error"></TrashIcon>
+          </button>
+          <button class="btn  btn-square btn-sm btn-ghost "
+                  title="删除">
+            <router-link
+                :to="`/config/${config.id}`"
+                class="text-primary hover:underline cursor-pointer"
+            >
+              <ArrowTopRightOnSquareIcon class="size-6"></ArrowTopRightOnSquareIcon>
+
+            </router-link>
+
+          </button>
+        </li>
+
+
+      </ul>
+
+    </div>
   </div>
+
+
+
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
-import { configAPI, type ConfigListItem } from '../services/api.ts';
+import {ref, onMounted, computed} from 'vue';
+import {configAPI, type ConfigListItem} from '../services/api.ts';
+import type {MCPServerConfig} from '../types/config';
+import { PlayIcon, StopIcon,
 
-interface Config extends ConfigListItem {}
+  ArrowTopRightOnSquareIcon } from '@heroicons/vue/20/solid'
+import {TrashIcon } from '@heroicons/vue/24/outline'
+
+interface Config extends ConfigListItem {
+}
 
 const configs = ref<Config[]>([]);
 const loading = ref(true);
 const error = ref<string | null>(null);
 
+// 搜索框
+const searchQuery = ref('');
+const filteredConfigs = computed(() => {
+  return configs.value.filter(config =>
+      config.name.toLowerCase().includes(searchQuery.value.toLowerCase())
+  );
+});
+
+// 展开状态管理
+const expandedConfigs = ref<Record<string, boolean>>({});
+const loadingTools = ref<Record<string, boolean>>({});
+const toolsError = ref<Record<string, string>>({});
+const configTools = ref<Record<string, MCPServerConfig[]>>({});
+
+// 切换展开状态并加载工具列表
+const toggleExpand = async (config: Config) => {
+  const isExpanded = expandedConfigs.value[config.id];
+  expandedConfigs.value[config.id] = !isExpanded;
+
+  // 如果是展开且还没有加载过工具列表，则加载工具列表
+  if (!isExpanded && !configTools.value[config.id]) {
+    loadingTools.value[config.id] = true;
+    toolsError.value[config.id] = '';
+
+    try {
+      const mcpConfig = await configAPI.getConfigById(config.id);
+      configTools.value[config.id] = Object.values(mcpConfig.mcpServers || {});
+    } catch (err) {
+      toolsError.value[config.id] = err instanceof Error ? err.message : '加载工具列表失败';
+      console.error('加载工具列表失败:', err);
+    } finally {
+      loadingTools.value[config.id] = false;
+    }
+  }
+};
+
 // 获取配置列表
 const fetchConfigs = async () => {
   loading.value = true;
   error.value = null;
-  
+
   try {
     configs.value = await configAPI.getConfigList();
   } catch (err) {
@@ -145,6 +161,17 @@ const toggleMCP = async (config: Config) => {
     console.error('切换MCP状态失败:', err);
     // 显示错误提示
     error.value = err instanceof Error ? err.message : '切换MCP状态失败';
+  }
+};
+
+// 删除配置
+const deleteConfig = async (configId: string) => {
+  try {
+    await configAPI.deleteConfig(configId);
+    configs.value = configs.value.filter(config => config.id !== configId);
+  } catch (err) {
+    console.error('删除配置失败:', err);
+    error.value = err instanceof Error ? err.message : '删除配置失败';
   }
 };
 
