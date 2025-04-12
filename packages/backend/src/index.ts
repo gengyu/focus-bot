@@ -101,7 +101,7 @@ router.post('/config/toggle/:id', async (ctx) => {
 // 保存配置
 router.post('/config', async (ctx) => {
   try {
-    const config: MCPConfig = ctx.request.body;
+    const config: MCPConfig = ctx.request.body as MCPConfig;
     await configService.saveConfig(config);
     ctx.body = { message: 'Configuration saved successfully' };
   } catch (error) {
@@ -116,10 +116,10 @@ router.post('/config', async (ctx) => {
 app.use(router.routes()).use(router.allowedMethods());
 
 // 启动服务器
-console.log('running on http://localhost:3000', import.meta.env.PROD);
-if (import.meta.env.PROD) {
-  app.listen(3000);
-  console.log('running on http://localhost:3000');
-}
+
+// if (import.meta.env.PROD) {
+//   app.listen(3000);
+//   console.log('running on http://localhost:3000');
+// }
 
 export const viteNodeApp = app;

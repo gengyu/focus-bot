@@ -1,7 +1,6 @@
 import { defineConfig } from 'vite';
 import { VitePluginNode } from 'vite-plugin-node';
-import { Logger, LogLevel } from 'vite';
-
+ 
 export default defineConfig({
   server:{
     port:3000,
