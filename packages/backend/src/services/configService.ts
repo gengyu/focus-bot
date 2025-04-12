@@ -9,20 +9,21 @@ import {
     ConfigStorageOptions,
     MCPConfigListItem
 } from '../types/config';
-import {Client} from '@modelcontextprotocol/sdk';
-
-console.log(Client, 33)
-
+import {Client} from "@modelcontextprotocol/sdk/client/index.js";
+import {StdioClientTransport,} from "@modelcontextprotocol/sdk/client/stdio.js";
+// import {Transport} from '@modelcontextprotocol/sdk/shared/transport.js';
 
 export class FileConfigService implements ConfigService {
     private filePath: string;
     private runningMCPs: Set<string> = new Set();
-    private mcpProcesses: Map<string, ChildProcess> = new Map();
-
+    private mcpProcesses: Map<string, Client> = new Map();
 
     constructor(options?: ConfigStorageOptions) {
         this.filePath = options?.filePath || path.join(process.cwd(), 'config.json');
-
+        // this.client = new Client( {
+        //     name: "example-client",
+        //     version: "1.0.0"
+        // });
 
     }
 
@@ -107,7 +108,7 @@ export class FileConfigService implements ConfigService {
                 // 停止MCP服务
                 const process = this.mcpProcesses.get(id);
                 if (process) {
-                    process.kill();
+
                     this.mcpProcesses.delete(id);
                     console.log(`Stopping MCP server: ${id}`);
                 }
@@ -121,7 +122,9 @@ export class FileConfigService implements ConfigService {
                 try {
                     // 调用启动MCP进程的方法
                     await this.startMCPProcess(id, serverConfig);
+
                     console.log(`Starting MCP server: ${id}`);
+
                 } catch (err) {
                     this.runningMCPs.delete(id);
                     throw new Error(`Failed to start MCP server: ${err instanceof Error ? err.message : 'Unknown error'}`);
@@ -140,43 +143,45 @@ export class FileConfigService implements ConfigService {
 
 
     private async startMCPProcess(id: string, serverConfig: { command: string; args?: string[] }): Promise<void> {
-        console.log(`Starting MCP server: id, ${serverConfig}`)
-        new Client({
-            config: {
-                serverUrl: serverConfig.command,
-                transport: 'http',
-                debug: true
+        console.log(`Starting MCP server: id, ${JSON.stringify(serverConfig)}`)
+
+        const transport = new StdioClientTransport({
+            command: serverConfig.command,
+            args: serverConfig.args,
+            stderr: 'pipe'
+        });
+
+
+        if (this.mcpProcesses.get(id)) {
+            return;
+        }
+
+        const client = new Client({
+                name: "example-client",
+                version: "1.0.0"
             },
-        });
-        const process = spawn(serverConfig.command, serverConfig.args || [], {
-            stdio: 'pipe',
-            detached: false
-        });
+            {
+                capabilities: {
+                    resources: {},
+                    tools: {},
+                    prompts: {}
+                }
+            });
 
-        // 处理进程输出
-        process.stdout?.on('data', (data) => {
-            console.log(`[MCP ${id}] ${data.toString().trim()}`);
-        });
 
-        process.stderr?.on('data', (data) => {
-            console.error(`[MCP ${id}] Error: ${data.toString().trim()}`);
-        });
+        await client.connect(transport);
 
-        // 处理进程退出
-        process.on('exit', (code) => {
-            console.log(`MCP server ${id} exited with code ${code}`);
-            this.runningMCPs.delete(id);
-            this.mcpProcesses.delete(id);
-        });
+        try {
+            // List prompts
+            const prompts = await client.listTools();
+            console.log('prompts', prompts)
+        } catch (e) {
+            console.error(e);
+        }
 
-        process.on('error', (err) => {
-            console.error(`Failed to start MCP server ${id}: ${err.message}`);
-            this.runningMCPs.delete(id);
-            this.mcpProcesses.delete(id);
-        });
 
         // 保存进程引用
-        this.mcpProcesses.set(id, process);
+        this.mcpProcesses.set(id, client);
         this.runningMCPs.add(id);
     }
 

@@ -9,8 +9,7 @@
       "command": "npx",
       "args": [
         "-y",
-        "@modelcontextprotocol/server-filesystem",
-        "/Users/gengyu/github"
+        "@modelcontextprotocol/server-memory"
       ]
     }
   }
