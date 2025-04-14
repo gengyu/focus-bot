@@ -10,13 +10,16 @@ import {
 } from '../types/config';
 import {Client} from "@modelcontextprotocol/sdk/client/index.js";
 import {StdioClientTransport,} from "@modelcontextprotocol/sdk/client/stdio.js";
+import {StatusService} from "./statusService.ts";
 
 // import {Transport} from '@modelcontextprotocol/sdk/shared/transport.js';
 
 export class FileConfigService implements ConfigService {
     private runningMCPs: Set<string> = new Set();
+    private autoStartEnabled: boolean = true;
     private mcpProcesses: Map<string, Client> = new Map();
     private persistenceService: PersistenceService;
+    private statusService: StatusService;
 
     constructor(options?: ConfigStorageOptions) {
         this.persistenceService = new PersistenceService({
@@ -24,12 +27,19 @@ export class FileConfigService implements ConfigService {
             configFileName: 'config.json'
         });
 
+        this.statusService = new StatusService();
+
         // 监听MCP自动启动事件
         this.persistenceService.on(PersistenceService.EVENT_MCP_AUTO_START, async (id: string) => {
-            try {
-                await this.toggleMCPStatus(id);
-            } catch (error) {
-                console.error(`Failed to auto-start MCP ${id}:`, error);
+            if (this.autoStartEnabled) {
+                try {
+                    const config = await this.loadConfig();
+                    if (config.mcpServers[id]?.isRunning) {
+                        await this.toggleMCPStatus(id);
+                    }
+                } catch (error) {
+                    console.error(`Failed to auto-start MCP ${id}:`, error);
+                }
             }
         });
     }
@@ -41,7 +51,6 @@ export class FileConfigService implements ConfigService {
         }
 
         try {
-            // await this.persistenceService.backupData();
             await this.persistenceService.saveData(config);
         } catch (error) {
             throw new Error(`Failed to save config: ${error instanceof Error ? error.message : 'Unknown error'}`);
@@ -70,14 +79,14 @@ export class FileConfigService implements ConfigService {
     async getConfigList(): Promise<MCPConfigListItem[]> {
         try {
             const config = await this.loadConfig();
+            const statusMap = await this.statusService.getAllStatus();
             const configList: MCPConfigListItem[] = [];
 
-            // 将配置转换为列表项
             Object.entries(config.mcpServers).forEach(([id, serverConfig]) => {
                 configList.push({
                     id,
                     name: serverConfig.name || `MCP配置${id}`,
-                    isRunning: this.runningMCPs.has(id)
+                    isRunning: statusMap[id]?.isRunning || this.runningMCPs.has(id)
                 });
             });
 
@@ -87,52 +96,44 @@ export class FileConfigService implements ConfigService {
         }
     }
 
-    async toggleMCPStatus(id: string): Promise<boolean> {
+    async toggleMCPStatus(id: string, updateConfig: boolean = true): Promise<boolean> {
         try {
-            // 检查配置是否存在
             const config = await this.loadConfig();
             if (!config.mcpServers || !config.mcpServers[id]) {
                 throw new Error(`MCP configuration with ID ${id} not found`);
             }
 
-            // 更新运行状态
-            config.mcpServers[id].isRunning = !this.runningMCPs.has(id);
+            const currentStatus = await this.statusService.getStatus(id);
+            const newStatus = !currentStatus;
 
-            // 切换运行状态
-            const isCurrentlyRunning = this.runningMCPs.has(id);
-
-            if (isCurrentlyRunning) {
+            if (currentStatus) {
                 this.runningMCPs.delete(id);
-                // 停止MCP服务
                 const process = this.mcpProcesses.get(id);
                 if (process) {
-
                     this.mcpProcesses.delete(id);
                     console.log(`Stopping MCP server: ${id}`);
                 }
             } else {
-                // 启动MCP服务
                 const serverConfig = config.mcpServers[id];
                 if (!serverConfig.command) {
                     throw new Error(`MCP server configuration is missing command: ${id}`);
                 }
 
                 try {
-                    // 调用启动MCP进程的方法
                     await this.startMCPProcess(id, serverConfig);
-
                     console.log(`Starting MCP server: ${id}`);
-
                 } catch (err) {
-                    console.error(err)
+                    console.error(err);
                     this.runningMCPs.delete(id);
                     throw new Error(`Failed to start MCP server: ${err instanceof Error ? err.message : 'Unknown error'}`);
                 }
             }
 
-            // 保存状态到配置文件
-            await this.saveConfig(config);
-            return !isCurrentlyRunning; // 返回新的运行状态
+            await this.statusService.setStatus(id, newStatus);
+            if (updateConfig) {
+                await this.saveConfig(config);
+            }
+            return newStatus;
         } catch (error) {
             throw new Error(`Failed to toggle MCP status: ${error instanceof Error ? error.message : 'Unknown error'}`);
         }
@@ -148,7 +149,7 @@ export class FileConfigService implements ConfigService {
     }
 
     async isMCPRunning(id: string): Promise<boolean> {
-        return this.runningMCPs.has(id);
+        return await this.statusService.getStatus(id);
     }
 
 

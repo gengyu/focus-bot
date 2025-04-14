@@ -50,6 +50,24 @@ router.get('/config/list', async (ctx) => {
   }
 });
 
+// 获取所有服务运行状态
+router.get('/services/status', async (ctx) => {
+  try {
+    const configList = await configService.getConfigList();
+    const statusList = configList.map(config => ({
+      id: config.id,
+      name: config.name,
+      isRunning: config.isRunning
+    }));
+    ctx.body = statusList;
+  } catch (error) {
+    ctx.status = 500;
+    ctx.body = {
+      error: error instanceof Error ? error.message : 'Failed to get services status'
+    };
+  }
+});
+
 // 根据ID获取配置
 router.get('/config/:id', async (ctx) => {
   try {
