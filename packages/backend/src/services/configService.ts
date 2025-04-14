@@ -11,6 +11,7 @@ import {
 } from '../types/config';
 import {Client} from "@modelcontextprotocol/sdk/client/index.js";
 import {StdioClientTransport,} from "@modelcontextprotocol/sdk/client/stdio.js";
+
 // import {Transport} from '@modelcontextprotocol/sdk/shared/transport.js';
 
 export class FileConfigService implements ConfigService {
@@ -126,12 +127,22 @@ export class FileConfigService implements ConfigService {
                     console.log(`Starting MCP server: ${id}`);
 
                 } catch (err) {
+                    console.error(err)
                     this.runningMCPs.delete(id);
                     throw new Error(`Failed to start MCP server: ${err instanceof Error ? err.message : 'Unknown error'}`);
                 }
             }
 
             return !isCurrentlyRunning; // 返回新的运行状态
+        } catch (error) {
+            throw new Error(`Failed to toggle MCP status: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        }
+    }
+
+    async capabilities(id: string) {
+        try {
+            const client = this.mcpProcesses.get(id);
+            return client?.listTools();
         } catch (error) {
             throw new Error(`Failed to toggle MCP status: ${error instanceof Error ? error.message : 'Unknown error'}`);
         }

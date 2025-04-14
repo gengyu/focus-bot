@@ -36,41 +36,46 @@
 
         <li v-for="config in filteredConfigs"
             :key="config.id"
-            class="list-row items-center">
-          <div class="list-col-grow">{{ config.name }}</div>
+            class="px-2 py-2">
+          <div class="flex items-center">
 
-          <div class="flex items-center space-x-2">
-            <div
-                class="h-3 w-3 rounded-full"
-                :class="config.isRunning ? 'bg-success animate-pulse' : 'bg-error'"
-            ></div>
-            <span
-                class="text-sm font-medium"
-                :class="config.isRunning ? 'text-success' : 'text-error'"
-            >
-              {{ config.isRunning ? '运行中' : '已停止' }}
-            </span>
+
+            <div class="flex-1" @click="capabilities(config)">{{ config.name }}</div>
+
+            <div class="flex items-center space-x-2">
+              <div
+                  class="h-3 w-3 rounded-full"
+                  :class="config.isRunning ? 'bg-success animate-pulse' : 'bg-error'"
+              ></div>
+              <span
+                  class="text-sm font-medium"
+                  :class="config.isRunning ? 'text-success' : 'text-error'"
+              >
+                {{ config.isRunning ? '运行中' : '已停止' }}
+              </span>
+            </div>
+            <button class="btn  btn-square btn-sm btn-ghost "  @click="toggleMCP(config)">
+              <StopIcon class="size-6 text-error" v-if=" config.isRunning"></StopIcon>
+              <PlayIcon class="size-6 text-success " v-else></PlayIcon>
+            </button>
+            <button class="btn  btn-square btn-sm btn-ghost "
+                    @click="deleteConfig(config.id)"
+                    title="删除">
+              <TrashIcon class="size-6 text-error"></TrashIcon>
+            </button>
+            <button class="btn  btn-square btn-sm btn-ghost "
+                    title="删除">
+              <router-link
+                  :to="`/config/${config.id}`"
+                  class="text-primary hover:underline cursor-pointer"
+              >
+                <ArrowTopRightOnSquareIcon class="size-6"></ArrowTopRightOnSquareIcon>
+
+              </router-link>
+
+            </button>
+
           </div>
-          <button class="btn  btn-square btn-sm btn-ghost "  @click="toggleMCP(config)">
-            <StopIcon class="size-6 text-error" v-if=" config.isRunning"></StopIcon>
-            <PlayIcon class="size-6 text-success " v-else></PlayIcon>
-          </button>
-          <button class="btn  btn-square btn-sm btn-ghost "
-                  @click="deleteConfig(config.id)"
-                  title="删除">
-            <TrashIcon class="size-6 text-error"></TrashIcon>
-          </button>
-          <button class="btn  btn-square btn-sm btn-ghost "
-                  title="删除">
-            <router-link
-                :to="`/config/${config.id}`"
-                class="text-primary hover:underline cursor-pointer"
-            >
-              <ArrowTopRightOnSquareIcon class="size-6"></ArrowTopRightOnSquareIcon>
-
-            </router-link>
-
-          </button>
         </li>
 
 
@@ -155,6 +160,18 @@ const toggleMCP = async (config: Config) => {
   try {
     // 调用后端API切换状态
     const newStatus = await configAPI.toggleMCPStatus(config.id);
+    // 更新本地状态
+    config.isRunning = newStatus;
+  } catch (err) {
+    console.error('切换MCP状态失败:', err);
+    // 显示错误提示
+    error.value = err instanceof Error ? err.message : '切换MCP状态失败';
+  }
+};
+const capabilities = async (config: Config) => {
+  try {
+    // 调用后端API切换状态
+    const newStatus = await configAPI.capabilities(config.id);
     // 更新本地状态
     config.isRunning = newStatus;
   } catch (err) {

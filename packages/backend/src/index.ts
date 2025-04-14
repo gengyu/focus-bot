@@ -98,6 +98,19 @@ router.post('/config/toggle/:id', async (ctx) => {
   }
 });
 
+router.post('/config/capabilities/:id', async (ctx) => {
+  try {
+    const id = ctx.params.id;
+    const newStatus = await configService.capabilities(id);
+    ctx.body = { id, isRunning: newStatus };
+  } catch (error) {
+    ctx.status = 400;
+    ctx.body = {
+      error: error instanceof Error ? error.message : 'Failed to toggle MCP status'
+    };
+  }
+});
+
 // 保存配置
 router.post('/config', async (ctx) => {
   try {
