@@ -41,7 +41,7 @@ export class FileConfigService implements ConfigService {
         }
 
         try {
-            await this.persistenceService.backupData();
+            // await this.persistenceService.backupData();
             await this.persistenceService.saveData(config);
         } catch (error) {
             throw new Error(`Failed to save config: ${error instanceof Error ? error.message : 'Unknown error'}`);
