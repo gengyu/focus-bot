@@ -103,7 +103,12 @@ const updateServerArgs = (id: string) => {
 };
 
 onMounted(async () => {
+
+
+
   try {
+    const list = await configAPI.getConfigList();
+
     const savedConfig = await configAPI.loadConfig();
     config.value = {...config.value, ...savedConfig};
     // 初始化参数字符串

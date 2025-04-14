@@ -1,5 +1,4 @@
-import fs from 'fs';
-import path from 'path';
+import { PersistenceService } from './persistenceService';
 import {spawn, ChildProcess} from 'child_process';
 import {
     MCPConfig,
@@ -15,17 +14,15 @@ import {StdioClientTransport,} from "@modelcontextprotocol/sdk/client/stdio.js";
 // import {Transport} from '@modelcontextprotocol/sdk/shared/transport.js';
 
 export class FileConfigService implements ConfigService {
-    private filePath: string;
     private runningMCPs: Set<string> = new Set();
     private mcpProcesses: Map<string, Client> = new Map();
+    private persistenceService: PersistenceService;
 
     constructor(options?: ConfigStorageOptions) {
-        this.filePath = options?.filePath || path.join(process.cwd(), 'config.json');
-        // this.client = new Client( {
-        //     name: "example-client",
-        //     version: "1.0.0"
-        // });
-
+        this.persistenceService = new PersistenceService({
+            dataDir: options?.dataDir,
+            configFileName: 'config.json'
+        });
     }
 
     async saveConfig(config: MCPConfig): Promise<void> {
@@ -35,11 +32,8 @@ export class FileConfigService implements ConfigService {
         }
 
         try {
-            await fs.promises.writeFile(
-                this.filePath,
-                JSON.stringify(config, null, 2),
-                'utf-8'
-            );
+            await this.persistenceService.backupData();
+            await this.persistenceService.saveData(config);
         } catch (error) {
             throw new Error(`Failed to save config: ${error instanceof Error ? error.message : 'Unknown error'}`);
         }
@@ -47,8 +41,8 @@ export class FileConfigService implements ConfigService {
 
     async loadConfig(): Promise<MCPConfig> {
         try {
-            const data = await fs.promises.readFile(this.filePath, 'utf-8');
-            const config = JSON.parse(data) as MCPConfig;
+            await this.persistenceService.initialize();
+            const config = await this.persistenceService.loadData();
             const validation = this.validateConfig(config);
 
             if (!validation.isValid) {
@@ -59,15 +53,6 @@ export class FileConfigService implements ConfigService {
         } catch (error) {
             if (error instanceof ConfigValidationError) {
                 throw error;
-            }
-            if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
-                // 如果配置文件不存在，返回默认配置
-                return {
-                    serverUrl: 'http://localhost:5000',
-                    transport: 'http',
-                    debug: false,
-                    mcpServers: {}
-                };
             }
             throw new Error(`Failed to load config: ${error instanceof Error ? error.message : 'Unknown error'}`);
         }
