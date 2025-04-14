@@ -1,7 +1,20 @@
 {
   "compilerOptions": {
-    "baseUrl": ".",
-    "moduleResolution": "node",
+
+    "target": "ES2022",
+    "lib": ["ES2023"],
+    "module": "ESNext",
+    "skipLibCheck": true,
+
+    /* Bundler mode */
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "isolatedModules": true,
+    "moduleDetection": "force",
+    "noEmit": true,
+
+
+ 
     "strict": true,
     "declaration": true,
     "noUnusedLocals": true,
@@ -9,15 +22,12 @@
     "allowSyntheticDefaultImports": true,
     // compile away optional-chaining-operator
     // node support table: https://node.green/#ES2020-features-optional-chaining-operator-----
-    "target": "esnext",
-    "module": "esnext",
-    "lib": [
-      "ESNext"
-    ],
+
     "sourceMap": true
   },
   "exclude": [
     "dist",
-    "node_modules"
+    "node_modules",
+    "config.json"
   ]
 }
