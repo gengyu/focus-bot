@@ -2,6 +2,7 @@ export interface MCPServerConfig {
   command: string;
   args: string[];
   name: string;
+  isRunning?: boolean;
 }
 
 export interface MCPConfig {

@@ -7,11 +7,15 @@ export interface PersistenceOptions {
   configFileName?: string;
 }
 
-export class PersistenceService {
+import { EventEmitter } from 'events';
+
+export class PersistenceService extends EventEmitter {
+  static readonly EVENT_MCP_AUTO_START = 'mcpAutoStart';
   private dataDir: string;
   private configFilePath: string;
 
   constructor(options?: PersistenceOptions) {
+    super();
     this.dataDir = options?.dataDir || path.join(process.cwd(), 'data');
     this.configFilePath = path.join(this.dataDir, options?.configFileName || 'config.json');
   }
@@ -30,6 +34,15 @@ export class PersistenceService {
           mcpServers: {}
         };
         await this.saveData(defaultConfig);
+      } else {
+        // 加载现有配置并检查运行状态
+        const config = await this.loadData();
+        Object.entries(config.mcpServers).forEach(([id, server]) => {
+          if (server.isRunning) {
+            // 通知ConfigService启动该MCP
+            this.emit('mcpAutoStart', id);
+          }
+        });
       }
     } catch (error) {
       throw new Error(`Failed to initialize persistence service: ${error instanceof Error ? error.message : 'Unknown error'}`);

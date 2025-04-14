@@ -23,6 +23,15 @@ export class FileConfigService implements ConfigService {
             dataDir: options?.dataDir,
             configFileName: 'config.json'
         });
+
+        // 监听MCP自动启动事件
+        this.persistenceService.on(PersistenceService.EVENT_MCP_AUTO_START, async (id: string) => {
+            try {
+                await this.toggleMCPStatus(id);
+            } catch (error) {
+                console.error(`Failed to auto-start MCP ${id}:`, error);
+            }
+        });
     }
 
     async saveConfig(config: MCPConfig): Promise<void> {
@@ -86,6 +95,9 @@ export class FileConfigService implements ConfigService {
                 throw new Error(`MCP configuration with ID ${id} not found`);
             }
 
+            // 更新运行状态
+            config.mcpServers[id].isRunning = !this.runningMCPs.has(id);
+
             // 切换运行状态
             const isCurrentlyRunning = this.runningMCPs.has(id);
 
@@ -118,6 +130,8 @@ export class FileConfigService implements ConfigService {
                 }
             }
 
+            // 保存状态到配置文件
+            await this.saveConfig(config);
             return !isCurrentlyRunning; // 返回新的运行状态
         } catch (error) {
             throw new Error(`Failed to toggle MCP status: ${error instanceof Error ? error.message : 'Unknown error'}`);
