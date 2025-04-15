@@ -79,12 +79,16 @@ export class PersistenceService extends EventEmitter {
     }
   }
 
-  async loadData(): Promise<MCPConfig> {
+  async loadData(): Promise<MCPConfig | any> {
     try {
       const data = await fs.promises.readFile(this.configFilePath, 'utf-8');
-      return JSON.parse(data) as MCPConfig;
+      return JSON.parse(data);
     } catch (error) {
       if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
+        // Return empty array for chat history if file doesn't exist
+        if (this.configFileName === 'chat_history.json') {
+          return [];
+        }
         throw new Error('Configuration file not found');
       }
       throw new Error(`Failed to load data: ${error instanceof Error ? error.message : 'Unknown error'}`);

@@ -4,10 +4,30 @@ import cors from '@koa/cors';
 import bodyParser from 'koa-bodyparser';
 import {FileConfigService} from './services/configService';
 import {MCPConfig} from './types/config';
+import {ChatService} from './services/chatService';
+import multer from '@koa/multer';
+import path from 'path';
 
 const app = new Koa();
 const router = new Router();
 const configService = new FileConfigService();
+const chatService = new ChatService();
+
+// 初始化聊天服务
+chatService.initialize().catch(error => {
+  console.error('Failed to initialize chat service:', error);
+});
+
+// 配置文件上传
+const upload = multer({
+  storage: multer.diskStorage({
+    destination: path.join(process.cwd(), 'data', 'images'),
+    filename: (req, file, cb) => {
+      const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+      cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
+    }
+  })
+});
 
 
 // 中间件配置
@@ -145,8 +165,66 @@ router.post('/config', async (ctx) => {
   }
 });
 
+// 聊天相关路由
+router.get('/chat/history', async (ctx) => {
+  try {
+    const messages = await chatService.getMessages();
+    ctx.body = messages;
+  } catch (error) {
+    ctx.status = 500;
+    ctx.body = {
+      error: error instanceof Error ? error.message : 'Failed to get chat history'
+    };
+  }
+});
+
+router.post('/chat/message', async (ctx) => {
+  try {
+    const message = ctx.request.body;
+    await chatService.addMessage({
+      ...message,
+      timestamp: Date.now(),
+      type: 'text'
+    });
+    ctx.body = { success: true };
+  } catch (error) {
+    ctx.status = 500;
+    ctx.body = {
+      error: error instanceof Error ? error.message : 'Failed to add message'
+    };
+  }
+});
+
+router.post('/chat/image', upload.single('image'), async (ctx) => {
+  try {
+    const file = ctx.file;
+    if (!file) {
+      throw new Error('No image file uploaded');
+    }
+    
+    const imageUrl = `/images/${file.filename}`;
+    await chatService.addMessage({
+      role: 'user',
+      content: '',
+      timestamp: Date.now(),
+      type: 'image',
+      imageUrl
+    });
+    
+    ctx.body = { success: true, imageUrl };
+  } catch (error) {
+    ctx.status = 500;
+    ctx.body = {
+      error: error instanceof Error ? error.message : 'Failed to upload image'
+    };
+  }
+});
+
 // 注册路由
 app.use(router.routes()).use(router.allowedMethods());
+
+// 静态文件服务
+// app.use(require('koa-static')(path.join(process.cwd(), 'data')));
 
 // 启动服务器
 console.log('running on import.meta.env.PROD', process.env.PROD);
