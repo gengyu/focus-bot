@@ -1,13 +1,13 @@
 <template>
   <div class="server-config">
     <form @submit.prevent="saveConfig" class="config-form">
-      <div class="form-group">
-        <label>传输方式</label>
-        <select class="select" v-model="config.transport">
-          <option class="" value="http">HTTP</option>
-          <option class="" value="stdio">STDIO</option>
-        </select>
-      </div>
+<!--      <div class="form-group">-->
+<!--        <label>传输方式</label>-->
+<!--        <select class="select" v-model="config.transport">-->
+<!--          <option class="" value="http">HTTP</option>-->
+<!--          <option class="" value="stdio">STDIO</option>-->
+<!--        </select>-->
+<!--      </div>-->
 
       <div class="server-list">
         <div class="server-items">

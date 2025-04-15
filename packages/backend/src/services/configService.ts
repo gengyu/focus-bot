@@ -178,10 +178,11 @@ export class FileConfigService implements ConfigService {
                 throw new Error('MCP client not found');
             }
             const tools = await client.listTools();
-            return tools.tools.map(tool => ({
-                name: tool.name || '',
-                description: tool.description || ''
-            }));
+            return tools.tools as any
+            // s.map(tool => ({
+            //     name: tool.name || '',
+            //     description: tool.description || ''
+            // }));
         } catch (error) {
             throw new Error(`Failed to get MCP capabilities: ${error instanceof Error ? error.message : 'Unknown error'}`);
         }
