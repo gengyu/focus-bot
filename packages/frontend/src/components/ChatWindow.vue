@@ -3,18 +3,22 @@
     <!-- 消息列表区域 -->
     <div class="flex-1 overflow-y-auto mb-4" ref="messageContainer">
       <div v-for="message in messages" :key="message.timestamp" class="mb-4">
-        <div :class="['flex', message.role === 'user' ? 'justify-end' : 'justify-start']">
+        <div :class="['flex', message.role === 'user' ? 'justify-end' : 'justify-start']" :style="{ flexDirection: message.role === 'user' ? 'row-reverse' : 'row' }">
           <div :class="[
-            'max-w-[70%] rounded-lg p-3',
+            'max-w-[70%] rounded-lg p-3 shadow-md',
             message.role === 'user' ? 'bg-blue-500 text-white' : 'bg-white text-gray-800'
           ]">
+            <!-- 消息时间 -->
+            <div class="text-xs opacity-70 mb-1">
+              {{ new Date(message.timestamp).toLocaleTimeString() }}
+            </div>
             <!-- 文本消息 -->
             <div v-if="message.type === 'text'" class="break-words">
               {{ message.content }}
             </div>
             <!-- 图片消息 -->
             <div v-else-if="message.type === 'image'" class="max-w-sm">
-              <img :src="message.imageUrl" alt="聊天图片" class="rounded-lg">
+              <img :src="message.imageUrl" alt="聊天图片" class="rounded-lg w-full">
             </div>
           </div>
         </div>
