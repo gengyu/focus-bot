@@ -150,9 +150,9 @@ app.use(router.routes()).use(router.allowedMethods());
 
 // 启动服务器
 console.log('running on import.meta.env.PROD', process.env.PROD);
-if (process.env.PROD) {
+// if (process.env.PROD) {
   app.listen(3000);
   console.log('running on http://localhost:3000');
-}
+// }
 
 export const viteNodeApp = app;

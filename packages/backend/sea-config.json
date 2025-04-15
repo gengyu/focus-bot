@@ -4,14 +4,5 @@
   "disableExperimentalSEAWarning": true,
   "useCodeCache": true,
    "assets": {
-    "assets-config.json": "./assets-config.json",
-    "@koa/cors": "./node_modules/@koa/cors/dist/index.js",
-    "@mcp-connect/core": "./node_modules/@mcp-connect/core/dist/index.js",
-    "@modelcontextprotocol/sdk": "./node_modules/@modelcontextprotocol/sdk/dist/esm/index.js",
-    "dotenv": "./node_modules/dotenv/lib/main.js",
-    "koa": "./node_modules/koa/lib/application.js",
-    "koa-bodyparser": "./node_modules/koa-bodyparser/index.js",
-    "koa-router": "./node_modules/koa-router/lib/router.js",
-    "winston": "./node_modules/winston/lib/winston.js"
   }
 }

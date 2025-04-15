@@ -12,14 +12,14 @@ export default defineConfig({
     },
     rollupOptions: {
       external: [
-        'koa',
-        '@koa/cors',
-        'koa-router',
-        'koa-bodyparser',
-        'winston',
-        'dotenv',
-        '@mcp-connect/core',
-        '@modelcontextprotocol/sdk'
+        // 'koa',
+        // '@koa/cors',
+        // 'koa-router',
+        // 'koa-bodyparser',
+        // 'winston',
+        // 'dotenv',
+        // '@mcp-connect/core',
+        // '@modelcontextprotocol/sdk'
       ]
     }
   },
