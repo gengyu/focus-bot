@@ -9,6 +9,7 @@ const app = new Koa();
 const router = new Router();
 const configService = new FileConfigService();
 
+
 // 中间件配置
 app.use(cors({
   origin: '*', // 允许所有来源访问
@@ -120,10 +121,11 @@ router.post('/config/capabilities/:id', async (ctx) => {
   try {
     const id = ctx.params.id;
     const newStatus = await configService.capabilities(id);
-    ctx.body = { id, isRunning: newStatus };
+    ctx.body = newStatus;
   } catch (error) {
     ctx.status = 400;
     ctx.body = {
+      id: ctx.params.id,
       error: error instanceof Error ? error.message : 'Failed to toggle MCP status'
     };
   }

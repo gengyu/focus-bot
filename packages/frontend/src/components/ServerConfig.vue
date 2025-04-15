@@ -10,7 +10,6 @@
       </div>
 
       <div class="server-list">
-        <h3>MCP 服务器列表</h3>
         <div class="server-items">
           <div v-for="(server, id) in config.mcpServers" :key="id" class="server-item">
             <div class="server-header">
@@ -26,15 +25,8 @@
                 <span class="badge" :class="serverStatus[id] ? 'badge-success' : 'badge-error'">
                   {{ serverStatus[id] ? '运行中' : '已停止' }}
                 </span>
-                <button type="button" 
-                        class="btn btn-sm ml-2" 
-                        :class="serverStatus[id] ? 'btn-error' : 'btn-success'"
-                        @click="toggleServerStatus(id)">
-                  {{ serverStatus[id] ? '停止' : '启动' }}
-                </button>
               </div>
               <button type="button" class="btn btn-info btn-sm ml-2" @click="saveConfig">保存配置</button>
-              <button type="button" class="btn ml-2 btn-sm" @click="resetConfig">重置</button>
             </div>
             <div class="server-details">
               <div class="form-group">
@@ -141,16 +133,8 @@ onMounted(async () => {
     const list = await configAPI.getConfigList();
     const savedConfig = await configAPI.loadConfig();
     config.value = {...config.value, ...savedConfig};
-    
-    // 初始化参数字符串和服务器状态
-    for (const item of list) {
-      serverStatus[item.id] = item.isRunning;
-      if (item.isRunning) {
-        const capabilities = await configAPI.capabilities(item.id);
-        serverCapabilities[item.id] = capabilities;
-      }
-    }
-    
+    //
+
     Object.entries(savedConfig.mcpServers || {}).forEach(([id, server]) => {
       argsString[id] = server.args.join(' ');
     });
@@ -158,6 +142,14 @@ onMounted(async () => {
     if (route.params.id) {
       serverString.value = JSON.stringify(config.value.mcpServers[route.params.id as string] || {}, null, 2);
     }
+      // 初始化参数字符串和服务器状态
+      for (const item of list) {
+        serverStatus[item.id] = item.isRunning;
+        if (item.isRunning) {
+          const capabilities = await configAPI.capabilities(item.id);
+          serverCapabilities[item.id] = capabilities;
+        }
+      }
   } catch (error) {
     console.error('加载配置失败:', error);
   }
@@ -209,7 +201,7 @@ select {
 }
 
 .server-list {
-  @apply mt-8 pt-6 border-t border-base-200;
+  @apply border-t border-base-200;
 }
 
 .server-items {

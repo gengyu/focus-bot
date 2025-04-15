@@ -30,19 +30,50 @@ export class FileConfigService implements ConfigService {
         this.statusService = new StatusService();
 
         // 监听MCP自动启动事件
-        this.persistenceService.on(PersistenceService.EVENT_MCP_AUTO_START, async (id: string) => {
-            if (this.autoStartEnabled) {
-                try {
-                    const config = await this.loadConfig();
-                    if (config.mcpServers[id]?.isRunning) {
-                        await this.toggleMCPStatus(id);
-                    }
-                } catch (error) {
-                    console.error(`Failed to auto-start MCP ${id}:`, error);
+        // this.persistenceService.on(PersistenceService.EVENT_MCP_AUTO_START, async (id: string) => {
+        //     if (!this.autoStartEnabled) return;
+        //     await this.startMCPIfEnabled(id);
+        // });
+        console.log('FileConfigService initialized')
+        this.initializeAutoStartMCPs();
+    }
+
+    private async initializeAutoStartMCPs(): Promise<void> {
+        try {
+            const config = await this.loadConfig();
+            const statusMap = await this.statusService.getAllStatus();
+            console.log('Initializing auto-start MCPs...', config.mcpServers);
+            if (!config.mcpServers) return;
+
+            for (const [id] of Object.entries(config.mcpServers)) {
+                if (statusMap[id].isRunning) {
+                    await this.startMCPIfEnabled(id);
                 }
             }
-        });
+        } catch (error) {
+            console.error(`Failed to auto-start all MCPs: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        }
     }
+    private async startMCPIfEnabled(id: string): Promise<void> {
+        try {
+            const config = await this.loadConfig();
+            const serverConfig = config.mcpServers[id];
+            
+            if (!serverConfig) {
+                console.error(`MCP configuration not found for ID: ${id}`);
+                return;
+            }
+
+            const isCurrentlyRunning = this.runningMCPs.has(id);
+            if (!isCurrentlyRunning) {
+                console.log(`Auto-starting MCP server: ${id}`);
+                await this.toggleMCPStatus(id, false);
+            }
+        } catch (error) {
+            console.error(`Failed to auto-start MCP ${id}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        }
+    }
+    
 
     async saveConfig(config: MCPConfig): Promise<void> {
         const validation = this.validateConfig(config);
@@ -103,7 +134,7 @@ export class FileConfigService implements ConfigService {
                 throw new Error(`MCP configuration with ID ${id} not found`);
             }
 
-            const currentStatus = await this.statusService.getStatus(id);
+            const currentStatus = this.runningMCPs.has(id);
             const newStatus = !currentStatus;
 
             if (currentStatus) {
@@ -139,12 +170,20 @@ export class FileConfigService implements ConfigService {
         }
     }
 
-    async capabilities(id: string) {
+    async capabilities(id: string): Promise<{ name: string; description: string }[]> {
         try {
             const client = this.mcpProcesses.get(id);
-            return client?.listTools();
+            console.log(this.mcpProcesses)
+            if (!client) {
+                throw new Error('MCP client not found');
+            }
+            const tools = await client.listTools();
+            return tools.tools.map(tool => ({
+                name: tool.name || '',
+                description: tool.description || ''
+            }));
         } catch (error) {
-            throw new Error(`Failed to toggle MCP status: ${error instanceof Error ? error.message : 'Unknown error'}`);
+            throw new Error(`Failed to get MCP capabilities: ${error instanceof Error ? error.message : 'Unknown error'}`);
         }
     }
 
@@ -181,14 +220,14 @@ export class FileConfigService implements ConfigService {
 
 
         await client.connect(transport);
-
-        try {
-            // List prompts
-            const prompts = await client.listTools();
-            console.log('prompts', prompts)
-        } catch (e) {
-            console.error(e);
-        }
+        //
+        // try {
+        //     // List prompts
+        //     const prompts = await client.listTools();
+        //     // console.log('prompts', prompts)
+        // } catch (e) {
+        //     console.error(e);
+        // }
 
 
         // 保存进程引用
