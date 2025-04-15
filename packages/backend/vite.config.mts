@@ -2,6 +2,27 @@ import { defineConfig } from 'vite';
 import { VitePluginNode } from 'vite-plugin-node';
  
 export default defineConfig({
+  build: {
+    target: 'node18',
+    outDir: 'dist',
+    lib: {
+      entry: './src/index.ts',
+      formats: ['cjs'],
+      fileName: () => 'index.js'
+    },
+    rollupOptions: {
+      external: [
+        'koa',
+        '@koa/cors',
+        'koa-router',
+        'koa-bodyparser',
+        'winston',
+        'dotenv',
+        '@mcp-connect/core',
+        '@modelcontextprotocol/sdk'
+      ]
+    }
+  },
   server:{
     port:3000,
     // logLevel: 'info',
