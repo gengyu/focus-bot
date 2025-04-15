@@ -17,8 +17,8 @@ export class ChatService {
     this.persistenceService = new PersistenceService({
       dataDir: options?.dataDir || path.join(process.cwd(), 'data'),
       configFileName: 'chat_history.json',
-      backupInterval: options?.backupInterval,
-      maxBackups: options?.maxBackups
+      backupInterval: options?.backupInterval ?? 3600000, // 默认1小时
+      maxBackups: options?.maxBackups ?? 24 // 默认24个备份
     });
   }
 
@@ -57,7 +57,13 @@ export class ChatService {
   async loadChatHistory(): Promise<ChatMessage[]> {
     try {
       const data = await this.persistenceService.loadData();
-      return data as ChatMessage[];
+      return (data as ChatMessage[]).map(msg => ({
+  role: msg.role || 'user',
+  content: msg.content,
+  timestamp: msg.timestamp,
+  type: msg.type,
+  ...(msg.imageUrl && { imageUrl: msg.imageUrl })
+}));
     } catch (error) {
       if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
         return [];

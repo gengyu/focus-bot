@@ -181,8 +181,10 @@ router.get('/chat/history', async (ctx) => {
 router.post('/chat/message', async (ctx) => {
   try {
     const message = ctx.request.body;
+    const role = message.role || 'default';
     await chatService.addMessage({
-      ...message,
+      content: message.message,
+      role,
       timestamp: Date.now(),
       type: 'text'
     });
