@@ -4,7 +4,7 @@ import cors from '@koa/cors';
 import bodyParser from 'koa-bodyparser';
 import {FileConfigService} from './services/configService';
 import {MCPConfig} from './types/config';
-import {ChatService} from './services/chatService';
+import {ChatMessage, ChatService} from './services/chatService';
 import multer from '@koa/multer';
 import path from 'path';
 
@@ -182,13 +182,14 @@ router.post('/chat/message', async (ctx) => {
   try {
     const message = ctx.request.body;
     const role = message.role || 'default';
-    await chatService.addMessage({
+    const chatMsg: ChatMessage = {
+      role: role,
       content: message.message,
-      role,
       timestamp: Date.now(),
       type: 'text'
-    });
-    ctx.body = { success: true };
+    };
+    await chatService.addMessage(chatMsg);
+    ctx.body = chatMsg;
   } catch (error) {
     ctx.status = 500;
     ctx.body = {
@@ -230,9 +231,9 @@ app.use(router.routes()).use(router.allowedMethods());
 
 // 启动服务器
 console.log('running on import.meta.env.PROD', process.env.PROD);
-// if (process.env.PROD) {
+if (process.env.PROD) {
   app.listen(3000);
   console.log('running on http://localhost:3000');
-// }
+}
 
 export const viteNodeApp = app;

@@ -8,6 +8,7 @@
             <router-link to="/" class="inline-flex items-center px-1 pt-1 text-sm font-medium">首页</router-link>
             <router-link to="/configs" class="inline-flex items-center px-1 pt-1 text-sm font-medium">配置管理</router-link>
             <router-link to="/config" class="inline-flex items-center px-1 pt-1 text-sm font-medium">配置管理</router-link>
+            <router-link to="/chat" class="inline-flex items-center px-1 pt-1 text-sm font-medium">CHAT VIEW</router-link>
           </div>
         </div>
       </div>

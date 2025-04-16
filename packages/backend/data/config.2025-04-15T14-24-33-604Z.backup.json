@@ -1,0 +1,16 @@
+{
+  "serverUrl": "http://localhost:5000",
+  "apiKey": "",
+  "debug": false,
+  "transport": "http",
+  "mcpServers": {
+    "server-1744297701108": {
+      "name": "新服务器 filesystem",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-memory"
+      ]
+    }
+  }
+}
