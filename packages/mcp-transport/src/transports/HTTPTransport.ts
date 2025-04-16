@@ -1,5 +1,5 @@
 import axios, { AxiosInstance } from 'axios';
-import { MCPRequest, MCPResponse, MCPStreamOptions } from '@mcp-connect/core/src/types';
+import { MCPRequest, MCPResponse, MCPStreamOptions } from '@mcp-connect/core';
 import { Transport } from '../types';
 
 /**
@@ -36,10 +36,11 @@ export class HTTPTransport implements Transport {
       let data = request;
       let headers = {};
       if (request.payload && typeof FormData !== 'undefined' && request.payload instanceof FormData) {
-        data = request.payload;
+        data = request.payload as any;
         // axios会自动设置multipart边界，无需手动设置Content-Type
         headers = { ...(this.client.defaults.headers || {}), ...this.client.defaults.headers.common };
-        delete headers['Content-Type'];
+        // @ts-ignore
+        delete headers['Content-Type'] ;
       }
       const response = await this.client.post('/invoke', data, { headers });
       return {

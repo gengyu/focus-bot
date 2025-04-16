@@ -29,7 +29,7 @@
     "vue-tsc": "^2.2.8"
   },
   "peerDependencies": {
-    "@mcp-connect/core": "*",
-    "@mcp-connect/mcp-transport": "workspace:*"
+    "@mcp-connect/core": "workspace:*",
+    "@mcp-connect/transport": "workspace:*"
   }
 }

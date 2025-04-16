@@ -1,4 +1,4 @@
-import { TransportAdapter, TransportType } from '@mcp-connect/mcp-transport';
+import { TransportAdapter, TransportType } from '@mcp-connect/transport';
 import type { MCPConfig } from '../types/config';
 
 export const API_BASE_URL = 'http://localhost:3000';

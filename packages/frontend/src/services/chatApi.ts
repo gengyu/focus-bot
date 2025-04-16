@@ -1,5 +1,5 @@
 import { API_BASE_URL } from './api';
-import { TransportAdapter, TransportType } from '@mcp-connect/mcp-transport';
+import { TransportAdapter, TransportType } from '@mcp-connect/transport';
 
 export interface ChatMessage {
   role: 'user' | 'assistant';

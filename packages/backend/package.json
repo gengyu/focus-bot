@@ -37,7 +37,7 @@
     "vite-plugin-node": "^3.1.0"
   },
   "peerDependencies": {
-    "@mcp-connect/core": "*",
-    "@mcp-connect/mcp-transport": "workspace:*"
+    "@mcp-connect/core": "workspace:*",
+    "@mcp-connect/transport": "workspace:*"
   }
 }
