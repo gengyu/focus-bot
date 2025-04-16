@@ -1,7 +1,14 @@
-import { MCPRequest, MCPResponse, MCPStreamOptions } from '@mcp-connect/core/src/types';
-import { Transport, TransportConfig, TransportType } from './types';
-import { HTTPTransport } from './transports/HTTPTransport';
-import { EventTransport } from './transports/EventTransport';
+// import { MCPRequest, MCPResponse, MCPStreamOptions } from '@mcp-connect/core/src/types';
+
+import {HTTPTransport} from './HTTPTransport';
+import {EventTransport} from './EventTransport';
+import {
+  type Transport,
+  type TransportConfig,
+  type TransportRequest,
+  type TransportResponse, type TransportStreamOptions,
+  TransportType
+} from "./types.ts";
 
 /**
  * 传输适配器类
@@ -30,16 +37,15 @@ export class TransportAdapter implements Transport {
           apiKey: this.config.apiKey
         });
         break;
-        
 
-        
+
       case TransportType.EVENT:
         this.transport = new EventTransport({
           namespace: this.config.eventNamespace,
           emitter: this.config.eventEmitter
         });
         break;
-        
+
       default:
         throw new Error(`Unsupported transport type: ${type}`);
     }
@@ -48,22 +54,22 @@ export class TransportAdapter implements Transport {
   /**
    * 直接调用，返回响应
    */
-  async invokeDirect(request: MCPRequest): Promise<MCPResponse> {
+  async invokeDirect(request: TransportRequest): Promise<TransportResponse> {
     // 自动识别FormData并转发给HTTPTransport
     if (
       this.transport instanceof HTTPTransport &&
       request.payload && typeof FormData !== 'undefined' && request.payload instanceof FormData
     ) {
       // @ts-ignore
-      return (this.transport as HTTPTransport).invokeDirect({ ...request, payload: request.payload });
+      return (this.transport as HTTPTransport).invokeDirect({...request, payload: request.payload});
     }
     return this.transport.invokeDirect(request);
   }
-  
+
   /**
    * 流式调用，通过回调处理响应
    */
-  async invokeStream(request: MCPRequest, options: MCPStreamOptions): Promise<void> {
-    return this.transport.invokeStream(request, options);
+  async invokeStream(request: TransportRequest, options: TransportStreamOptions)  {
+      this.transport.invokeStream(request, options);
   }
 }

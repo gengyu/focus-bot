@@ -1,5 +1,5 @@
 import { API_BASE_URL } from './api';
-import { TransportAdapter, TransportType } from '@mcp-connect/transport';
+import {TransportAdapter, type TransportRequest, TransportType} from "../transports";
 
 export interface ChatMessage {
   role: 'user' | 'assistant';
@@ -13,7 +13,7 @@ const transport = new TransportAdapter(TransportType.HTTP, { serverUrl: API_BASE
 
 export class ChatAPI {
   async sendMessage(message: string): Promise<ChatMessage> {
-    const req = { method: 'sendMessage', params: { message } };
+    const req: TransportRequest = { method: 'sendMessage', payload: { message } };
     const res = await transport.invokeDirect(req);
     if (!res.success) throw new Error(`发送消息失败: ${res.error}`);
     return res.data;
@@ -34,7 +34,7 @@ export class ChatAPI {
   }
 
   async getChatHistory(): Promise<ChatMessage[]> {
-    const req = { method: 'getChatHistory', params: {} };
+    const req = { method: 'getChatHistory', payload: {} };
     const res = await transport.invokeDirect(req);
     if (!res.success) throw new Error(`获取聊天历史失败: ${res.error}`);
     return res.data;

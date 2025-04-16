@@ -1,6 +1,12 @@
 import { EventEmitter } from 'eventemitter3';
-import { MCPRequest, MCPResponse, MCPStreamOptions } from '@mcp-connect/core/src/types';
-import { Transport, EventTransportEvents } from '../types';
+import type {
+  EventTransportEvents,
+  Transport,
+  TransportRequest,
+  TransportResponse,
+  TransportStreamOptions
+} from "./types.ts";
+
 
 /**
  * 事件传输配置
@@ -60,10 +66,10 @@ export class EventTransport implements Transport {
   /**
    * 直接调用，返回响应
    */
-  async invokeDirect(request: MCPRequest): Promise<MCPResponse> {
+  async invokeDirect(request: TransportRequest): Promise<TransportResponse> {
     return new Promise((resolve) => {
       // 创建一次性响应监听器
-      const responseListener = (response: MCPResponse) => {
+      const responseListener = (response: TransportResponse) => {
         this.emitter.off(this.getEventName('response'), responseListener);
         resolve(response);
       };
@@ -90,7 +96,7 @@ export class EventTransport implements Transport {
   /**
    * 流式调用，通过回调处理响应
    */
-  async invokeStream(request: MCPRequest, options: MCPStreamOptions): Promise<void> {
+  async invokeStream(request: TransportRequest, options: TransportStreamOptions){
     // 创建数据监听器
     const dataListener = (data: any) => {
       options.onData?.(data);

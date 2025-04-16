@@ -1,6 +1,7 @@
-import axios, { AxiosInstance } from 'axios';
-import { MCPRequest, MCPResponse, MCPStreamOptions } from '@mcp-connect/core';
-import { Transport } from '../types';
+import axios, {type AxiosInstance} from 'axios';
+
+
+import type {Transport, TransportRequest, TransportResponse, TransportStreamOptions} from "./types.ts";
 
 /**
  * HTTP传输配置
@@ -30,19 +31,20 @@ export class HTTPTransport implements Transport {
   /**
    * 直接调用，返回响应
    */
-  async invokeDirect(request: MCPRequest): Promise<MCPResponse> {
+  async invokeDirect(request: TransportRequest): Promise<TransportResponse> {
     try {
       // 检查payload是否为FormData
       let data = request;
       let headers = {};
+      data = request.payload as any;
       if (request.payload && typeof FormData !== 'undefined' && request.payload instanceof FormData) {
-        data = request.payload as any;
+        // data = request.payload as any;
         // axios会自动设置multipart边界，无需手动设置Content-Type
         headers = { ...(this.client.defaults.headers || {}), ...this.client.defaults.headers.common };
         // @ts-ignore
         delete headers['Content-Type'] ;
       }
-      const response = await this.client.post('/invoke', data, { headers });
+      const response = await this.client.post('/invoke/' + request.method, data, { headers });
       return {
         success: true,
         data: response.data,
@@ -59,7 +61,7 @@ export class HTTPTransport implements Transport {
   /**
    * 流式调用，通过回调处理响应
    */
-  async invokeStream(request: MCPRequest, options: MCPStreamOptions): Promise<void> {
+  async invokeStream(request: TransportRequest, options: TransportStreamOptions)  {
     try {
       const response = await this.client.post('/invoke/stream', request, {
         responseType: 'stream',
@@ -67,6 +69,7 @@ export class HTTPTransport implements Transport {
 
       const stream = response.data;
       
+      // @ts-ignore
       stream.on('data', (chunk: Buffer) => {
         try {
           const data = JSON.parse(chunk.toString());

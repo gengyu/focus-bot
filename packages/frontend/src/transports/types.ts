@@ -1,5 +1,34 @@
-import { MCPRequest, MCPResponse, MCPStreamOptions } from '@mcp-connect/core/src/types';
+
 import { EventEmitter } from 'eventemitter3';
+
+
+
+export interface TransportAdapterOptions {
+  /**
+   * 传输类型
+   */
+  type: TransportType;
+  /**
+   * 传输配置
+   */
+  config: TransportConfig;
+}
+export interface TransportRequest {
+  method: string
+  payload: any;
+}
+
+export interface TransportResponse {
+  success: boolean;
+  data?: any;
+  error?: string;
+}
+
+export interface TransportStreamOptions {
+  onData?: (data: any) => void;
+  onError?: (error: Error) => void;
+  onComplete?: () => void;
+}
 
 /**
  * 支持的传输类型
@@ -37,20 +66,20 @@ export interface Transport {
   /**
    * 直接调用，返回响应
    */
-  invokeDirect(request: MCPRequest): Promise<MCPResponse>;
-  
+  invokeDirect(request: TransportRequest): Promise<TransportResponse>;
+
   /**
    * 流式调用，通过回调处理响应
    */
-  invokeStream(request: MCPRequest, options: MCPStreamOptions): Promise<void>;
+  invokeStream(request: TransportRequest, options: TransportStreamOptions): void;
 }
 
 /**
  * 事件传输事件类型
  */
 export interface EventTransportEvents {
-  request: (request: MCPRequest) => void;
-  response: (response: MCPResponse) => void;
+  request: (request: TransportRequest) => void;
+  response: (response: TransportResponse) => void;
   streamData: (data: any) => void;
   streamError: (error: Error) => void;
   streamComplete: () => void;

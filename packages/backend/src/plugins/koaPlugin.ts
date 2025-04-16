@@ -47,7 +47,7 @@ export function createKoaHTTPTransportMiddleware(options: KoaHTTPTransportOption
           console.log(`[KoaHTTPTransport] ${ctx.method} ${ctx.path}`, ctx.body);
         }
         const request = ctx.body;
-          const playload = request.playload
+          const playload = request.payload
           const method = request.method
         const mt = options?.router?.get(method)
         if(mt){
