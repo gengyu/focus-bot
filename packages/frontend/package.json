@@ -27,5 +27,9 @@
     "typescript": "^5.8.3",
     "vite": "^6.2.2",
     "vue-tsc": "^2.2.8"
+  },
+  "peerDependencies": {
+    "@mcp-connect/core": "*",
+    "@mcp-connect/mcp-transport": "workspace:*"
   }
 }
