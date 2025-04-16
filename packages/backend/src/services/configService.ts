@@ -11,6 +11,7 @@ import {
 import {Client} from "@modelcontextprotocol/sdk/client/index.js";
 import {StdioClientTransport,} from "@modelcontextprotocol/sdk/client/stdio.js";
 import {StatusService} from "./statusService.ts";
+import path from "path";
 
 // import {Transport} from '@modelcontextprotocol/sdk/shared/transport.js';
 
@@ -23,8 +24,10 @@ export class FileConfigService implements ConfigService {
 
     constructor(options?: ConfigStorageOptions) {
         this.persistenceService = new PersistenceService({
-            dataDir: options?.dataDir,
-            configFileName: 'config.json'
+            dataDir: options?.dataDir || path.join(process.cwd(), 'data'),
+            configFileName: 'config.json',
+            backupInterval: options?.backupInterval ?? 3600000, // 默认1小时
+            maxBackups: options?.maxBackups ?? 24 // 默认24个备份
         });
 
         this.statusService = new StatusService();
