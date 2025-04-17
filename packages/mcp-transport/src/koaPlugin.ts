@@ -34,7 +34,7 @@ export function createKoaHTTPTransportMiddleware(options: KoaHTTPTransportOption
             const token = ctx.headers['authorization'] || ctx.query.token;
             authed = token === options.auth.token;
           } else if (options.auth.type === 'custom' && typeof options.auth.customValidator === 'function') {
-            authed = await options.auth.customValidator(ctx, ctx.request.body);
+            authed = await options.auth.customValidator(ctx, ctx.request);
           }
           if (!authed) {
             ctx.status = 401;
@@ -44,9 +44,9 @@ export function createKoaHTTPTransportMiddleware(options: KoaHTTPTransportOption
         }
         // 日志处理
         if (options.enableLog) {
-          console.log(`[KoaHTTPTransport] ${ctx.method} ${ctx.path}`, ctx.request.body);
+          console.log(`[KoaHTTPTransport] ${ctx.method} ${ctx.path}`, ctx.body);
         }
-        const request = ctx.request.body;
+        const request = ctx.body;
           const playload = request.playload
           const method = request.method
         const mt = options?.router?.get(method)

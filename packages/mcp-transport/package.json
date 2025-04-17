@@ -34,7 +34,8 @@
     "ts-node": "^10.9.2",
     "typescript": "^5.8.3",
     "vite": "^5.4.17",
-    "vite-plugin-dts": "^3.9.1"
+    "vite-plugin-dts": "^3.9.1",
+    "@types/koa": "^2.15.0"
   },
   "peerDependencies": {
     "@mcp-connect/core": "workspace:*",
