@@ -37,7 +37,8 @@
     "vite-plugin-dts": "^3.9.1"
   },
   "peerDependencies": {
-    "@mcp-connect/core": "workspace:*"
+    "@mcp-connect/core": "workspace:*",
+    "koa": "^2.15.1"
   },
   "files": [
     "dist/*",

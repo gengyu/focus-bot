@@ -1,5 +1,4 @@
 import { Context, Middleware } from 'koa';
-import { HTTPTransport, HTTPTransportConfig } from './transports/HTTPTransport';
 
 interface KoaHTTPTransportOptions  {
   /**
@@ -50,14 +49,16 @@ export function createKoaHTTPTransportMiddleware(options: KoaHTTPTransportOption
         const request = ctx.request.body;
           const playload = request.playload
           const method = request.method
-        if( options?.router?.get(method)){
-          const res = await options.router.get(method)(playload)
+        const mt = options?.router?.get(method)
+        if(mt){
+          const res = await mt(playload)
           ctx.status = 200;
           ctx.body = { success: false, error: '', data: res };
         }else {
           ctx.status = 404;
           ctx.body = { success: false, error: 'Method not found', data: null };
         }
+        return;
 
         // // 自定义分发规则
         // if (typeof options.dispatchRule === 'function') {
