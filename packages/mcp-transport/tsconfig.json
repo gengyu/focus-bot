@@ -1,16 +1,32 @@
 {
   "compilerOptions": {
-    "target": "ES2020",
-    "module": "ESNext",
-    "moduleResolution": "node",
-    "esModuleInterop": true,
+    "baseUrl": ".",
+    "rootDir": ".",
+    "outDir": "dist",
+    "sourceMap": false,
+    "noEmit": true,
+    "target": "esnext",
+    "module": "esnext",
+    "moduleResolution": "Bundler",
+    "allowJs": false,
+    "noUnusedLocals": true,
+    "strictNullChecks": true,
+    "noImplicitAny": true,
+    "noImplicitThis": true,
+    "noImplicitReturns": true,
     "strict": true,
-    "declaration": true,
-    "outDir": "./dist",
-    "rootDir": "./src",
     "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true
+    // "noUncheckedIndexedAccess": true,
+    "experimentalDecorators": true,
+    "resolveJsonModule": true,
+    "esModuleInterop": true,
+    "removeComments": false,
+    "jsx": "preserve",
   },
+  "types": [
+    "node",
+    "vite/client"
+  ],
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist"]
 }

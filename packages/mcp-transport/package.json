@@ -38,6 +38,9 @@
   },
   "peerDependencies": {
     "@mcp-connect/core": "workspace:*"
-
-  }
+  },
+  "files": [
+    "dist/*",
+    "src/koaPlugin.ts"
+  ]
 }

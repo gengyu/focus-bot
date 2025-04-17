@@ -1,7 +1,6 @@
 import { MCPRequest, MCPResponse, MCPStreamOptions } from '@mcp-connect/core/src/types';
 import { Transport, TransportConfig, TransportType } from './types';
 import { HTTPTransport } from './transports/HTTPTransport';
-import { CommandTransport } from './transports/CommandTransport';
 import { EventTransport } from './transports/EventTransport';
 
 /**
@@ -19,30 +18,25 @@ export class TransportAdapter implements Transport {
    */
   constructor(type: TransportType, config: TransportConfig) {
     this.config = config;
-    
+
     // 根据类型创建对应的传输实例
     switch (type) {
       case TransportType.HTTP:
-        if (!config.serverUrl) {
+        if (!this.config.serverUrl) {
           throw new Error('HTTP transport requires serverUrl');
         }
         this.transport = new HTTPTransport({
-          serverUrl: config.serverUrl,
-          apiKey: config.apiKey
+          serverUrl: this.config.serverUrl,
+          apiKey: this.config.apiKey
         });
         break;
         
-      case TransportType.COMMAND:
-        this.transport = new CommandTransport({
-          commandPath: config.commandPath,
-          commandArgs: config.commandArgs
-        });
-        break;
+
         
       case TransportType.EVENT:
         this.transport = new EventTransport({
-          namespace: config.eventNamespace,
-          emitter: config.eventEmitter
+          namespace: this.config.eventNamespace,
+          emitter: this.config.eventEmitter
         });
         break;
         
