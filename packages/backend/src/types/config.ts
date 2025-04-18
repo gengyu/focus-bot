@@ -35,6 +35,9 @@ export class ConfigValidationError extends Error {
 export interface ConfigStorageOptions {
   filePath?: string;
   encryptKey?: string;
+  dataDir?: string
+  backupInterval?: number;
+  maxBackups?: number;
 }
 
 export interface ConfigService {

@@ -1,11 +1,10 @@
-import Router from 'koa-router';
+import { Controller, Get, Post } from '../decorators';
 import { FileConfigService } from '../services/configService';
 import { MCPConfig } from '../types/config';
 import { z } from 'zod';
-import { bindAndHandle } from './routeHelper';
+import { Context } from 'koa';
 
 const configService = new FileConfigService();
-const router = new Router();
 
 const idParamsSchema = z.object({ id: z.string() });
 const configBodySchema = z.object({
@@ -16,68 +15,93 @@ const configBodySchema = z.object({
   mcpServers: z.record(z.string(), z.any())
 });
 
-router.get('/config', bindAndHandle({
-  handler: async () => await configService.loadConfig()
-}));
+@Controller('/config')
+export class ConfigController {
+  @Get('/')
+  async getConfig(ctx: Context) {
+    const config = await configService.loadConfig();
+    ctx.body = { code: 0, message: 'success', data: config };
+  }
 
-router.get('/config/list', bindAndHandle({
-  handler: async () => await configService.getConfigList()
-}));
+  @Get('/list')
+  async getConfigList(ctx: Context) {
+    const list = await configService.getConfigList();
+    ctx.body = { code: 0, message: 'success', data: list };
+  }
 
-router.get('/services/status', bindAndHandle({
-  handler: async () => {
+  @Get('/services/status')
+  async getServicesStatus(ctx: Context) {
     const configList = await configService.getConfigList();
-    return configList.map(config => ({
+    ctx.body = { code: 0, message: 'success', data: configList.map(config => ({
       id: config.id,
       name: config.name,
       isRunning: config.isRunning
-    }));
+    })) };
   }
-}));
 
-router.get('/config/:id', bindAndHandle({
-  paramsSchema: idParamsSchema,
-  handler: async ({ params }) => {
-    const id = params.id;
-    const config = await configService.loadConfig();
-    if (!config.mcpServers || !config.mcpServers[id]) {
-      throw new Error(`MCP configuration with ID ${id} not found`);
+  @Get('/:id')
+  async getConfigById(ctx: Context) {
+    try {
+      const params = idParamsSchema.parse(ctx.params);
+      const id = params.id;
+      const config = await configService.loadConfig();
+      if (!config.mcpServers || !config.mcpServers[id]) {
+        ctx.status = 404;
+        ctx.body = { code: 1, message: `MCP configuration with ID ${id} not found`, data: null };
+        return;
+      }
+      const serverConfig = config.mcpServers[id];
+      const isRunning = await configService.isMCPRunning(id);
+      ctx.body = { code: 0, message: 'success', data: {
+        ...config,
+        id,
+        name: serverConfig.name,
+        isRunning,
+        selectedServer: { [id]: serverConfig }
+      }};
+    } catch (err: any) {
+      ctx.status = 400;
+      ctx.body = { code: 1, message: err.message, data: null };
     }
-    const serverConfig = config.mcpServers[id];
-    const isRunning = await configService.isMCPRunning(id);
-    return {
-      ...config,
-      id,
-      name: serverConfig.name,
-      isRunning,
-      selectedServer: { [id]: serverConfig }
-    };
   }
-}));
 
-router.post('/config/toggle/:id', bindAndHandle({
-  paramsSchema: idParamsSchema,
-  handler: async ({ params }) => {
-    const id = params.id;
-    const newStatus = await configService.toggleMCPStatus(id);
-    return { id, isRunning: newStatus };
+  @Post('/toggle/:id')
+  async toggleConfig(ctx: Context) {
+    try {
+      const params = idParamsSchema.parse(ctx.params);
+      const id = params.id;
+      const newStatus = await configService.toggleMCPStatus(id);
+      ctx.body = { code: 0, message: 'success', data: { id, isRunning: newStatus } };
+    } catch (err: any) {
+      ctx.status = 400;
+      ctx.body = { code: 1, message: err.message, data: null };
+    }
   }
-}));
 
-router.post('/config/capabilities/:id', bindAndHandle({
-  paramsSchema: idParamsSchema,
-  handler: async ({ params }) => {
-    const id = params.id;
-    return await configService.capabilities(id);
+  @Post('/capabilities/:id')
+  async getCapabilities(ctx: Context) {
+    try {
+      const params = idParamsSchema.parse(ctx.params);
+      const id = params.id;
+      const data = await configService.capabilities(id);
+      ctx.body = { code: 0, message: 'success', data };
+    } catch (err: any) {
+      ctx.status = 400;
+      ctx.body = { code: 1, message: err.message, data: null };
+    }
   }
-}));
 
-router.post('/config', bindAndHandle({
-  bodySchema: configBodySchema,
-  handler: async ({ body }) => {
-    await configService.saveConfig(body as MCPConfig);
-    return { message: 'Configuration saved successfully' };
+  @Post('/')
+  async saveConfig(ctx: Context) {
+    try {
+      const body = configBodySchema.parse(ctx.request.body);
+      await configService.saveConfig(body as MCPConfig);
+      ctx.body = { code: 0, message: 'Configuration saved successfully', data: null };
+    } catch (err: any) {
+      ctx.status = 400;
+      ctx.body = { code: 1, message: err.message, data: null };
+    }
   }
-}));
+}
 
-export default router;
+// 不再导出 router，Controller 装饰器注册路由

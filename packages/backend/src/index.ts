@@ -2,13 +2,12 @@ import Koa from 'koa';
 import Router from 'koa-router';
 import cors from '@koa/cors';
 import bodyParser from 'koa-bodyparser';
-import configRouter from './routes/config';
-import chatRouter from './routes/chat';
 
+import { router as decoratorRouter, registerControllers } from './decorators';
+import { ChatController } from './routes/chat';
+import { ConfigController } from './routes/config';
 const app = new Koa();
-const router = new Router();
-
-
+ 
 
 // 中间件配置
 app.use(cors({
@@ -20,14 +19,14 @@ app.use(cors({
 app.use(bodyParser());
 
 // 健康检查接口
-router.get('/health', (ctx) => {
+const healthRouter = new Router();
+healthRouter.get('/health', (ctx) => {
   ctx.body = { status: 'ok', timestamp: new Date().toISOString() };
 });
-
 // 注册路由
-app.use(router.routes()).use(router.allowedMethods());
-app.use(configRouter.routes()).use(configRouter.allowedMethods());
-app.use(chatRouter.routes()).use(chatRouter.allowedMethods());
+registerControllers([ChatController, ConfigController]);
+app.use(healthRouter.routes()).use(healthRouter.allowedMethods());
+app.use(decoratorRouter.routes()).use(decoratorRouter.allowedMethods());
 
 // 静态文件服务
 // app.use(require('koa-static')(path.join(process.cwd(), 'data')));
