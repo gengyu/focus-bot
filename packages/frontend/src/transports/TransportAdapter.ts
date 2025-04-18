@@ -1,7 +1,7 @@
 // import { MCPRequest, MCPResponse, MCPStreamOptions } from '@mcp-connect/core/src/types';
 
-import {HTTPTransport} from './HTTPTransport';
-import {EventTransport} from './EventTransport';
+import { HTTPTransport } from './HTTPTransport';
+import { EventTransport } from './EventTransport';
 import {
   type Transport,
   type TransportConfig,
@@ -48,7 +48,7 @@ export class TransportAdapter implements Transport {
         break;
 
       default:
-        throw new Error(`Unsupported transport type: ${type}`);
+        throw new Error(`Unsupported transport type: ${ type }`);
     }
   }
 
@@ -70,7 +70,7 @@ export class TransportAdapter implements Transport {
   /**
    * 流式调用，通过回调处理响应
    */
-  async invokeStream(request: TransportRequest, options: TransportStreamOptions)  {
-      this.transport.invokeStream(request, options);
+  async invokeStream(request: TransportRequest, options: TransportStreamOptions) {
+    this.transport.invokeStream(request, options);
   }
 }

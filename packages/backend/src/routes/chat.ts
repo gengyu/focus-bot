@@ -34,19 +34,26 @@ export class ChatController {
     return ResultHelper.success(messages);
   }
 
-  @SSE('/message')
+  @SSE('/sendMessage')
   async postMessage(@Body() body: any) {
     try {
-      const parsed = messageBodySchema.parse(body);
-      const role = parsed.role || 'default';
-      const chatMsg: ChatMessage = {
-        role: role,
-        content: parsed.message,
-        timestamp: Date.now(),
-        type: 'text'
-      };
-      await chatService.addMessage(chatMsg);
-      return ResultHelper.success(chatMsg);
+      const writableStream = new WritableStream();
+      setTimeout(()=> {
+       const write =  writableStream.getWriter();
+       write.write('data: Hello, World!\n\n')
+      }, 1000);
+     return  new ReadableStream(writableStream)
+      // const parsed = messageBodySchema.parse(body);
+      // console.log(parsed)
+      // const role = parsed.role || 'default';
+      // const chatMsg: ChatMessage = {
+      //   role: role,
+      //   content: parsed.message,
+      //   timestamp: Date.now(),
+      //   type: 'text'
+      // };
+      // await chatService.addMessage(chatMsg);
+      // return readableStream
     } catch (err: any) {
       return ResultHelper.fail(err.message, null);
     }

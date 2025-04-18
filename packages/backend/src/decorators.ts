@@ -79,6 +79,8 @@ export function Param(key?: string): ParameterDecorator {
   };
 }
 
+const newMap = new Map();
+
 // 修改registerControllers以支持参数注入
 export function registerControllers(controllers: any[]) {
   controllers.forEach(ControllerClass => {
@@ -89,6 +91,18 @@ export function registerControllers(controllers: any[]) {
       const fullPath = prefix + route.path;
       // @ts-ignore
       if (route.sse) {
+
+
+        router.post(fullPath, async (ctx: any, next: any) => {
+          const token = new Date().getTime().toString() + Math.random().toString(36).substring(2);
+          newMap.set(token, {
+            a: 12321,
+          })
+          ctx.body = ResultHelper.success({
+            url: `${ctx.request.origin}${fullPath}?token=${token}`,
+          });
+        });
+
         router.get(fullPath, async (ctx: any, next: any) => {
           ctx.set('Content-Type', 'text/event-stream');
           ctx.set('Cache-Control', 'no-cache');
@@ -120,6 +134,9 @@ export function registerControllers(controllers: any[]) {
             args[i] = ctx;
           }
           // handler返回async generator或可迭代对象
+          const parsm = newMap.get(ctx.query.token);
+          newMap.delete(ctx.query.token);
+          console.log(parsm);
           const result = await handler.apply(instance, args);
           if (result && typeof result[Symbol.asyncIterator] === 'function') {
             for await (const data of result) {

@@ -1,7 +1,7 @@
-import axios, {type AxiosInstance} from 'axios';
+import axios, { type AxiosInstance } from 'axios';
 
 
-import type {Transport, TransportRequest, TransportResponse, TransportStreamOptions} from "./types.ts";
+import type { Transport, TransportRequest, TransportResponse, TransportStreamOptions } from "./types.ts";
 
 /**
  * HTTP传输配置
@@ -20,13 +20,13 @@ export class HTTPTransport implements Transport {
   private readonly client: AxiosInstance;
   private config: HTTPTransportConfig;
 
-  constructor( config: HTTPTransportConfig) {
+  constructor(config: HTTPTransportConfig) {
     this.config = config;
     this.client = axios.create({
       baseURL: config.serverUrl,
       headers: {
         'Content-Type': 'application/json',
-        ...(config.apiKey && { 'Authorization': `Bearer ${config.apiKey}` }),
+        ...(config.apiKey && {'Authorization': `Bearer ${ config.apiKey }`}),
       },
     });
   }
@@ -43,17 +43,14 @@ export class HTTPTransport implements Transport {
       if (request.payload && typeof FormData !== 'undefined' && request.payload instanceof FormData) {
         // data = request.payload as any;
         // axios会自动设置multipart边界，无需手动设置Content-Type
-        headers = { ...(this.client.defaults.headers || {}), ...this.client.defaults.headers.common };
+        headers = {...(this.client.defaults.headers || {}), ...this.client.defaults.headers.common};
         // @ts-ignore
-        delete headers['Content-Type'] ;
+        delete headers['Content-Type'];
       }
-      const method = this.config.prefix ? `${this.config.prefix}/${request.method}` : request.method;
-      const response = await this.client.post('/invoke/' + method, data, { headers });
-      console.log(response,333)
-      return {
-        success: true,
-        data: response.data.data,
-      };
+      const method = this.config.prefix ? `${ this.config.prefix }/${ request.method }` : request.method;
+      const response = await this.client.post('/invoke/' + method, data, {headers});
+
+      return response.data;
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
       return {
@@ -66,31 +63,32 @@ export class HTTPTransport implements Transport {
   /**
    * 流式调用，通过回调处理响应
    */
-  async invokeStream(request: TransportRequest, options: TransportStreamOptions)  {
+  async invokeStream(request: TransportRequest, options: TransportStreamOptions) {
     try {
-      const response = await this.client.post('/invoke/stream', request, {
-        responseType: 'stream',
-      });
 
-      const stream = response.data;
-      
-      // @ts-ignore
-      stream.on('data', (chunk: Buffer) => {
+      const response = await this.invokeDirect(request);
+      console.log(response, 33)
+      // 使用EventSource API处理SSE流
+      const eventSource = new EventSource(new URL(response.data.url as string, window.location.origin).href);
+
+      eventSource.onmessage = (event) => {
         try {
-          const data = JSON.parse(chunk.toString());
+          const data = JSON.parse(event.data);
           options.onData?.(data);
         } catch (error) {
           const errorMessage = error instanceof Error ? error.message : 'Failed to parse stream data';
           options.onError?.(error instanceof Error ? error : new Error(errorMessage));
         }
-      });
+      };
 
-      stream.on('error', (error: Error) => {
-        options.onError?.(error);
-      });
+      eventSource.onerror = (error) => {
+        options.onError?.(new Error('SSE connection error'));
+        eventSource.close();
+      };
 
-      stream.on('end', () => {
+      eventSource.addEventListener('end', () => {
         options.onComplete?.();
+        eventSource.close();
       });
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';

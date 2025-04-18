@@ -69,7 +69,7 @@ import { ChatAPI, type ChatMessage } from '../services/chatApi';
 
 const chatApi = new ChatAPI();
 const messages = ref<ChatMessage[]>([]);
-const messageInput = ref('');
+const messageInput = ref('122122');
 const messageContainer = ref<HTMLElement | null>(null);
 
 // 加载聊天历史
@@ -89,7 +89,7 @@ const sendMessage = async () => {
   try {
     const response = await chatApi.sendMessage(messageInput.value);
     messages.value.push(response);
-    messageInput.value = '';
+    // messageInput.value = '';
     scrollToBottom();
   } catch (error) {
     console.error('发送消息失败:', error);

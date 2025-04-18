@@ -17,9 +17,19 @@ const transport = new TransportAdapter(TransportType.HTTP, {
 export class ChatAPI {
   async sendMessage(message: string): Promise<ChatMessage> {
     const req: TransportRequest = { method: 'sendMessage', payload: { message } };
-    const res = await transport.invokeDirect(req);
-    if (!res.success) throw new Error(`发送消息失败: ${res.error}`);
-    return res.data;
+    transport.invokeStream(req, {
+      onData: (data) => {
+        console.log('onData', data);
+      },
+    });
+    // const res = await transport.invokeStream(req);
+    // if (!res.success) throw new Error(`发送消息失败: ${res.error}`);
+    return  await {
+      role: 'assistant',
+      content: 'Hello World',
+      timestamp: Date.now(),
+      type: 'text',
+    };
   }
 
   async sendImage(imageFile: File): Promise<ChatMessage> {
