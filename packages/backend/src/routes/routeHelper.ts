@@ -7,13 +7,15 @@ export interface Result<T = any> {
   data?: T;
 }
 
-export function Result<T = any>(data: T, message = 'success', code = 0): Result<T> {
-  return { code, message, data };
+export class ResultHelper {
+  static success<T = any>(data?: T, message = 'success'): Result<T> {
+    return { code: 0, message, data };
+  }
+  static fail<T = any>(message = 'error', data?: T, code = 1): Result<T> {
+    return { code, message, data };
+  }
 }
 
-export function errorResult(message = 'error', code = 1): Result<null> {
-  return { code, message, data: null };
-}
 
 export function bindAndHandle<P = any, Q = any, B = any>(opts: {
   querySchema?: ZodSchema<Q>,

@@ -9,7 +9,10 @@ export interface ChatMessage {
   imageUrl?: string;
 }
 
-const transport = new TransportAdapter(TransportType.HTTP, { serverUrl: API_BASE_URL });
+const transport = new TransportAdapter(TransportType.HTTP, {
+  serverUrl: API_BASE_URL,
+  prefix: 'chat'
+});
 
 export class ChatAPI {
   async sendMessage(message: string): Promise<ChatMessage> {

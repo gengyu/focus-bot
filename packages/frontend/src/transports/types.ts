@@ -46,6 +46,7 @@ export interface TransportConfig {
   // HTTP传输配置
   serverUrl?: string;
   apiKey?: string;
+  prefix?: string;
   
   // 命令行传输配置
   commandPath?: string;

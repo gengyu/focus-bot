@@ -34,7 +34,8 @@ export class TransportAdapter implements Transport {
         }
         this.transport = new HTTPTransport({
           serverUrl: this.config.serverUrl,
-          apiKey: this.config.apiKey
+          apiKey: this.config.apiKey,
+          prefix: this.config.prefix
         });
         break;
 

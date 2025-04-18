@@ -8,6 +8,7 @@ import type {Transport, TransportRequest, TransportResponse, TransportStreamOpti
  */
 interface HTTPTransportConfig {
   serverUrl: string;
+  prefix?: string;
   apiKey?: string;
 }
 
@@ -17,8 +18,10 @@ interface HTTPTransportConfig {
  */
 export class HTTPTransport implements Transport {
   private readonly client: AxiosInstance;
+  private config: HTTPTransportConfig;
 
-  constructor(config: HTTPTransportConfig) {
+  constructor( config: HTTPTransportConfig) {
+    this.config = config;
     this.client = axios.create({
       baseURL: config.serverUrl,
       headers: {
@@ -44,10 +47,12 @@ export class HTTPTransport implements Transport {
         // @ts-ignore
         delete headers['Content-Type'] ;
       }
-      const response = await this.client.post('/invoke/' + request.method, data, { headers });
+      const method = this.config.prefix ? `${this.config.prefix}/${request.method}` : request.method;
+      const response = await this.client.post('/invoke/' + method, data, { headers });
+      console.log(response,333)
       return {
         success: true,
-        data: response.data,
+        data: response.data.data,
       };
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';

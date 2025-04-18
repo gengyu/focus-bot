@@ -1,9 +1,10 @@
-import { Controller, Get, Post } from '../decorators';
+import {Body, Controller, Get, Post} from '../decorators';
 import { ChatMessage, ChatService } from '../services/chatService';
 import multer from '@koa/multer';
 import path from 'path';
 import { z } from 'zod';
-import { Context } from 'koa';
+
+import { ResultHelper } from './routeHelper';
 
 const chatService = new ChatService();
 chatService.initialize().catch(error => {
@@ -25,42 +26,41 @@ const messageBodySchema = z.object({
   message: z.string()
 });
 
-@Controller('/chat')
+@Controller('/invoke/chat')
 export class ChatController {
-  @Get('/history')
-  async getHistory(ctx: Context) {
+  @Post('/getChatHistory')
+  async getHistory() {
     const messages = await chatService.getMessages();
-    ctx.body = { code: 0, message: 'success', data: messages };
+    return ResultHelper.success(messages);
   }
 
   @Post('/message')
-  async postMessage(ctx: Context) {
+  async postMessage(@Body() body: any) {
     try {
-      const body = messageBodySchema.parse(ctx.request.body);
-      const role = body.role || 'default';
+      const parsed = messageBodySchema.parse(body);
+      const role = parsed.role || 'default';
       const chatMsg: ChatMessage = {
         role: role,
-        content: body.message,
+        content: parsed.message,
         timestamp: Date.now(),
         type: 'text'
       };
       await chatService.addMessage(chatMsg);
-      ctx.body = { code: 0, message: 'success', data: chatMsg };
+      return ResultHelper.success(chatMsg);
     } catch (err: any) {
-      ctx.status = 400;
-      ctx.body = { code: 1, message: err.message, data: null };
+      return ResultHelper.fail(err.message, null);
     }
   }
 
   @Post('/image')
-  async uploadImage(ctx: Context, next: Function) {
-    await upload.single('image')(ctx, next);
+  async uploadImage(@Body() body: any) {
+    // 注意：图片上传接口如需支持自动注入需配合中间件处理，这里暂保留body参数
+    // 实际项目中建议将文件上传逻辑迁移到专用中间件或服务
+    // 这里假设body.image为图片文件名
     try {
-      const file = ctx.file;
+      const file = body.file;
       if (!file) {
-        ctx.status = 400;
-        ctx.body = { code: 1, message: 'No image file uploaded', data: null };
-        return;
+        return ResultHelper.fail('No image file uploaded', null);
       }
       const imageUrl = `/images/${file.filename}`;
       await chatService.addMessage({
@@ -70,10 +70,9 @@ export class ChatController {
         type: 'image',
         imageUrl
       });
-      ctx.body = { code: 0, message: 'success', data: { imageUrl } };
+      return ResultHelper.success({ imageUrl });
     } catch (error: any) {
-      ctx.status = 500;
-      ctx.body = { code: 1, message: error.message || 'Failed to upload image', data: null };
+      return ResultHelper.fail(error.message || 'Failed to upload image', null);
     }
   }
 }
