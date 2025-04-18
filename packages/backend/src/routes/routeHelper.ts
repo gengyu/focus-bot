@@ -14,6 +14,9 @@ export class ResultHelper {
   static fail<T = any>(message = 'error', data?: T, code = 1): Result<T> {
     return { code, message, data };
   }
+  static toSSEMessage<T = any>(result: Result<T>): string {
+    return `data: ${JSON.stringify(result)}\n\n`;
+  }
 }
 
 

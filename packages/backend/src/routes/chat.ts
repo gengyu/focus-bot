@@ -1,4 +1,4 @@
-import {Body, Controller, Get, Post} from '../decorators';
+import {Body, Controller, Get, Post, SSE} from '../decorators';
 import { ChatMessage, ChatService } from '../services/chatService';
 import multer from '@koa/multer';
 import path from 'path';
@@ -34,7 +34,7 @@ export class ChatController {
     return ResultHelper.success(messages);
   }
 
-  @Post('/message')
+  @SSE('/message')
   async postMessage(@Body() body: any) {
     try {
       const parsed = messageBodySchema.parse(body);
