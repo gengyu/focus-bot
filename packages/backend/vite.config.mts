@@ -19,7 +19,10 @@ export default defineConfig({
         // 'winston',
         // 'dotenv',
         // '@mcp-connect/core',
-        // '@modelcontextprotocol/sdk'
+        // '@modelcontextprotocol/sdk',
+        // 'reflect-metadata',
+        // 'zod',
+        // '@koa/multer'
       ]
     }
   },
@@ -41,7 +44,7 @@ export default defineConfig({
       adapter: 'koa',
       appPath: './src/index.ts',
       exportName: 'viteNodeApp',
-      tsCompiler: 'esbuild',
+      // tsCompiler: 'esbuild',
       initAppOnBoot: true
     })
   ]

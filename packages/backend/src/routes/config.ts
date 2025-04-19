@@ -71,7 +71,7 @@ export class ConfigController {
   }
 
   @Post('/')
-  async saveConfig(@Body() config: any) {
+  async saveConfig( config: any) {
     try {
       await configService.saveConfig(config);
       return ResultHelper.success(null);

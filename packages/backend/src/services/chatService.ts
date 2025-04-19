@@ -1,6 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-import { PersistenceService, PersistenceOptions } from './persistenceService';
+import {PersistenceService, PersistenceOptions} from './persistenceService';
 
 export interface ChatMessage {
   role: 'user' | 'assistant';
@@ -58,12 +58,12 @@ export class ChatService {
     try {
       const data = await this.persistenceService.loadData();
       return (data as ChatMessage[]).map(msg => ({
-  role: msg.role || 'user',
-  content: msg.content,
-  timestamp: msg.timestamp,
-  type: msg.type,
-  ...(msg.imageUrl && { imageUrl: msg.imageUrl })
-}));
+        role: msg.role || 'user',
+        content: msg.content,
+        timestamp: msg.timestamp,
+        type: msg.type,
+        ...(msg.imageUrl && {imageUrl: msg.imageUrl})
+      }));
     } catch (error) {
       if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
         return [];

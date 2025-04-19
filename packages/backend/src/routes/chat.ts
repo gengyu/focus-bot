@@ -1,9 +1,9 @@
-import {Body, Controller, Get, Post, SSE} from '../decorators';
+import {Body, Controller, Get, Param, Post, SSE} from '../decorators';
 import { ChatMessage, ChatService } from '../services/chatService';
 import multer from '@koa/multer';
 import path from 'path';
 import { z } from 'zod';
-
+import {ReadableStream, WritableStream} from "node:stream/web";
 import { ResultHelper } from './routeHelper';
 
 const chatService = new ChatService();
@@ -29,7 +29,7 @@ const messageBodySchema = z.object({
 @Controller('/invoke/chat')
 export class ChatController {
   @Post('/getChatHistory')
-  async getHistory() {
+  async getHistory( ) {
     const messages = await chatService.getMessages();
     return ResultHelper.success(messages);
   }
@@ -37,30 +37,25 @@ export class ChatController {
   @SSE('/sendMessage')
   async postMessage(@Body() body: any) {
     try {
-      const writableStream = new WritableStream();
-      setTimeout(()=> {
-       const write =  writableStream.getWriter();
-       write.write('data: Hello, World!\n\n')
-      }, 1000);
-     return  new ReadableStream(writableStream)
-      // const parsed = messageBodySchema.parse(body);
-      // console.log(parsed)
-      // const role = parsed.role || 'default';
-      // const chatMsg: ChatMessage = {
-      //   role: role,
-      //   content: parsed.message,
-      //   timestamp: Date.now(),
-      //   type: 'text'
-      // };
-      // await chatService.addMessage(chatMsg);
-      // return readableStream
+      const readableStream = new ReadableStream({
+        start(controller) {
+          setTimeout(() => {
+            controller.enqueue('data: Hello, World! ' + JSON.stringify(body));
+
+              controller.close();
+
+          }, 1000);
+        },
+      });
+
+      return readableStream;
     } catch (err: any) {
       return ResultHelper.fail(err.message, null);
     }
   }
 
   @Post('/image')
-  async uploadImage(@Body() body: any) {
+  async uploadImage(  body: any) {
     // 注意：图片上传接口如需支持自动注入需配合中间件处理，这里暂保留body参数
     // 实际项目中建议将文件上传逻辑迁移到专用中间件或服务
     // 这里假设body.image为图片文件名

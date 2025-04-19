@@ -67,13 +67,15 @@ export class HTTPTransport implements Transport {
     try {
 
       const response = await this.invokeDirect(request);
-      console.log(response, 33)
+
       // 使用EventSource API处理SSE流
       const eventSource = new EventSource(new URL(response.data.url as string, window.location.origin).href);
 
       eventSource.onmessage = (event) => {
         try {
+          console.log('event===',event.data,333)
           const data = JSON.parse(event.data);
+
           options.onData?.(data);
         } catch (error) {
           const errorMessage = error instanceof Error ? error.message : 'Failed to parse stream data';
