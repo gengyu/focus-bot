@@ -9,19 +9,20 @@ export interface ChatMessage {
   imageUrl?: string;
 }
 
-const transport = new TransportAdapter(TransportType.HTTP, {
-  serverUrl: API_BASE_URL,
-  prefix: 'chat'
-});
 
 export class ChatAPI {
+
+  private transport = new TransportAdapter(TransportType.HTTP, {
+    serverUrl: API_BASE_URL,
+    prefix: 'chat'
+  });
+
+
+
   async sendMessage(message: string, providerId?: string, model?: string): Promise<ChatMessage> {
     const req: TransportRequest = { method: 'sendMessage', payload: { message, providerId, model } };
-    transport.invokeStream(req, {
-      onData: (data) => {
-        console.log('onData', data);
-      },
-    });
+    this.transport.invokeStream(req);
+
     // const res = await transport.invokeStream(req);
     // if (!res.success) throw new Error(`发送消息失败: ${res.error}`);
     return  await {
@@ -48,7 +49,7 @@ export class ChatAPI {
 
   async getChatHistory(): Promise<ChatMessage[]> {
     const req = { method: 'getChatHistory', payload: {} };
-    const res = await transport.invokeDirect(req);
+    const res = await this.transport.invokeDirect(req);
     console.log(res)
     if (!res.success) throw new Error(`获取聊天历史失败: ${res.error}`);
     return res.data;

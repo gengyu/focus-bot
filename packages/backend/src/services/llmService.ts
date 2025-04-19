@@ -1,4 +1,4 @@
-import OpenAI from 'openai';
+import OpenAI, {Models} from 'openai';
 
 export interface ModelConfig {
   apiKey: string;
@@ -11,6 +11,7 @@ export interface ModelConfig {
 export interface LLMProvider {
   chat: (messages: Array<{ role: string; content: string }>) => Promise<any>;
   streamChat: (messages: Array<{ role: string; content: string }>) => Promise<any>;
+  getModels: () => Promise<Models>;
 }
 
 class OpenAIProvider implements LLMProvider {
@@ -63,6 +64,17 @@ class OpenAIProvider implements LLMProvider {
     } catch (error) {
       console.error('OpenAI API Stream Error:', error);
       throw new Error('Failed to create stream from OpenAI');
+    }
+  }
+
+  //  查询模型列表
+  async getModels() {
+    try {
+      const response = await this.openai.models.list();
+      return response.data;
+    } catch (error) {
+      console.error('OpenAI API Error:', error);
+      throw new Error('Failed to get models from OpenAI');
     }
   }
 }
