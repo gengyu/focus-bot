@@ -1,5 +1,6 @@
 import {Body, Controller, Post, SSE} from '../decorators';
 import {ChatService} from '../services/chatService';
+import {LLMService} from '../services/llmService';
 import multer from '@koa/multer';
 import path from 'path';
 import {z} from 'zod';
@@ -7,6 +8,11 @@ import {ReadableStream} from "node:stream/web";
 import {ResultHelper} from './routeHelper';
 
 const chatService = new ChatService();
+const llmService = new LLMService({
+  apiKey: process.env.OPENAI_API_KEY || '',
+  model: process.env.DEFAULT_MODEL || 'gpt-3.5-turbo'
+});
+
 chatService.initialize().catch(error => {
   console.error('Failed to initialize chat service:', error);
 });
@@ -23,7 +29,8 @@ const upload = multer({
 
 const messageBodySchema = z.object({
   role: z.string().optional(),
-  message: z.string()
+  message: z.string(),
+  model: z.string().optional()
 });
 
 @Controller('/invoke/chat')
@@ -37,20 +44,43 @@ export class ChatController {
   @SSE('/sendMessage')
   async postMessage(@Body() body: any) {
     try {
+      const userMessage = {
+        role: 'user',
+        content: body.message,
+        timestamp: Date.now(),
+        type: 'text'
+      };
+      await chatService.addMessage(userMessage);
 
+      const messages = await chatService.getMessages();
+      const chatMessages = messages.map(msg => ({
+        role: msg.role,
+        content: msg.content || ''
+      }));
+
+      const stream = await llmService.streamChat(chatMessages, body.model);
       const readableStream = new ReadableStream({
-        start(controller) {
-          setTimeout(() => {
-            controller.enqueue('data: Hello, World! ' + JSON.stringify(body));
-
-              controller.close();
-
-          }, 1000);
-        },
+        async start(controller) {
+          for await (const chunk of stream) {
+            const content = chunk.choices[0]?.delta?.content || '';
+            if (content) {
+              controller.enqueue(`data: ${JSON.stringify({ content })}\n\n`);
+            }
+          }
+          const assistantMessage = {
+            role: 'assistant',
+            content: '',
+            timestamp: Date.now(),
+            type: 'text'
+          };
+          await chatService.addMessage(assistantMessage);
+          controller.close();
+        }
       });
 
       return readableStream;
     } catch (err: any) {
+      console.error('Error in postMessage:', err);
       return ResultHelper.fail(err.message, null);
     }
   }
