@@ -32,7 +32,7 @@
         <option v-for="provider in providers" :key="provider.id" :value="provider.id">{{ provider.name }}</option>
       </select>
       <!-- 模型选择 -->
-      <select v-model="selectedModel" class="select select-bordered mr-2 w-32">
+      <select v-model="selectedModel" class="select select-bordered mr-2 w-32" v-if="!props.model">
         <option v-for="model in availableModels" :key="model" :value="model">{{ model }}</option>
       </select>
       <!-- 图片上传按钮 -->
@@ -69,9 +69,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted, computed, defineProps } from 'vue';
 import { ChatAPI, type ChatMessage } from '../services/chatApi';
 import { configAPI } from '../services/api';
+
+const props = defineProps<{
+  model?: string
+}>();
 
 const chatApi = new ChatAPI();
 const messages = ref<ChatMessage[]>([]);
@@ -81,7 +85,7 @@ const messageContainer = ref<HTMLElement | null>(null);
 // 服务商与模型相关
 const providers = ref<{id: string, name: string, models: string[]}[]>([]);
 const selectedProvider = ref('');
-const selectedModel = ref('');
+const selectedModel = ref(props.model || '');
 const availableModels = computed(() => {
   const p = providers.value.find(p => p.id === selectedProvider.value);
   return p ? p.models : [];
@@ -98,7 +102,12 @@ const loadProviders = async () => {
   }));
   if (providers.value.length > 0) {
     selectedProvider.value = providers.value[0].id;
-    selectedModel.value = providers.value[0].models[0];
+    // 如果从父组件传入model，则使用传入的model，否则使用第一个可用的模型
+    if (props.model) {
+      selectedModel.value = props.model;
+    } else if (availableModels.value.length > 0) {
+      selectedModel.value = availableModels.value[0];
+    }
   }
 };
 
@@ -115,10 +124,24 @@ const loadChatHistory = async () => {
 // 发送文本消息
 const sendMessage = async () => {
   if (!messageInput.value.trim()) return;
+  
+  // 添加用户消息
+  const userMessage: ChatMessage = {
+    role: 'user',
+    content: messageInput.value,
+    type: 'text',
+    timestamp: Date.now()
+  };
+  messages.value.push(userMessage);
+  messageInput.value = '';
+  scrollToBottom();
+  
+  // 使用选定的模型
+  const modelToUse = props.model || selectedModel.value;
+  
   try {
-    const response = await chatApi.sendMessage(messageInput.value, selectedProvider.value, selectedModel.value);
+    const response = await chatApi.sendMessage(userMessage.content, selectedProvider.value, modelToUse);
     messages.value.push(response);
-    messageInput.value = '';
     scrollToBottom();
   } catch (error) {
     console.error('发送消息失败:', error);

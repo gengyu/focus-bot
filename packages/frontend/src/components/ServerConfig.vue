@@ -169,62 +169,91 @@ const resetConfig = () => {
 
 <style scoped>
 .server-config {
-  @apply max-w-2xl mx-auto p-6;
+  max-width: 42rem;
+  margin-left: auto;
+  margin-right: auto;
+  padding: 1.5rem;
 }
 
 .config-form {
-  @apply flex flex-col gap-6;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
 }
 
 .form-group {
-  @apply form-control;
+  display: flex;
+  flex-direction: column;
 }
 
 
 input[type="text"],
 input[type="password"],
 select {
-  @apply input input-bordered w-full;
+  width: 100%;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.375rem;
 }
 
 .checkbox-label,
 .radio-label {
-  @apply flex items-center gap-2 cursor-pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
 }
 
 .radio-group {
-  @apply flex gap-6;
+  display: flex;
+  gap: 1.5rem;
 }
 
 .form-actions {
-  @apply flex gap-4 mt-6;
+  display: flex;
+  gap: 1rem;
+  margin-top: 1.5rem;
 }
 
 .server-list {
-  @apply border-t border-base-200;
+  border-top: 1px solid #e5e7eb;
 }
 
 .server-items {
-  @apply flex flex-col gap-6 my-6;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  margin-top: 1.5rem;
+  margin-bottom: 1.5rem;
 }
 
 .server-item {
-  @apply card bg-base-100 shadow-md p-6;
+  background-color: white;
+  border-radius: 0.5rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  padding: 1.5rem;
 }
 
 .server-header {
-  @apply flex justify-between items-center mb-4;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
 }
 
 .server-header h4 {
-  @apply m-0 text-primary;
+  margin: 0;
+  color: var(--color-primary);
 }
 
 .server-details {
-  @apply grid gap-4;
+  display: grid;
+  gap: 1rem;
 }
 
 
 .form-actions {
-  @apply flex gap-3 justify-end mt-6;
+  display: flex;
+  gap: 0.75rem;
+  justify-content: flex-end;
+  margin-top: 1.5rem;
 }</style>

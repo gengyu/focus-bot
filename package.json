@@ -29,5 +29,9 @@
   "publishConfig": {
     "access": "public",
     "registry": "https://registry.npmjs.org/"
+  },
+  "dependencies": {
+    "@radix-ui/colors": "^3.0.0",
+    "radix-vue": "^1.9.17"
   }
 }
