@@ -15,8 +15,8 @@ const transport = new TransportAdapter(TransportType.HTTP, {
 });
 
 export class ChatAPI {
-  async sendMessage(message: string): Promise<ChatMessage> {
-    const req: TransportRequest = { method: 'sendMessage', payload: { message } };
+  async sendMessage(message: string, providerId?: string, model?: string): Promise<ChatMessage> {
+    const req: TransportRequest = { method: 'sendMessage', payload: { message, providerId, model } };
     transport.invokeStream(req, {
       onData: (data) => {
         console.log('onData', data);

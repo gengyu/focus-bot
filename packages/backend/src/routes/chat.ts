@@ -1,5 +1,5 @@
 import {Body, Controller, Post, SSE} from '../decorators';
-import {ChatService} from '../services/chatService';
+import {ChatMessage, ChatService} from '../services/chatService';
 import {LLMService} from '../services/llmService';
 import multer from '@koa/multer';
 import path from 'path';
@@ -44,7 +44,7 @@ export class ChatController {
   @SSE('/sendMessage')
   async postMessage(@Body() body: any) {
     try {
-      const userMessage = {
+      const userMessage: ChatMessage = {
         role: 'user',
         content: body.message,
         timestamp: Date.now(),
@@ -58,7 +58,21 @@ export class ChatController {
         content: msg.content || ''
       }));
 
-      const stream = await llmService.streamChat(chatMessages, body.model);
+      // 动态选择服务商和模型
+      let llm;
+      if (body.providerId) {
+        // TODO: 这里应根据 providerId 查找对应服务商配置和模型
+        // 示例：假设 providerId = 'openai'，可扩展为多服务商
+        // 这里只做简单演示，实际应从配置文件或数据库读取
+        llm = new LLMService({
+          apiKey: process.env.OPENAI_API_KEY || '',
+          model: body.model || process.env.DEFAULT_MODEL || 'gpt-3.5-turbo'
+        });
+      } else {
+        llm = llmService;
+      }
+
+      const stream = await llm.streamChat(chatMessages);
       const readableStream = new ReadableStream({
         async start(controller) {
           for await (const chunk of stream) {
@@ -67,7 +81,7 @@ export class ChatController {
               controller.enqueue(`data: ${JSON.stringify({ content })}\n\n`);
             }
           }
-          const assistantMessage = {
+          const assistantMessage: ChatMessage = {
             role: 'assistant',
             content: '',
             timestamp: Date.now(),

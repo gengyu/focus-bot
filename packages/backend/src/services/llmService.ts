@@ -32,8 +32,10 @@ class OpenAIProvider implements LLMProvider {
 
   async chat(messages: Array<{ role: string; content: string }>) {
     try {
+      // @ts-ignore
       const response = await this.openai.chat.completions.create({
         model: this.config.model!,
+        // @ts-ignore
         messages,
         temperature: this.config.temperature,
         max_tokens: this.config.maxTokens
@@ -50,6 +52,7 @@ class OpenAIProvider implements LLMProvider {
     try {
       const stream = await this.openai.chat.completions.create({
         model: this.config.model!,
+        // @ts-ignore
         messages,
         temperature: this.config.temperature,
         max_tokens: this.config.maxTokens,

@@ -27,7 +27,15 @@
     </div>
 
     <!-- 输入区域 -->
-    <div class="flex gap-2">
+    <div class="flex gap-2 items-center mb-2">
+      <!-- 服务商选择 -->
+      <select v-model="selectedProvider" class="select select-bordered mr-2 w-32">
+        <option v-for="provider in providers" :key="provider.id" :value="provider.id">{{ provider.name }}</option>
+      </select>
+      <!-- 模型选择 -->
+      <select v-model="selectedModel" class="select select-bordered mr-2 w-32">
+        <option v-for="model in availableModels" :key="model" :value="model">{{ model }}</option>
+      </select>
       <!-- 图片上传按钮 -->
       <label class="flex items-center justify-center w-10 h-10 bg-gray-200 rounded-lg cursor-pointer hover:bg-gray-300">
         <input
@@ -40,7 +48,6 @@
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
         </svg>
       </label>
-
       <!-- 文本输入框 -->
       <div class="flex-1 relative">
         <input
@@ -51,7 +58,6 @@
           @keyup.enter="sendMessage"
         >
       </div>
-
       <!-- 发送按钮 -->
       <button
         @click="sendMessage"
@@ -64,13 +70,38 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import { ChatAPI, type ChatMessage } from '../services/chatApi';
+import { configAPI } from '../services/api';
 
 const chatApi = new ChatAPI();
 const messages = ref<ChatMessage[]>([]);
-const messageInput = ref('122122');
+const messageInput = ref('');
 const messageContainer = ref<HTMLElement | null>(null);
+
+// 服务商与模型相关
+const providers = ref<{id: string, name: string, models: string[]}[]>([]);
+const selectedProvider = ref('');
+const selectedModel = ref('');
+const availableModels = computed(() => {
+  const p = providers.value.find(p => p.id === selectedProvider.value);
+  return p ? p.models : [];
+});
+
+// 加载服务商配置
+const loadProviders = async () => {
+  // 假设 configAPI.loadConfig() 返回包含 mcpServers，每个 server 有 models 字段
+  const config = await configAPI.loadConfig();
+  providers.value = Object.entries(config.mcpServers || {}).map(([id, server]: [string, any]) => ({
+    id,
+    name: server.name || id,
+    models: server.models || ['gpt-3.5-turbo']
+  }));
+  if (providers.value.length > 0) {
+    selectedProvider.value = providers.value[0].id;
+    selectedModel.value = providers.value[0].models[0];
+  }
+};
 
 // 加载聊天历史
 const loadChatHistory = async () => {
@@ -85,11 +116,10 @@ const loadChatHistory = async () => {
 // 发送文本消息
 const sendMessage = async () => {
   if (!messageInput.value.trim()) return;
-
   try {
-    const response = await chatApi.sendMessage(messageInput.value);
+    const response = await chatApi.sendMessage(messageInput.value, selectedProvider.value, selectedModel.value);
     messages.value.push(response);
-    // messageInput.value = '';
+    messageInput.value = '';
     scrollToBottom();
   } catch (error) {
     console.error('发送消息失败:', error);
