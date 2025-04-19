@@ -6,7 +6,7 @@ import {
   type Transport,
   type TransportConfig,
   type TransportRequest,
-  type TransportResponse, type TransportStreamOptions,
+  type TransportResponse,
   TransportType
 } from "./types.ts";
 
@@ -41,6 +41,7 @@ export class TransportAdapter implements Transport {
 
 
       case TransportType.EVENT:
+        //@ts-ignore
         this.transport = new EventTransport({
           namespace: this.config.eventNamespace,
           emitter: this.config.eventEmitter
@@ -70,7 +71,7 @@ export class TransportAdapter implements Transport {
   /**
    * 流式调用，通过回调处理响应
    */
-  async invokeStream(request: TransportRequest, options: TransportStreamOptions) {
-    this.transport.invokeStream(request, options);
+    invokeStream(request: TransportRequest) {
+      return this.transport.invokeStream(request);
   }
 }

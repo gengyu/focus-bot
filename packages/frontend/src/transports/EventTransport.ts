@@ -96,15 +96,19 @@ export class EventTransport implements Transport {
   /**
    * 流式调用，通过回调处理响应
    */
-  async invokeStream(request: TransportRequest, options: TransportStreamOptions){
+  //@ts-ignore
+  async invokeStream(request: TransportRequest){
     // 创建数据监听器
+
+    //@ts-ignore
     const dataListener = (data: any) => {
-      options.onData?.(data);
+      // options.onData?.(data);
     };
 
     // 创建错误监听器
+    //@ts-ignore
     const errorListener = (error: Error) => {
-      options.onError?.(error);
+      // options.onError?.(error);
     };
 
     // 创建完成监听器
@@ -114,7 +118,7 @@ export class EventTransport implements Transport {
       this.emitter.off(this.getEventName('streamError'), errorListener);
       this.emitter.off(this.getEventName('streamComplete'), completeListener);
       
-      options.onComplete?.();
+      // options.onComplete?.();
     };
 
     // 添加监听器

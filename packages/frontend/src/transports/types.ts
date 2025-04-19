@@ -72,7 +72,7 @@ export interface Transport {
   /**
    * 流式调用，通过回调处理响应
    */
-  invokeStream(request: TransportRequest, options: TransportStreamOptions): void;
+  invokeStream(request: TransportRequest): ReadableStream;
 }
 
 /**

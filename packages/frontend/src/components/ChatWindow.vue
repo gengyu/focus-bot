@@ -3,16 +3,15 @@
     <!-- 消息列表区域 -->
     <div class="flex-1 overflow-y-auto mb-4" ref="messageContainer">
       <div v-for="message in messages" :key="message.timestamp" class="mb-4">
-        <div :class="['flex',  'justify-start']  "
-             :style="{ flexDirection: message.role === 'user' ? 'row' : 'row-reverse' }">
+        <div  class="flex justify-end" :class=" message.role === 'user' ? 'justify-end' : 'justify-start'">
           <div :class="[
             'max-w-[70%] rounded-lg p-3 shadow-md',
             message.role === 'user' ? 'bg-blue-500 text-white' : message.role === 'assistant' ? 'bg-green-500 text-white' : 'bg-white text-gray-800'
           ]">
             <!-- 消息时间 -->
-            <div class="text-xs opacity-70 mb-1">
-              {{ new Date(message.timestamp).toLocaleTimeString() }}
-            </div>
+<!--            <div class="text-xs opacity-70 mb-1">-->
+<!--              {{ new Date(message.timestamp).toLocaleTimeString() }}-->
+<!--            </div>-->
             <!-- 文本消息 -->
             <div v-if="message.type === 'text'" class="break-words">
               {{ message.content }}

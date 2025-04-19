@@ -50,7 +50,10 @@ export class HTTPTransport implements Transport {
       const method = this.config.prefix ? `${ this.config.prefix }/${ request.method }` : request.method;
       const response = await this.client.post('/invoke/' + method, data, {headers});
 
-      return response.data;
+      return {
+        success: response.data.code === 0,
+        data: response.data.data,
+      } ;
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
       return {
@@ -63,38 +66,44 @@ export class HTTPTransport implements Transport {
   /**
    * 流式调用，通过回调处理响应
    */
-  async invokeStream(request: TransportRequest, options: TransportStreamOptions) {
-    try {
-
-      const response = await this.invokeDirect(request);
-
-      // 使用EventSource API处理SSE流
-      const eventSource = new EventSource(new URL(response.data.url as string, window.location.origin).href);
-
-      eventSource.onmessage = (event) => {
+   invokeStream(request: TransportRequest) {
+    return new ReadableStream({
+      start: async (controller) => {
         try {
-          console.log('event===',event.data,333)
-          const data = JSON.parse(event.data);
+          const response = await this.invokeDirect(request);
 
-          options.onData?.(data);
+          // 使用EventSource API处理SSE流
+          const eventSource = new EventSource(new URL(response.data.url as string, window.location.origin).href);
+
+          eventSource.onmessage = (event) => {
+            controller.enqueue(event.data)
+            // const errorMessage = error instanceof Error ? error.message : 'Failed to parse stream data';
+            // try {
+            //
+            //   const data = JSON.parse(event.data);
+            //
+            //   options.onData?.(data);
+            // } catch (error) {
+            //   const errorMessage = error instanceof Error ? error.message : 'Failed to parse stream data';
+            //   options.onError?.(error instanceof Error ? error : new Error(errorMessage));
+            // }
+          };
+
+          eventSource.onerror = (error) => {
+            eventSource.close();
+            controller.error(    error ?? new Error('SSE connection error'));
+          };
+
+          eventSource.addEventListener('end', () => {
+            eventSource.close();
+            controller.close();
+          });
         } catch (error) {
-          const errorMessage = error instanceof Error ? error.message : 'Failed to parse stream data';
-          options.onError?.(error instanceof Error ? error : new Error(errorMessage));
+          const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+          // options.onError?.(error instanceof Error ? error : new Error(errorMessage));
+          controller.error(errorMessage)
         }
-      };
-
-      eventSource.onerror = (error) => {
-        options.onError?.(new Error('SSE connection error'));
-        eventSource.close();
-      };
-
-      eventSource.addEventListener('end', () => {
-        options.onComplete?.();
-        eventSource.close();
-      });
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-      options.onError?.(error instanceof Error ? error : new Error(errorMessage));
-    }
+      },
+    });
   }
 }
