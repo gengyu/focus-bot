@@ -46,6 +46,7 @@ export default defineConfig({
       exportName: 'viteNodeApp',
       // tsCompiler: 'esbuild',
       initAppOnBoot: true
+
     })
   ]
 });

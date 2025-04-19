@@ -48,6 +48,7 @@ export class ChatService {
 
   async saveChatHistory(messages: ChatMessage[]): Promise<void> {
     try {
+      //@ts-ignore
       await this.persistenceService.saveData(messages);
     } catch (error) {
       throw new Error(`Failed to save chat history: ${error instanceof Error ? error.message : 'Unknown error'}`);

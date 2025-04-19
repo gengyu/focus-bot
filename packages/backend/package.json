@@ -5,8 +5,9 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
+    "dev": "ts-node src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js",
     "test": "jest",
     "esbuild": "esbuild src/index.ts --bundle --platform=node --outfile=dist/index2.js",
     "sea-prep": "node --experimental-sea-config sea-config.json",

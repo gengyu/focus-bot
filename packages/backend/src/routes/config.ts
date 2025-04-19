@@ -1,4 +1,4 @@
-import {Body, Controller, Get, Param, Post} from '../decorators';
+import {Controller, Get, Param, Post} from '../decorators';
 import {FileConfigService} from '../services/configService';
 import {ResultHelper} from './routeHelper';
 

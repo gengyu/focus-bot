@@ -1,10 +1,10 @@
-import {Body, Controller, Get, Param, Post, SSE} from '../decorators';
-import { ChatMessage, ChatService } from '../services/chatService';
+import {Body, Controller, Post, SSE} from '../decorators';
+import {ChatService} from '../services/chatService';
 import multer from '@koa/multer';
 import path from 'path';
-import { z } from 'zod';
-import {ReadableStream, WritableStream} from "node:stream/web";
-import { ResultHelper } from './routeHelper';
+import {z} from 'zod';
+import {ReadableStream} from "node:stream/web";
+import {ResultHelper} from './routeHelper';
 
 const chatService = new ChatService();
 chatService.initialize().catch(error => {
@@ -29,7 +29,7 @@ const messageBodySchema = z.object({
 @Controller('/invoke/chat')
 export class ChatController {
   @Post('/getChatHistory')
-  async getHistory( ) {
+  async getHistory(@Body('cccc') cc: string) {
     const messages = await chatService.getMessages();
     return ResultHelper.success(messages);
   }
@@ -37,6 +37,7 @@ export class ChatController {
   @SSE('/sendMessage')
   async postMessage(@Body() body: any) {
     try {
+
       const readableStream = new ReadableStream({
         start(controller) {
           setTimeout(() => {

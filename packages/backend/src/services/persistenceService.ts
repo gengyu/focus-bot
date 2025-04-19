@@ -44,6 +44,7 @@ export class PersistenceService extends EventEmitter {
         // 加载现有配置并检查运行状态
         const config = await this.loadData();
         Object.entries(config.mcpServers).forEach(([id, server]) => {
+          //@ts-ignore
           if (server.isRunning) {
             // 通知ConfigService启动该MCP
             this.emit('mcpAutoStart', id);
@@ -86,6 +87,7 @@ export class PersistenceService extends EventEmitter {
     } catch (error) {
       if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
         // Return empty array for chat history if file doesn't exist
+        //@ts-ignore
         if (this.configFileName === 'chat_history.json') {
           return [];
         }

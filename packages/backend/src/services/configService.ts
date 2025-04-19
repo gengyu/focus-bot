@@ -10,7 +10,7 @@ import {
 } from '../types/config';
 import {Client} from "@modelcontextprotocol/sdk/client/index.js";
 import {StdioClientTransport,} from "@modelcontextprotocol/sdk/client/stdio.js";
-import {StatusService} from "./statusService.ts";
+import {StatusService} from "./statusService";
 import path from "path";
 
 // import {Transport} from '@modelcontextprotocol/sdk/shared/transport.js';
@@ -45,7 +45,7 @@ export class FileConfigService implements ConfigService {
         try {
             const config = await this.loadConfig();
             const statusMap = await this.statusService.getAllStatus();
-            console.log('Initializing auto-start MCPs...', config.mcpServers);
+            // console.log('Initializing auto-start MCPs...', config.mcpServers);
             if (!config.mcpServers) return;
 
             for (const [id] of Object.entries(config.mcpServers)) {
