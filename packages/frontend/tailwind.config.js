@@ -1,5 +1,4 @@
 
-import daisyui from "daisyui"
 /** @type {import('tailwindcss').Config} */
 export default {
   content: [
@@ -9,13 +8,11 @@ export default {
   theme: {
     extend: {
       colors: {
-        primary: '#4F46E5',
-        success: '#10B981',
-        error: '#EF4444',
+        primary: 'var(--color-primary)',
+        success: 'var(--color-success)',
+        error: 'var(--color-error)',
       },
     },
   },
-  plugins: [
-    daisyui
-  ],
+  plugins: [],
 }
