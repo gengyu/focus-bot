@@ -1,6 +1,9 @@
 
 import {OpenAIProvider} from "../provider/OpenAIProvider";
 import {LLMProvider, ProviderConfig} from "../provider/LLMProvider";
+// import {Ollama} from "ollama";
+//
+// console.log(Ollama)
 
 export class LLMService {
     private provider: LLMProvider;

@@ -1,7 +1,8 @@
 import {Body, Controller, Get, Param, Post, Service} from '../decorators';
 import {FileConfigService} from '../services/configService';
 import {ResultHelper} from './routeHelper';
-import {LLMService, ProviderConfig} from "../services/LLMService";
+import {LLMService} from "../services/LLMService";
+import {ProviderConfig} from "../provider/LLMProvider.ts";
 
 const configService = new FileConfigService();
 
