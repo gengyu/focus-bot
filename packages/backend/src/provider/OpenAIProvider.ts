@@ -3,9 +3,9 @@ import axios from "axios";
 import {LLMProvider, ProviderConfig} from "./LLMProvider";
 import {type ChatCompletionMessageParam} from "openai/resources";
 
-import { Ollama } from "ollama";
+// import { Ollama } from "ollama";
 
-const ollama = new Ollama();
+// const ollama = new Ollama();
 
 export class OpenAIProvider implements LLMProvider {
   private openai: OpenAI;
@@ -69,9 +69,9 @@ export class OpenAIProvider implements LLMProvider {
 
   async getModels() {
     try {
-      const tags = await ollama.tags();
-      console.log('📦 Local model list:', tags);
-      return tags;
+      // const tags = await ollama.tags();
+      console.log('📦 Local model list:');
+      return [];
     } catch (error) {
       console.error('Ollama API Error:', error);
       throw new Error('Failed to get models from Ollama');

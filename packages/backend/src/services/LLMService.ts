@@ -1,6 +1,6 @@
 
 import {OpenAIProvider} from "../provider/OpenAIProvider";
-import {LLMProvider, ProviderConfig} from "provider/LLMProvider";
+import {LLMProvider, ProviderConfig} from "../provider/LLMProvider";
 
 export class LLMService {
     private provider: LLMProvider;
