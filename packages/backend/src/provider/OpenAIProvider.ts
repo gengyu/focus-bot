@@ -1,9 +1,11 @@
 import OpenAI from 'openai';
 import axios from "axios";
-import {LLMProvider, ProviderConfig} from "./LLMProvider.ts";
-import {
-type   ChatCompletionMessageParam
-} from "openai/resources";
+import {LLMProvider, ProviderConfig} from "./LLMProvider";
+import {type ChatCompletionMessageParam} from "openai/resources";
+
+import { Ollama } from "ollama";
+
+const ollama = new Ollama();
 
 export class OpenAIProvider implements LLMProvider {
   private openai: OpenAI;
@@ -15,8 +17,8 @@ export class OpenAIProvider implements LLMProvider {
       temperature: 0.7,
       maxTokens: 2000,
       ...config,
-      apiKey:'ollama',
-      baseURL: "http://localhost:11434/'"
+      apiKey: 'ollama',
+      baseURL: "http://localhost:11434/"
     };
 
     this.openai = new OpenAI({
@@ -27,11 +29,9 @@ export class OpenAIProvider implements LLMProvider {
 
   async chat(messages: Array<{ role: string; content: string }>) {
     try {
-      // @ts-ignore
       const response = await this.openai.chat.completions.create({
         model: this.config.model!,
-        // @ts-ignore
-        messages,
+        messages: messages as ChatCompletionMessageParam[],
         temperature: this.config.temperature,
         max_tokens: this.config.maxTokens,
         stream: false
@@ -46,7 +46,6 @@ export class OpenAIProvider implements LLMProvider {
 
   async *streamChat(messages: Array<{ role: string; content: string }>) {
     try {
-
       const stream = await this.openai.chat.completions.create({
         model: this.config.model!,
         messages: messages as ChatCompletionMessageParam[],
@@ -68,22 +67,14 @@ export class OpenAIProvider implements LLMProvider {
     }
   }
 
-
-  //  查询模型列表
   async getModels() {
- 
     try {
-      const { data } = await axios.get('http://localhost:11434/api/tags');
-      console.log('📦 本地模型列表：');
-      data.models.forEach((model: any) => {
-        console.log(`- ${model.name}`);
-      });
-      return data;
-      // const response = await this.openai.models.list();
-      // return response.data;
+      const tags = await ollama.tags();
+      console.log('📦 Local model list:', tags);
+      return tags;
     } catch (error) {
-      console.error('OpenAI API Error:', error);
-      throw new Error('Failed to get models from OpenAI');
+      console.error('Ollama API Error:', error);
+      throw new Error('Failed to get models from Ollama');
     }
   }
 }

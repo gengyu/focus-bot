@@ -21,7 +21,7 @@ export interface Chat {
 
 export class ChatService {
 
-  private chat: Chat;
+  // private chat: Chat;
   private persistenceService: PersistenceService;
 
   constructor(options?: PersistenceOptions) {

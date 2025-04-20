@@ -1,6 +1,6 @@
 import {Body, Controller, Post, SSE} from '../decorators';
 import {ChatMessage, ChatService} from '../services/chatService';
-import {LLMService} from '../services/LLMService.ts';
+import {LLMService} from '../services/LLMService';
 import multer from '@koa/multer';
 import path from 'path';
 import {z} from 'zod';
@@ -100,7 +100,8 @@ export class ChatController {
       const readableStream = new ReadableStream({
         async start(controller) {
           for await (const chunk of stream) {
-            const content = chunk.choices[0]?.delta?.content || '';
+
+            const content = chunk.content || '';
             if (content) {
               controller.enqueue(`data: ${JSON.stringify({ content })}\n\n`);
             }
