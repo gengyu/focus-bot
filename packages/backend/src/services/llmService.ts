@@ -1,4 +1,5 @@
-import OpenAI, {Models} from 'openai';
+import OpenAI from 'openai';
+import axios from "axios";
 
 export interface ModelConfig {
   apiKey: string;
@@ -11,7 +12,7 @@ export interface ModelConfig {
 export interface LLMProvider {
   chat: (messages: Array<{ role: string; content: string }>) => Promise<any>;
   streamChat: (messages: Array<{ role: string; content: string }>) => Promise<any>;
-  getModels: () => Promise<Models>;
+  getModels: () => Promise<any>;
 }
 
 class OpenAIProvider implements LLMProvider {
@@ -23,8 +24,11 @@ class OpenAIProvider implements LLMProvider {
       model: 'gpt-3.5-turbo',
       temperature: 0.7,
       maxTokens: 2000,
-      ...config
+      ...config,
+      apiKey:'ollama',
+      baseURL: "http://localhost:11434/'"
     };
+
     this.openai = new OpenAI({
       apiKey: this.config.apiKey,
       baseURL: this.config.baseURL
@@ -70,8 +74,14 @@ class OpenAIProvider implements LLMProvider {
   //  查询模型列表
   async getModels() {
     try {
-      const response = await this.openai.models.list();
-      return response.data;
+      const { data } = await axios.get('http://localhost:11434/api/tags');
+      console.log('📦 本地模型列表：');
+      data.models.forEach((model: any) => {
+        console.log(`- ${model.name}`);
+      });
+      return data;
+      // const response = await this.openai.models.list();
+      // return response.data;
     } catch (error) {
       console.error('OpenAI API Error:', error);
       throw new Error('Failed to get models from OpenAI');
@@ -94,5 +104,9 @@ export class LLMService {
 
   async streamChat(messages: Array<{ role: string; content: string }>) {
     return this.provider.streamChat(messages);
+  }
+
+  async getModels() {
+    return this.provider.getModels();
   }
 }

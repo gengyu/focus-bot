@@ -1,0 +1,10 @@
+{
+  "provider1": {
+    "apiKey": "your-api-key-1",
+    "defaultModel": "gpt-3.5-turbo"
+  },
+  "provider2": {
+    "apiKey": "your-api-key-2",
+    "defaultModel": "gpt-3.5-turbo"
+  }
+}

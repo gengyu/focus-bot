@@ -6,6 +6,8 @@ import bodyParser from 'koa-bodyparser';
 import { router as decoratorRouter, registerControllers } from './decorators';
 import { ChatController } from './routes/chat';
 import { ConfigController } from './routes/config';
+import {SettingController} from "./routes/setting";
+
 const app = new Koa();
  
 
@@ -24,7 +26,7 @@ healthRouter.get('/health', (ctx) => {
   ctx.body = { status: 'ok', timestamp: new Date().toISOString() };
 });
 // 注册路由
-registerControllers([ChatController, ConfigController]);
+registerControllers([ChatController, ConfigController, SettingController]);
 app.use(healthRouter.routes()).use(healthRouter.allowedMethods());
 app.use(decoratorRouter.routes()).use(decoratorRouter.allowedMethods());
 

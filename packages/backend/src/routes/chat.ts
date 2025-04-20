@@ -60,13 +60,37 @@ export class ChatController {
 
       // 动态选择服务商和模型
       let llm;
+      let providerCache: { [key: string]: { apiKey: string; defaultModel: string; } } | null = null;
+
+      async function loadProviderConfig() {
+        if (providerCache !== null) return;
+
+        try {
+          const fs = await import('fs');
+          const rawdata = await fs.promises.readFile('./src/config/providerConfig.json');
+          providerCache = JSON.parse(rawdata.toString());
+        } catch (err) {
+          console.error('Error loading provider config:', err);
+          providerCache = {};
+        }
+      }
+
+      function getProviderConfig(providerId: string): { apiKey: string; defaultModel: string; } | null {
+        if (providerCache === null) {
+          loadProviderConfig();
+        }
+
+        return providerCache ? providerCache[providerId] || null : null;
+      }
+
       if (body.providerId) {
-        // TODO: 这里应根据 providerId 查找对应服务商配置和模型
-        // 示例：假设 providerId = 'openai'，可扩展为多服务商
-        // 这里只做简单演示，实际应从配置文件或数据库读取
+        const providerConfig = getProviderConfig(body.providerId);
+        if (!providerConfig) {
+          throw new Error(`Provider ${body.providerId} not found`);
+        }
         llm = new LLMService({
-          apiKey: process.env.OPENAI_API_KEY || '',
-          model: body.model || process.env.DEFAULT_MODEL || 'gpt-3.5-turbo'
+          apiKey: providerConfig.apiKey,
+          model: body.model || providerConfig.defaultModel || 'gpt-3.5-turbo'
         });
       } else {
         llm = llmService;

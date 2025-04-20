@@ -13,7 +13,7 @@ export function Controller(prefix = ''): ClassDecorator {
   };
 }
 
-export function Service(): PropertyDecorator {
+export function Service(): ClassDecorator {
   return (target: any) => {
     // Mark the class as a service
     Reflect.defineMetadata('isService', true, target);

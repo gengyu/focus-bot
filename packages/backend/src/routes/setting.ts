@@ -1,7 +1,7 @@
-import {Controller, Get, Param, Post, Service} from '../decorators';
+import {Body, Controller, Get, Param, Post, Service} from '../decorators';
 import {FileConfigService} from '../services/configService';
 import {ResultHelper} from './routeHelper';
-import {LLMService} from "../services/llmService";
+import {LLMService, ModelConfig} from "../services/llmService";
 
 const configService = new FileConfigService();
 
@@ -10,8 +10,10 @@ const configService = new FileConfigService();
 export class SettingController {
 
   @Post('/getModels')
-  async getModels() {
-    const config = await configService.loadConfig();
+  async getModels(@Body() modelConfig: ModelConfig) {
+
+    const llmService = new LLMService(modelConfig);
+    const config = await llmService.getModels();
     return ResultHelper.success(config);
   }
 
