@@ -60,47 +60,47 @@ const routes: RouteRecordRaw[] = [
             {
                 path: 'search',
                 name: 'SearchSettings',
-                component: () => import('@/views/settings/GeneralSettings.vue')
+                component: () => import('@/views/settings/SearchSettings.vue')
             },
             {
                 path: 'server',
                 name: 'ServerSettings',
-                component: () => import('@/views/settings/GeneralSettings.vue')
+                component: () => import('@/views/settings/ServerSettings.vue')
             },
             {
                 path: 'display',
                 name: 'DisplaySettings',
-                component: () => import('@/views/settings/GeneralSettings.vue')
+                component: () => import('@/views/settings/DisplaySettings.vue')
             },
             {
                 path: 'miniapp',
                 name: 'MiniAppSettings',
-                component: () => import('@/views/settings/GeneralSettings.vue')
+                component: () => import('@/views/settings/MiniAppSettings.vue')
             },
             {
                 path: 'shortcut',
                 name: 'ShortcutSettings',
-                component: () => import('@/views/settings/GeneralSettings.vue')
+                component: () => import('@/views/settings/ShortcutSettings.vue')
             },
             {
                 path: 'assistant',
                 name: 'AssistantSettings',
-                component: () => import('@/views/settings/GeneralSettings.vue')
+                component: () => import('@/views/settings/AssistantSettings.vue')
             },
             {
                 path: 'phrase',
                 name: 'PhraseSettings',
-                component: () => import('@/views/settings/GeneralSettings.vue')
+                component: () => import('@/views/settings/PhraseSettings.vue')
             },
             {
                 path: 'data',
                 name: 'DataSettings',
-                component: () => import('@/views/settings/GeneralSettings.vue')
+                component: () => import('@/views/settings/DataSettings.vue')
             },
             {
                 path: 'about',
                 name: 'AboutSettings',
-                component: () => import('@/views/settings/GeneralSettings.vue')
+                component: () => import('@/views/settings/AboutSettings.vue')
             }
         ]
     },
