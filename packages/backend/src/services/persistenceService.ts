@@ -25,32 +25,33 @@ export class PersistenceService extends EventEmitter {
     this.configFilePath = path.join(this.dataDir, options?.configFileName || 'config.json');
     this.backupInterval = options?.backupInterval || 3600000; // 默认1小时
     this.maxBackups = options?.maxBackups || 24; // 默认24个备份
+    this.initialize();
   }
   async initialize(): Promise<void> {
     try {
       // 确保数据目录存在
       await fs.promises.mkdir(this.dataDir, { recursive: true });
-      
-      // 如果配置文件不存在，创建默认配置
-      if (!await this.exists(this.configFilePath)) {
-        const defaultConfig: MCPConfig = {
-          serverUrl: 'http://localhost:5000',
-          transport: 'http',
-          debug: false,
-          mcpServers: {}
-        };
-        await this.saveData(defaultConfig);
-      } else {
-        // 加载现有配置并检查运行状态
-        const config = await this.loadData();
-        Object.entries(config.mcpServers).forEach(([id, server]) => {
-          //@ts-ignore
-          if (server.isRunning) {
-            // 通知ConfigService启动该MCP
-            this.emit('mcpAutoStart', id);
-          }
-        });
-      }
+
+        // 如果配置文件不存在，创建默认配置
+      // if (!await this.exists(this.configFilePath)) {
+      //   const defaultConfig: MCPConfig = {
+      //     serverUrl: 'http://localhost:5000',
+      //     transport: 'http',
+      //     debug: false,
+      //     mcpServers: {}
+      //   };
+      //   await this.saveData(defaultConfig);
+      // } else {
+      //   // 加载现有配置并检查运行状态
+      //   const config = await this.loadData();
+      //   Object.entries(config.mcpServers).forEach(([id, server]) => {
+      //     //@ts-ignore
+      //     if (server.isRunning) {
+      //       // 通知ConfigService启动该MCP
+      //       this.emit('mcpAutoStart', id);
+      //     }
+      //   });
+      // }
 
       // 启动自动备份定时器
       this.startAutoBackup();
@@ -68,7 +69,7 @@ export class PersistenceService extends EventEmitter {
     }
   }
 
-  async saveData(data: MCPConfig): Promise<void> {
+  async saveData(data: any): Promise<void> {
     try {
       await fs.promises.writeFile(
         this.configFilePath,
@@ -82,6 +83,9 @@ export class PersistenceService extends EventEmitter {
 
   async loadData(): Promise<MCPConfig | any> {
     try {
+      if (!(await this.exists(this.configFilePath))) {
+        return ;
+      }
       const data = await fs.promises.readFile(this.configFilePath, 'utf-8');
       return JSON.parse(data);
     } catch (error) {

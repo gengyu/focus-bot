@@ -40,7 +40,7 @@ export interface ConfigStorageOptions {
   maxBackups?: number;
 }
 
-export interface ConfigService {
+export interface IConfigService {
   saveConfig(config: MCPConfig): Promise<void>;
   loadConfig(): Promise<MCPConfig>;
   validateConfig(config: MCPConfig): ConfigValidationResult;
