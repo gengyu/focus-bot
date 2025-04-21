@@ -1,6 +1,6 @@
 import {Body, Controller, Post, SSE} from '../decorators';
 import {ChatMessage, ChatService} from '../services/chatService';
-import {LLMService} from '../services/llmService';
+import {LLMService} from '../services/LLMService.ts';
 import multer from '@koa/multer';
 import path from 'path';
 import {z} from 'zod';

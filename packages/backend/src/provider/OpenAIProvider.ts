@@ -1,9 +1,11 @@
 import OpenAI from 'openai';
 import axios from "axios";
 import {LLMProvider, ProviderConfig} from "./LLMProvider.ts";
+import {
+type   ChatCompletionMessageParam
+} from "openai/resources";
 
-
-class OpenAIProvider implements LLMProvider {
+export class OpenAIProvider implements LLMProvider {
   private openai: OpenAI;
   private config: ProviderConfig;
 
@@ -31,7 +33,8 @@ class OpenAIProvider implements LLMProvider {
         // @ts-ignore
         messages,
         temperature: this.config.temperature,
-        max_tokens: this.config.maxTokens
+        max_tokens: this.config.maxTokens,
+        stream: false
       });
 
       return response.choices[0].message;
@@ -41,26 +44,34 @@ class OpenAIProvider implements LLMProvider {
     }
   }
 
-  async streamChat(messages: Array<{ role: string; content: string }>) {
+  async *streamChat(messages: Array<{ role: string; content: string }>) {
     try {
+
       const stream = await this.openai.chat.completions.create({
         model: this.config.model!,
-        // @ts-ignore
-        messages,
+        messages: messages as ChatCompletionMessageParam[],
         temperature: this.config.temperature,
         max_tokens: this.config.maxTokens,
         stream: true
       });
-
-      return stream;
+      for await (const part of stream) {
+        yield {
+          content: part.choices[0].delta.content as string,
+          reasoningContent: part.choices[0].delta.content as string,
+          provider: 'openai',
+          model: this.config.model as string
+        };
+      }
     } catch (error) {
       console.error('OpenAI API Stream Error:', error);
       throw new Error('Failed to create stream from OpenAI');
     }
   }
 
+
   //  查询模型列表
   async getModels() {
+ 
     try {
       const { data } = await axios.get('http://localhost:11434/api/tags');
       console.log('📦 本地模型列表：');
@@ -77,24 +88,3 @@ class OpenAIProvider implements LLMProvider {
   }
 }
 
-export class LLMService {
-  private provider: LLMProvider;
-
-  constructor(config: ProviderConfig) {
-    // 根据配置选择不同的provider
-    // 目前只实现了OpenAI，后续可以扩展其他模型
-    this.provider = new OpenAIProvider(config);
-  }
-
-  async chat(messages: Array<{ role: string; content: string }>) {
-    return this.provider.chat(messages);
-  }
-
-  async streamChat(messages: Array<{ role: string; content: string }>) {
-    return this.provider.streamChat(messages);
-  }
-
-  async getModels() {
-    return this.provider.getModels();
-  }
-}

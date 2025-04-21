@@ -10,7 +10,18 @@ export interface ChatMessage {
   imageUrl?: string;
 }
 
+export interface Chat {
+  id: string;
+  messages: ChatMessage[];
+  create_time: string;
+  update_time: string;
+  content_hash?: string;
+  share_id?: string;
+}
+
 export class ChatService {
+
+  private chat: Chat;
   private persistenceService: PersistenceService;
 
   constructor(options?: PersistenceOptions) {
@@ -34,15 +45,6 @@ export class ChatService {
       console.error('Chat service initialization error:', error);
       // Initialize with empty array on error
       await this.saveChatHistory([]);
-    }
-  }
-
-  private async exists(filePath: string): Promise<boolean> {
-    try {
-      await fs.promises.access(filePath);
-      return true;
-    } catch {
-      return false;
     }
   }
 
