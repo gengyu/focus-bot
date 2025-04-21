@@ -1,57 +1,43 @@
 <template>
-  <div class="bg-white rounded-lg shadow p-6">
-    <h2 class="text-xl font-semibold mb-4">模型服务配置</h2>
-    
-    <!-- 服务商列表 -->
-    <div class="space-y-6">
-      <div v-for="provider in providers" :key="provider.id" class="border rounded-lg p-4">
-        <!-- 服务商标题和启用开关 -->
-        <div class="flex items-center justify-between mb-4">
-          <h3 class="text-lg font-medium">{{ provider.name }}</h3>
+  <div class="bg-white rounded-lg shadow p-6 flex h-[600px]">
+    <!-- 左侧服务商抽屉导航 -->
+    <div class="w-56 border-r pr-4 overflow-y-auto">
+      <div v-for="(provider, idx) in providers" :key="provider.id" @click="selectedProviderIdx = idx" :class="['cursor-pointer flex items-center px-3 py-2 rounded mb-2', selectedProviderIdx === idx ? 'bg-primary text-white' : 'hover:bg-base-200']">
+        <span class="font-medium">{{ provider.name }}</span>
+        <span v-if="provider.enabled" class="ml-auto text-xs bg-green-100 text-green-600 px-2 py-0.5 rounded">已启用</span>
+      </div>
+    </div>
+    <!-- 右侧配置表单 -->
+    <div class="flex-1 pl-8">
+      <h2 class="text-xl font-semibold mb-4">模型服务配置</h2>
+      <template v-if="currentProvider">
+        <div class="flex items-center mb-4">
+          <h3 class="text-lg font-medium mr-4">{{ currentProvider.name }}</h3>
           <label class="cursor-pointer">
-            <input type="checkbox" v-model="provider.enabled" class="toggle toggle-primary" />
+            <input type="checkbox" v-model="currentProvider.enabled" class="toggle toggle-primary" />
+            <span class="ml-2 text-sm">启用</span>
           </label>
         </div>
-
-        <!-- 服务商配置 -->
-        <div v-if="provider.enabled" class="space-y-4">
-          <!-- API 配置 -->
+        <div v-if="currentProvider.enabled" class="space-y-4">
           <div class="form-control">
             <label class="label">
               <span class="label-text">API 地址</span>
             </label>
-            <input 
-              type="text" 
-              v-model="provider.apiUrl" 
-              :placeholder="getDefaultApiUrl(provider.id)"
-              class="input input-bordered w-full" 
-            />
+            <input type="text" v-model="currentProvider.apiUrl" :placeholder="getDefaultApiUrl(currentProvider.id)" class="input input-bordered w-full" />
           </div>
-
           <div class="form-control">
             <label class="label">
               <span class="label-text">API 密钥</span>
             </label>
-            <input 
-              type="password" 
-              v-model="provider.apiKey" 
-              placeholder="输入 API 密钥"
-              class="input input-bordered w-full" 
-            />
+            <input type="password" v-model="currentProvider.apiKey" placeholder="输入 API 密钥" class="input input-bordered w-full" />
           </div>
-
-          <!-- 模型列表 -->
           <div class="space-y-2">
             <label class="label">
               <span class="label-text">可用模型</span>
             </label>
-            <div v-for="model in provider.models" :key="model.id" class="flex items-center justify-between p-2 bg-base-200 rounded-lg">
+            <div v-for="model in currentProvider.models" :key="model.id" class="flex items-center justify-between p-2 bg-base-200 rounded-lg">
               <div class="flex items-center space-x-4">
-                <input 
-                  type="checkbox" 
-                  v-model="model.enabled" 
-                  class="checkbox checkbox-sm" 
-                />
+                <input type="checkbox" v-model="model.enabled" class="checkbox checkbox-sm" />
                 <div>
                   <div class="font-medium">{{ model.name }}</div>
                   <div class="text-sm text-gray-500">{{ model.description }}</div>
@@ -61,19 +47,19 @@
             </div>
           </div>
         </div>
+      </template>
+      <div v-else class="text-gray-400 text-center mt-20">请选择左侧服务商</div>
+      <!-- 操作按钮 -->
+      <div class="flex justify-end mt-6">
+        <button @click="resetSettings" class="btn btn-outline mr-2">重置</button>
+        <button @click="saveSettings" class="btn btn-primary">保存设置</button>
       </div>
-    </div>
-
-    <!-- 操作按钮 -->
-    <div class="flex justify-end mt-6">
-      <button @click="resetSettings" class="btn btn-outline mr-2">重置</button>
-      <button @click="saveSettings" class="btn btn-primary">保存设置</button>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { settingsAPI } from '../../services/SettingsApi';
 
 interface Model {
@@ -162,7 +148,9 @@ const providers = ref<Provider[]>([
   }
 ]);
 
-// 获取默认 API 地址
+const selectedProviderIdx = ref(0);
+const currentProvider = computed(() => providers.value[selectedProviderIdx.value]);
+
 const getDefaultApiUrl = (providerId: string): string => {
   switch (providerId) {
     case 'ollama': return 'http://localhost:11434';
@@ -175,7 +163,6 @@ const getDefaultApiUrl = (providerId: string): string => {
   }
 };
 
-// 加载设置
 const loadSettings = async () => {
   try {
     const savedSettings = localStorage.getItem('modelSettings');
@@ -191,7 +178,6 @@ const loadSettings = async () => {
   }
 };
 
-// 保存设置
 const saveSettings = async () => {
   try {
     const settings = providers.value.reduce((acc, provider) => {
@@ -203,7 +189,6 @@ const saveSettings = async () => {
       };
       return acc;
     }, {} as Record<string, any>);
-
     localStorage.setItem('modelSettings', JSON.stringify(settings));
     alert('设置已保存');
   } catch (error) {
@@ -212,7 +197,6 @@ const saveSettings = async () => {
   }
 };
 
-// 重置设置
 const resetSettings = async () => {
   if (confirm('确定要重置所有设置吗？')) {
     providers.value = providers.value.map(provider => ({
@@ -226,7 +210,6 @@ const resetSettings = async () => {
   }
 };
 
-// 初始化加载
 onMounted(() => {
   loadSettings();
 });
