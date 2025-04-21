@@ -1,25 +1,13 @@
 import OpenAI from 'openai';
 import axios from "axios";
+import {LLMProvider, ProviderConfig} from "./LLMProvider.ts";
 
-export interface ModelConfig {
-  apiKey: string;
-  model?: string;
-  temperature?: number;
-  maxTokens?: number;
-  baseURL?: string;
-}
-
-export interface LLMProvider {
-  chat: (messages: Array<{ role: string; content: string }>) => Promise<any>;
-  streamChat: (messages: Array<{ role: string; content: string }>) => Promise<any>;
-  getModels: () => Promise<any>;
-}
 
 class OpenAIProvider implements LLMProvider {
   private openai: OpenAI;
-  private config: ModelConfig;
+  private config: ProviderConfig;
 
-  constructor(config: ModelConfig) {
+  constructor(config: ProviderConfig) {
     this.config = {
       model: 'gpt-3.5-turbo',
       temperature: 0.7,
@@ -92,7 +80,7 @@ class OpenAIProvider implements LLMProvider {
 export class LLMService {
   private provider: LLMProvider;
 
-  constructor(config: ModelConfig) {
+  constructor(config: ProviderConfig) {
     // 根据配置选择不同的provider
     // 目前只实现了OpenAI，后续可以扩展其他模型
     this.provider = new OpenAIProvider(config);
