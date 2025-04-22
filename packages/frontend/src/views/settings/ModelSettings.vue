@@ -66,7 +66,7 @@
             </label>
             <div class="relative">
               <input
-                type="password"
+                :type="showPassword ? 'text' : 'password'"
                 v-model="currentProvider.apiKey"
                 placeholder="输入 API 密钥"
                 class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:border-blue-500"/>
@@ -139,24 +139,9 @@ import { ChevronUpDownIcon, ArrowPathIcon } from '@heroicons/vue/20/solid';
 // import { useToast } from 'vue-toastification';
 import { configAPI } from '@/services/api';
 import { toast } from 'vue-sonner'
+import type {Model, Provider} from "../../../../../share/type.ts";
 
 
-interface Model {
-  id: string;
-  name: string;
-  description: string;
-  size: string;
-  enabled: boolean;
-}
-
-interface Provider {
-  id: string;
-  name: string;
-  enabled: boolean;
-  apiUrl: string;
-  apiKey: string;
-  models: Model[];
-}
 
 // 默认供应商配置
 const defaultProviders: Provider[] = [
@@ -298,6 +283,7 @@ const addNewModel = async (model: Model) => {
   }
 };
 
+
 const loadSettings = async () => {
   try {
     // 初始化供应商列表
@@ -326,19 +312,12 @@ const loadSettings = async () => {
   }
 };
 
+// 保存模型
 const saveSettings = async () => {
   try {
-    const config = {
-      providers: providers.value.map(provider => ({
-        id: provider.id,
-        enabled: provider.enabled,
-        apiUrl: provider.apiUrl,
-        apiKey: provider.apiKey,
-        models: provider.models
-      }))
-    };
 
-    await configAPI.saveModelConfig(config);
+
+    await configAPI.saveModelConfig({ providers: providers.value });
     toast.success('设置已保存');
   } catch (error) {
     console.error('保存设置失败:', error);

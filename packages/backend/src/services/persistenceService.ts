@@ -84,7 +84,7 @@ export class PersistenceService extends EventEmitter {
   async loadData(): Promise<MCPConfig | any> {
     try {
       if (!(await this.exists(this.configFilePath))) {
-        return ;
+        return {};
       }
       const data = await fs.promises.readFile(this.configFilePath, 'utf-8');
       return JSON.parse(data);

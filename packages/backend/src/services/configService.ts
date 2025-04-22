@@ -12,6 +12,7 @@ import {Client} from "@modelcontextprotocol/sdk/client/index.js";
 import {StdioClientTransport,} from "@modelcontextprotocol/sdk/client/stdio.js";
 import {StatusService} from "./statusService";
 import path from "path";
+import {ModelConfig} from "../../../../share/type.ts";
 
 
 
@@ -276,21 +277,7 @@ export class FileConfigService implements IConfigService {
 }
 
 
-export interface ModelConfig {
-  providers: {
-    id: string;
-    enabled: boolean;
-    apiUrl: string;
-    apiKey: string;
-    models: {
-      id: string;
-      name: string;
-      description: string;
-      size: string;
-      enabled: boolean;
-    }[];
-  }[];
-}
+
 
 export class ConfigService {
 
@@ -305,17 +292,15 @@ export class ConfigService {
     });
   }
 
-
-  async getModelConfig(): Promise<ModelConfig[]> {
+  async getModelConfig(): Promise<ModelConfig> {
     try {
-      const modelConfigs =  await this.persistenceService.loadData();
-      return modelConfigs || [];
+      return await this.persistenceService.loadData();
     } catch (error) {
       throw new Error(`Failed to load settting data ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 
-  async saveModelConfig(configs: ModelConfig[]): Promise<void> {
+  async saveModelConfig(configs: ModelConfig): Promise<void> {
     try {
       await this.persistenceService.saveData(configs);
     } catch (error) {
