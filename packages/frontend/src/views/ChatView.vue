@@ -1,23 +1,30 @@
 <template>
-  <div class="chat-layout">
-    <aside class="sidebar">
-      <div class="sidebar-header">
-        <span class="logo">🧠</span>
-        <span class="sidebar-title">智AI助手</span>
+  <div class="flex min-h-screen bg-[#f5f6fa]">
+    <aside class="w-60 bg-white border-r border-[#e5e7eb] flex flex-col pb-5 shadow-[2px_0_8px_rgba(0,0,0,0.04)]">
+      <div class="flex items-center h-14 px-3 border-b border-[#f0f0f0]">
+        <span class="text-base mr-2.5">🧠</span>
+        <span class="text-xl font-bold text-[#1f2937]">智AI助手</span>
       </div>
-      <nav class="sidebar-nav">
-        <ul>
-          <li class="nav-item active">默认助手</li>
-          <li class="nav-item">demo</li>
-          <li class="nav-item">网页生成</li>
-          <li class="nav-item">One Word One...</li>
-        </ul>
+      <nav class="flex-1 pt-6">
+        <div v-for="group in groupedChats" :key="group.title" class="mb-4">
+          <div class="pl-6 text-sm text-gray-500 mb-2">{{ group.title }}</div>
+          <ul class="pl-6 m-0">
+            <li v-for="chat in group.chats" :key="chat.id" 
+                class="px-3 py-2.5 rounded-lg text-[#374151] cursor-pointer mb-1.5 transition-colors duration-200"
+                :class="{
+                  'bg-[#e0e7ef] text-[#2563eb] font-semibold': chat.isActive,
+                  'hover:bg-[#e0e7ef] hover:text-[#2563eb] hover:font-semibold': !chat.isActive
+                }">
+              {{ chat.title }}
+            </li>
+          </ul>
+        </div>
       </nav>
     </aside>
-    <div class="main-panel">
-      <header class="app-header">
+    <div class="flex-1 flex flex-col min-w-0">
+      <header class="bg-white py-4.5 px-8 border-b border-[#e5e7eb] shadow-[0_2px_4px_rgba(0,0,0,0.04)] text-left sticky top-0 z-10">
         <div class="flex items-center">
-          <h1 class="mr-4">Ollama</h1>
+          <h1 class="text-xl font-bold text-[#1f2937] m-0 mr-4">Ollama</h1>
 
           <div class="model-select px-3 py-1   " >
             <Listbox v-model="selectedPerson">
@@ -81,7 +88,7 @@
 
         </div>
       </header>
-      <main class="main-content">
+      <main class="flex-1 px-8 pt-8 pb-0 bg-[#f9fafb] rounded-b-xl shadow-[0_4px_12px_rgba(0,0,0,0.06)] mx-6 mb-6 min-h-0 overflow-y-auto">
         <ChatWindow :model="selectedModel" />
       </main>
     </div>
@@ -90,10 +97,53 @@
 
 <script setup lang="ts">
 import ChatWindow from '../components/ChatWindow.vue';
-import {onMounted, ref} from 'vue';
-import {configAPI} from '../services/api';
-import {Listbox, ListboxButton, ListboxOption, ListboxOptions,} from '@headlessui/vue'
-import {CheckIcon, ChevronUpDownIcon} from '@heroicons/vue/20/solid'
+import { onMounted, ref, computed } from 'vue';
+import { configAPI } from '../services/api';
+import { Listbox, ListboxButton, ListboxOption, ListboxOptions } from '@headlessui/vue'
+import { CheckIcon, ChevronUpDownIcon } from '@heroicons/vue/20/solid'
+
+// 模拟聊天数据
+const chats = ref([
+  { id: 1, title: '默认助手', timestamp: new Date(), isActive: true },
+  { id: 2, title: 'demo', timestamp: new Date(Date.now() - 24 * 60 * 60 * 1000), isActive: false },
+  { id: 3, title: '网页生成', timestamp: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000), isActive: false },
+  { id: 4, title: 'One Word One...', timestamp: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000), isActive: false },
+]);
+
+// 计算分组的聊天列表
+const groupedChats = computed(() => {
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const yesterday = new Date(today);
+  yesterday.setDate(yesterday.getDate() - 1);
+  const sevenDaysAgo = new Date(today);
+  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+  const thirtyDaysAgo = new Date(today);
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+  const groups = [
+    { title: '今天', chats: [] },
+    { title: '昨天', chats: [] },
+    { title: '最近7天', chats: [] },
+    { title: '最近30天', chats: [] },
+  ];
+
+  chats.value.forEach(chat => {
+    const chatDate = new Date(chat.timestamp);
+    if (chatDate >= today) {
+      groups[0].chats.push(chat);
+    } else if (chatDate >= yesterday) {
+      groups[1].chats.push(chat);
+    } else if (chatDate >= sevenDaysAgo) {
+      groups[2].chats.push(chat);
+    } else if (chatDate >= thirtyDaysAgo) {
+      groups[3].chats.push(chat);
+    }
+  });
+
+  // 只返回有聊天记录的分组
+  return groups.filter(group => group.chats.length > 0);
+});
 
 const people = [
   { name: 'Wade Cooper' },
@@ -102,8 +152,8 @@ const people = [
   { name: 'Tom Cook' },
   { name: 'Tanya Fox' },
   { name: 'Hellen Schmidt' },
-]
-const selectedPerson = ref(people[0])
+];
+const selectedPerson = ref(people[0]);
 
 
 
@@ -135,102 +185,20 @@ onMounted(async () => {
 });
 </script>
 
-<style>
-.chat-layout {
-  display: flex;
-  min-height: 100vh;
-  background: #f5f6fa;
-}
-.sidebar {
-  width: 240px;
-  background: #fff;
-  border-right: 1px solid #e5e7eb;
-  display: flex;
-  flex-direction: column;
-  padding: 0 0 20px 0;
-  box-shadow: 2px 0 8px rgba(0,0,0,0.04);
-}
-.sidebar-header {
-  display: flex;
-  align-items: center;
-  padding: 32px 24px 16px 24px;
-  border-bottom: 1px solid #f0f0f0;
-}
-.logo {
-  font-size: 2rem;
-  margin-right: 10px;
-}
-.sidebar-title {
-  font-size: 1.2rem;
-  font-weight: 700;
-  color: #1f2937;
-}
-.sidebar-nav {
-  flex: 1;
-  padding: 24px 0 0 0;
-}
-.sidebar-nav ul {
-  list-style: none;
-  padding: 0 0 0 24px;
-  margin: 0;
-}
-.nav-item {
-  padding: 10px 0 10px 12px;
-  border-radius: 6px;
-  color: #374151;
-  cursor: pointer;
-  margin-bottom: 6px;
-  transition: background 0.2s;
-}
-.nav-item.active, .nav-item:hover {
-  background: #e0e7ef;
-  color: #2563eb;
-  font-weight: 600;
-}
-.main-panel {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-}
-.app-header {
-  background: #fff;
-  padding: 18px 32px;
-  border-bottom: 1px solid #e5e7eb;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.04);
-  text-align: left;
-  position: sticky;
-  top: 0;
-  z-index: 10;
-}
-.app-header .flex {
-  display: flex;
-  align-items: center;
-}
-.app-header h1 {
-  color: #1f2937;
-  font-size: 20px;
-  font-weight: 700;
-  margin: 0;
-}
-.main-content {
-  flex: 1;
-  padding: 32px 32px 0 32px;
-  background: #f9fafb;
-  border-radius: 0 0 12px 12px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.06);
-  margin: 0 24px 24px 24px;
-  min-height: 0;
-  overflow-y: auto;
-}
+<style lang="less">
 .model-select {
   min-width: 240px;
 }
 
-@media (max-width: 900px) {
-  .chat-layout { flex-direction: column; }
-  .sidebar { width: 100%; flex-direction: row; border-right: none; border-bottom: 1px solid #e5e7eb; }
-  .main-panel { margin: 0; }
-  .main-content { margin: 0; border-radius: 0; padding: 16px 8px 0 8px; }
-}
+//@media (max-width: 900px) {
+//  aside {
+//    @apply w-full flex-row border-r-0 border-b;
+//  }
+//  .main-panel {
+//    @apply m-0;
+//  }
+//  main {
+//    @apply m-0 rounded-none px-2 pt-4;
+//  }
+//}
 </style>
