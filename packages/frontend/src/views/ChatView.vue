@@ -9,7 +9,7 @@
         <div v-for="group in groupedChats" :key="group.title" class="mb-4">
           <div class="pl-6 text-sm text-gray-500 mb-2">{{ group.title }}</div>
           <ul class="pl-6 m-0">
-            <li v-for="chat in group.chats" :key="chat.id" 
+            <li v-for="chat in group.chats" :key="chat.id"
                 class="px-3 py-2.5 rounded-lg text-[#374151] cursor-pointer mb-1.5 transition-colors duration-200"
                 :class="{
                   'bg-[#e0e7ef] text-[#2563eb] font-semibold': chat.isActive,
@@ -21,7 +21,7 @@
         </div>
       </nav>
     </aside>
-    <div class="flex-1 flex flex-col min-w-0">
+    <div class=" flex-1 flex flex-col min-w-0">
       <header class="bg-white h-14 flex items-center px-8 border-b border-[#e5e7eb] shadow-[0_2px_4px_rgba(0,0,0,0.04)] text-left sticky top-0 z-10">
         <div class="flex items-center">
           <h1 class="text-md font-bold text-[#1f2937] m-0 mr-4">Ollama</h1>
@@ -88,7 +88,7 @@
 
         </div>
       </header>
-      <main class="flex-1 px-8 pt-8 pb-0 bg-[#f9fafb] rounded-b-xl shadow-[0_4px_12px_rgba(0,0,0,0.06)] mx-6 mb-6 min-h-0 overflow-y-auto">
+      <main class="flex-1 bg-[#f9fafb] rounded-b-xl shadow-[0_4px_12px_rgba(0,0,0,0.06)] mx-6 mb-6 min-h-0 overflow-y-auto scrollbar-thin scrollbar-track-transparent scrollbar-thumb-gray-300 hover:scrollbar-thumb-gray-400">
         <ChatWindow :model="selectedModel" />
       </main>
     </div>
@@ -170,7 +170,7 @@ onMounted(async () => {
       const allModels = Object.values(config.mcpServers)
         .flatMap((server: any) => server.models || [])
         .filter((model: string) => model); // 过滤空值
-      
+
       if (allModels.length > 0) {
         availableModels.value = allModels;
         // 如果当前选择的模型不在列表中，则选择第一个
