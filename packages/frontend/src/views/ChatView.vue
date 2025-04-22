@@ -22,13 +22,13 @@
       </nav>
     </aside>
     <div class="flex-1 flex flex-col min-w-0">
-      <header class="bg-white py-4.5 px-8 border-b border-[#e5e7eb] shadow-[0_2px_4px_rgba(0,0,0,0.04)] text-left sticky top-0 z-10">
+      <header class="bg-white h-14 flex items-center px-8 border-b border-[#e5e7eb] shadow-[0_2px_4px_rgba(0,0,0,0.04)] text-left sticky top-0 z-10">
         <div class="flex items-center">
-          <h1 class="text-xl font-bold text-[#1f2937] m-0 mr-4">Ollama</h1>
+          <h1 class="text-md font-bold text-[#1f2937] m-0 mr-4">Ollama</h1>
 
           <div class="model-select px-3 py-1   " >
             <Listbox v-model="selectedPerson">
-              <div class="relative mt-1">
+              <div class="relative">
                 <ListboxButton
                     class="relative w-full cursor-default rounded-lg bg-white py-2 pl-3 pr-10 text-left shadow-md focus:outline-none focus-visible:border-indigo-500 focus-visible:ring-2 focus-visible:ring-white/75 focus-visible:ring-offset-2 focus-visible:ring-offset-orange-300 sm:text-sm"
                 >
