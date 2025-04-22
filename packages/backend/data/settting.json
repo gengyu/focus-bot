@@ -5,27 +5,34 @@
       "name": "Ollama",
       "enabled": true,
       "apiUrl": "http://localhost:11434",
-      "apiKey": "11",
+      "apiKey": "",
       "models": [
         {
-          "id": "llama2",
-          "name": "Llama 2",
-          "description": "开源大语言模型",
-          "size": "7B",
+          "id": "gemma3:latest",
+          "name": "gemma3:latest",
+          "description": "Ollama 本地模型",
+          "size": 3338801804,
+          "enabled": false
+        },
+        {
+          "id": "qwq:32b",
+          "name": "qwq:32b",
+          "description": "Ollama 本地模型",
+          "size": 19851349390,
           "enabled": true
         },
         {
-          "id": "codellama",
-          "name": "Code Llama",
-          "description": "代码专用模型",
-          "size": "7B",
+          "id": "chanwit/flux-7b:latest",
+          "name": "chanwit/flux-7b:latest",
+          "description": "Ollama 本地模型",
+          "size": 5131410276,
           "enabled": true
         },
         {
-          "id": "mistral",
-          "name": "Mistral",
-          "description": "高性能开源模型",
-          "size": "7B",
+          "id": "deepseek-r1:1.5b",
+          "name": "deepseek-r1:1.5b",
+          "description": "Ollama 本地模型",
+          "size": 1117322599,
           "enabled": true
         }
       ]

@@ -1,5 +1,5 @@
 <template>
-  <div class="bg-white rounded-lg shadow p-6 flex h-[600px]">
+  <div class="bg-white rounded-lg shadow p-6 flex">
     <!-- 左侧服务商抽屉导航 -->
     <div class="w-56 border-r pr-4 overflow-y-auto">
       <!-- 启用按钮 -->
@@ -140,6 +140,7 @@ import { ChevronUpDownIcon, ArrowPathIcon } from '@heroicons/vue/20/solid';
 import { configAPI } from '@/services/api';
 import { toast } from 'vue-sonner'
 import type {Model, Provider} from "../../../../../share/type.ts";
+import { useProviderStore } from '@/store/providerStore';
 
 
 
@@ -234,18 +235,121 @@ const getDefaultApiUrl = (providerId: string): string => {
   }
 };
 
-const providers = ref<Provider[]>([]);
+const providerStore = useProviderStore();
+const providers = computed(() => providerStore.providerConfig.providers);
+// ... existing code ...
+// const providers = ref<Provider[]>([]);
 
 // 从后端获取模型列表
 const fetchModels = async (providerId: string) => {
   try {
-    const response = await fetch(`/api/providers/${providerId}/models`);
-    if (!response.ok) throw new Error('获取模型列表失败');
-    const data = await response.json();
-    return data.models;
-  } catch (error) {
+    const provider = providers.value.find(p => p.id === providerId);
+    if (!provider) throw new Error('未找到服务商');
+    const apiUrl = provider.apiUrl;
+    const apiKey = provider.apiKey;
+    let models = [];
+    switch (providerId) {
+      case 'ollama': {
+        // Ollama 本地API: /api/tags
+        const resp = await fetch(apiUrl.replace(/\/$/, '') + '/api/tags');
+        if (!resp.ok) throw new Error('Ollama 获取模型失败');
+        const data = await resp.json();
+        models = (data.models || data.tags || []).map((item: any) => ({
+          id: item.name || item.tag,
+          name: item.name || item.tag,
+          description: 'Ollama 本地模型',
+          size: item.size || '未知',
+          enabled: true
+        }));
+        break;
+      }
+      case 'openai': {
+        // OpenAI: /models 需鉴权
+        const resp = await fetch(apiUrl.replace(/\/$/, '') + '/models', {
+          headers: { 'Authorization': `Bearer ${apiKey}` }
+        });
+        if (!resp.ok) throw new Error('OpenAI 获取模型失败');
+        const data = await resp.json();
+        models = (data.data || []).map((item: any) => ({
+          id: item.id,
+          name: item.id,
+          description: 'OpenAI 模型',
+          size: '-',
+          enabled: true
+        }));
+        break;
+      }
+      case 'gemini': {
+        // Gemini: /v1/models 需鉴权
+        const resp = await fetch(apiUrl.replace(/\/$/, '') + '/v1/models', {
+          headers: apiKey ? { 'x-goog-api-key': apiKey } : {}
+        });
+        if (!resp.ok) throw new Error('Gemini 获取模型失败');
+        const data = await resp.json();
+        models = (data.models || []).map((item: any) => ({
+          id: item.name,
+          name: item.displayName || item.name,
+          description: item.description || 'Gemini 模型',
+          size: '-',
+          enabled: true
+        }));
+        break;
+      }
+      case 'kimi': {
+        // Kimi: /models 需鉴权
+        const resp = await fetch(apiUrl.replace(/\/$/, '') + '/models', {
+          headers: apiKey ? { 'Authorization': `Bearer ${apiKey}` } : {}
+        });
+        if (!resp.ok) throw new Error('Kimi 获取模型失败');
+        const data = await resp.json();
+        models = (data.data || []).map((item: any) => ({
+          id: item.id,
+          name: item.name || item.id,
+          description: item.description || 'Kimi 模型',
+          size: '-',
+          enabled: true
+        }));
+        break;
+      }
+      case 'doubao': {
+        // 豆包: /models 需鉴权
+        const resp = await fetch(apiUrl.replace(/\/$/, '') + '/models', {
+          headers: apiKey ? { 'Authorization': `Bearer ${apiKey}` } : {}
+        });
+        if (!resp.ok) throw new Error('豆包 获取模型失败');
+        const data = await resp.json();
+        models = (data.data || []).map((item: any) => ({
+          id: item.id,
+          name: item.name || item.id,
+          description: item.description || '豆包模型',
+          size: '-',
+          enabled: true
+        }));
+        break;
+      }
+      case 'aliyun': {
+        // 阿里云千问: /models 需鉴权
+        const resp = await fetch(apiUrl.replace(/\/$/, '') + '/models', {
+          headers: apiKey ? { 'Authorization': `Bearer ${apiKey}` } : {}
+        });
+        if (!resp.ok) throw new Error('阿里云千问 获取模型失败');
+        const data = await resp.json();
+        models = (data.data || data.models || []).map((item: any) => ({
+          id: item.id,
+          name: item.name || item.id,
+          description: item.description || '通义千问模型',
+          size: '-',
+          enabled: true
+        }));
+        break;
+      }
+      default:
+        throw new Error('暂不支持该服务商');
+    }
+    return models;
+  } catch (error: any) {
     console.error('获取模型列表失败:', error);
-    toast.error('获取模型列表失败');
+    toast.error('获取模型列表失败: ' + error.message);
     return [];
   }
 };

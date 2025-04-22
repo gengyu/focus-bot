@@ -12,7 +12,7 @@ import {Client} from "@modelcontextprotocol/sdk/client/index.js";
 import {StdioClientTransport,} from "@modelcontextprotocol/sdk/client/stdio.js";
 import {StatusService} from "./statusService";
 import path from "path";
-import {ModelConfig} from "../../../../share/type.ts";
+import {ProviderConfig} from "../../../../share/type.ts";
 
 
 
@@ -292,7 +292,7 @@ export class ConfigService {
     });
   }
 
-  async getModelConfig(): Promise<ModelConfig> {
+  async getModelConfig(): Promise<ProviderConfig> {
     try {
       return await this.persistenceService.loadData();
     } catch (error) {
@@ -300,7 +300,7 @@ export class ConfigService {
     }
   }
 
-  async saveModelConfig(configs: ModelConfig): Promise<void> {
+  async saveModelConfig(configs: ProviderConfig): Promise<void> {
     try {
       await this.persistenceService.saveData(configs);
     } catch (error) {

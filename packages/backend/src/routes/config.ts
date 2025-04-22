@@ -1,7 +1,7 @@
 import {Body, Controller, Get, Param, Post} from '../decorators';
 import {ConfigService, FileConfigService} from '../services/configService';
 import {ResultHelper} from './routeHelper';
-import {ModelConfig} from "../../../../share/type.ts";
+import {ProviderConfig} from "../../../../share/type.ts";
 
 const fileConfigService = new FileConfigService();
 const configService = new ConfigService();
@@ -11,7 +11,7 @@ const configService = new ConfigService();
 export class ConfigController {
 
   @Post('/saveModelConfig')
-  async saveModelConfig(@Body() configs: ModelConfig) {
+  async saveModelConfig(@Body() configs: ProviderConfig) {
     const config = await configService.saveModelConfig(configs);
     return ResultHelper.success(config);
   }

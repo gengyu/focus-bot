@@ -14,6 +14,6 @@ export interface Provider {
   models: Model[];
 }
 
-export interface ModelConfig {
+export interface ProviderConfig {
   providers?: Provider[];
 }
