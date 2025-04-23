@@ -1,7 +1,7 @@
 <template>
-  <div class="flex flex-col h-full rounded-xl ">
+  <div class="flex flex-1 flex-col rounded-xl ">
     <!-- 消息列表区域 -->
-    <div class="flex-1 overflow-y-auto px-6 py-4" ref="messageContainer">
+    <div class="flex-1 px-6 py-4" ref="messageContainer">
       <div v-for="message in messages" :key="message.timestamp" class="mb-6">
         <div class="flex" :class="message.role === 'user' ? 'justify-end' : 'justify-start'">
           <!-- 头像 -->
@@ -35,8 +35,8 @@
     </div>
 
     <!-- 输入区域 -->
-    <div class=" bg-white border-b border-[#e5e7eb] shadow-[0_2px_4px_rgba(0,0,0,0.04)]
-    border-t  px-4 py-3 rounded-xl">
+    <div class=" bg-white border-b border-[#e5e7eb] sticky bottom-4 shadow-[0_2px_4px_rgba(0,0,0,0.04)]
+    border-t mb  px-4 py-3 rounded-xl">
       <!-- 功能按钮区 -->
       <div class="flex gap-2 mb-3">
         <!-- 搜索按钮 -->

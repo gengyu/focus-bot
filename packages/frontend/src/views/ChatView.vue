@@ -92,8 +92,8 @@ overflow-y-auto scrollbar-thin scrollbar-track-transparent scrollbar-thumb-gray-
         </div>
       </header>
 <!--      shadow-[0_4px_12px_rgba(0,0,0,0.06)]-->
-      <main class="flex-1 rounded-b-xl mx-6 mb-6 min-h-0 ">
-        <ChatWindow :model="selectedModel" />
+      <main class="flex-1 flex justify-center rounded-b-xl mx-6 mb-6 min-h-0  ">
+        <ChatWindow :model="selectedModel"  class="max-w-260"/>
       </main>
     </div>
   </div>
