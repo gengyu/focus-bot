@@ -22,8 +22,8 @@
         </div>
       </nav>
     </aside>
-    <div class=" flex-1 relative flex flex-col min-w-0
-    h-screen
+    <div ref="messageContainer" class=" flex-1 relative flex flex-col min-w-0
+    h-screen  scroll-smooth
 overflow-y-auto scrollbar-thin scrollbar-track-transparent scrollbar-thumb-gray-300 hover:scrollbar-thumb-gray-400
 ">
 <!--      bg-white border-b border-[#e5e7eb] shadow-[0_2px_4px_rgba(0,0,0,0.04)]-->
@@ -99,7 +99,9 @@ overflow-y-auto scrollbar-thin scrollbar-track-transparent scrollbar-thumb-gray-
       </header>
 <!--      shadow-[0_4px_12px_rgba(0,0,0,0.06)]-->
       <main class="flex-1 flex justify-center rounded-b-xl mx-6 mb-6 min-h-0  ">
-        <ChatWindow :model="selectedModel"  class="max-w-260"/>
+        <ChatWindow :model="selectedModel"
+                    @scroll="handlerScroll"
+                    class="max-w-260"/>
       </main>
     </div>
   </div>
@@ -119,6 +121,19 @@ const chats = ref([
   { id: 3, title: '网页生成', timestamp: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000), isActive: false },
   { id: 4, title: 'One Word One...', timestamp: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000), isActive: false },
 ]);
+
+const messageContainer = ref<HTMLElement | null>(null);
+
+const handlerScroll = () => {
+  if(messageContainer.value){
+    const container = messageContainer.value;
+    const scrollOptions = {
+      top: container.scrollHeight,
+      behavior: 'smooth' as ScrollBehavior
+    };
+    container.scrollTo(scrollOptions);
+  }
+};
 
 // 计算分组的聊天列表
 const groupedChats = computed(() => {

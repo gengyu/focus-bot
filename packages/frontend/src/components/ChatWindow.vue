@@ -311,13 +311,17 @@ const handleImageMessage = async () => {
   }
 };
 
+// 定义emit事件
+const emit = defineEmits<{
+  (e: 'scroll'): void
+}>();
+
 // 滚动到底部
 const scrollToBottom = () => {
-  setTimeout(() => {
-    if (messageContainer.value) {
-      messageContainer.value.scrollTop = messageContainer.value.scrollHeight;
-    }
-  }, 100);
+
+    // 发送滚动事件给父组件
+    emit('scroll');
+
 };
 
 onMounted(() => {
