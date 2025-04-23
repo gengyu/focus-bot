@@ -36,8 +36,8 @@
 
     <!-- 输入区域 -->
     <div class=" bg-white border-b border-[#e5e7eb] sticky bottom-4 shadow-[0_2px_4px_rgba(0,0,0,0.04)]
-    focus:outline-none focus:border-blue-500 focus:bg-white transition-colors
-    border-t mb  px-4 py-3 rounded-xl">
+    border-t mb px-4 py-3 rounded-xl ring-1 ring-transparent
+    focus-within:ring-blue-500 focus-within:ring-opacity-50 focus-within:shadow-[0_2px_8px_rgba(37,99,235,0.15)] transition-all duration-200">
 
 
       <!-- 图片预览区域 -->
@@ -326,7 +326,7 @@ onMounted(() => {
 // 更新输入框内容
 const updateEditableContent = () => {
   if (editableDiv.value) {
-    editableDiv.value.innerText = messageInput.value;
+    // editableDiv.value.innerText = messageInput.value;
   }
 };
 
