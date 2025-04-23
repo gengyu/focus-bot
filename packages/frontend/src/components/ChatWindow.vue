@@ -66,8 +66,21 @@
         </button>
       </div>
 
+      <!-- 图片预览区域 -->
+      <div v-if="imagePreview" class="mb-3 flex items-center gap-2">
+        <div class="relative w-20 h-20 rounded-lg overflow-hidden border border-gray-200">
+          <img :src="imagePreview" alt="图片预览" class="w-full h-full object-cover">
+          <button @click="cancelImageUpload" class="absolute top-1 right-1 bg-black/50 rounded-full p-1 hover:bg-black/70">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+        <span class="text-sm text-gray-500">{{ imageFileName }}</span>
+      </div>
+
       <!-- 输入框区域 -->
-      <div class="flex gap-2 items-center">
+      <div class="flex gap-2 items-start">
         <!-- 服务商选择 -->
         <select v-model="selectedProvider" class="px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm w-32 focus:outline-none focus:border-blue-500">
           <option v-for="provider in providers" :key="provider.id" :value="provider.id">{{ provider.name }}</option>
@@ -78,18 +91,19 @@
         </select>
         <!-- 文本输入框 -->
         <div class="flex-1 relative">
-          <input
+          <textarea
             v-model="messageInput"
-            type="text"
+            rows="3"
             placeholder="输入消息..."
-            class="w-full px-4 py-2.5 bg-gray-50 rounded-full border border-gray-200 focus:outline-none focus:border-blue-500 focus:bg-white transition-colors"
-            @keyup.enter="sendMessage"
-          >
+            class="w-full px-4 py-2.5 bg-gray-50 rounded-lg border border-gray-200 focus:outline-none focus:border-blue-500 focus:bg-white transition-colors resize-none"
+            @keyup.enter.ctrl="sendMessage"
+          ></textarea>
+          <div class="text-xs text-gray-400 mt-1 text-right">按 Ctrl + Enter 发送</div>
         </div>
         <!-- 发送按钮 -->
         <button
           @click="sendMessage"
-          class="px-6 py-2.5 bg-blue-500 text-white rounded-full hover:bg-blue-600 focus:outline-none transition-colors"
+          class="px-6 py-2.5 bg-blue-500 text-white rounded-lg hover:bg-blue-600 focus:outline-none transition-colors self-end"
         >
           发送
         </button>
@@ -111,6 +125,9 @@ const chatApi = new ChatAPI();
 const messages = ref<ChatMessage[]>([]);
 const messageInput = ref('');
 const messageContainer = ref<HTMLElement | null>(null);
+const imagePreview = ref<string | null>(null);
+const imageFileName = ref<string>('');
+const imageFile = ref<File | null>(null);
 
 // 功能开关状态
 const isSearchActive = ref(false);
@@ -174,26 +191,35 @@ const loadChatHistory = async () => {
 
 // 发送文本消息
 const sendMessage = async () => {
-  if (!messageInput.value.trim()) return;
-  
-  // 添加用户消息
-  const userMessage: ChatMessage = {
-    role: 'user',
-    content: messageInput.value,
-    type: 'text',
-    timestamp: Date.now()
-  };
-  messages.value.push(userMessage);
-  messageInput.value = '';
-  scrollToBottom();
-  
-  // 使用选定的模型
-  const modelToUse = props.model || selectedModel.value;
+  // 如果既没有文本消息也没有图片，则不发送
+  if (!messageInput.value.trim() && !imageFile.value) return;
   
   try {
-    const response = await chatApi.sendMessage(userMessage.content, selectedProvider.value, modelToUse);
-    messages.value.push(response);
-    scrollToBottom();
+    // 如果有图片，先发送图片
+    if (imageFile.value) {
+      await handleImageMessage();
+    }
+    
+    // 如果有文本消息，发送文本
+    if (messageInput.value.trim()) {
+      // 添加用户消息
+      const userMessage: ChatMessage = {
+        role: 'user',
+        content: messageInput.value,
+        type: 'text',
+        timestamp: Date.now()
+      };
+      messages.value.push(userMessage);
+      messageInput.value = '';
+      scrollToBottom();
+      
+      // 使用选定的模型
+      const modelToUse = props.model || selectedModel.value;
+      
+      const response = await chatApi.sendMessage(userMessage.content, selectedProvider.value, modelToUse);
+      messages.value.push(response);
+      scrollToBottom();
+    }
   } catch (error) {
     console.error('发送消息失败:', error);
   }
@@ -204,16 +230,39 @@ const handleImageUpload = async (event: Event) => {
   const input = event.target as HTMLInputElement;
   if (!input.files?.length) return;
 
-  try {
-    const response = await chatApi.sendImage(input.files[0]);
-    messages.value.push(response);
-    scrollToBottom();
-  } catch (error) {
-    console.error('上传图片失败:', error);
-  }
+  const file = input.files[0];
+  imageFile.value = file;
+  imageFileName.value = file.name;
+  
+  // 创建本地预览URL
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    imagePreview.value = e.target?.result as string;
+  };
+  reader.readAsDataURL(file);
 
   // 清除input的value，允许上传相同的文件
   input.value = '';
+};
+
+const cancelImageUpload = () => {
+  imagePreview.value = null;
+  imageFileName.value = '';
+  imageFile.value = null;
+};
+
+// 发送消息时处理图片上传
+const handleImageMessage = async () => {
+  if (!imageFile.value) return;
+
+  try {
+    const response = await chatApi.sendImage(imageFile.value);
+    messages.value.push(response);
+    scrollToBottom();
+    cancelImageUpload(); // 清除预览
+  } catch (error) {
+    console.error('上传图片失败:', error);
+  }
 };
 
 // 滚动到底部

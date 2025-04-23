@@ -1,6 +1,7 @@
 <template>
   <div class="flex min-h-screen bg-[#f5f6fa]">
-    <aside class="w-60 bg-white border-r border-[#e5e7eb] flex flex-col pb-5 shadow-[2px_0_8px_rgba(0,0,0,0.04)]">
+    <aside class="transition-all duration-300 bg-white border-r border-[#e5e7eb] flex flex-col pb-5 shadow-[2px_0_8px_rgba(0,0,0,0.04)]"
+      :class="[isAsideCollapsed ? 'w-10 overflow-hidden' : 'w-60']">
       <div class="flex items-center h-14 px-3 border-b border-[#f0f0f0]">
         <span class="text-base mr-2.5">🧠</span>
         <span class="text-xl font-bold text-[#1f2937]">智AI助手</span>
@@ -28,6 +29,11 @@ overflow-y-auto scrollbar-thin scrollbar-track-transparent scrollbar-thumb-gray-
 <!--      bg-white border-b border-[#e5e7eb] shadow-[0_2px_4px_rgba(0,0,0,0.04)]-->
       <header class=" h-14 flex items-center px-8  text-left sticky top-0 z-10">
         <div class="flex items-center">
+          <button @click="toggleAside" class="p-2 hover:bg-gray-100 rounded-lg transition-colors mr-2">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          </button>
           <h1 class="text-md font-bold text-[#1f2937] m-0 mr-4">Ollama</h1>
 
           <div class="model-select px-3 py-1   " >
@@ -164,6 +170,11 @@ const selectedPerson = ref(people[0]);
 
 const selectedModel = ref('gemma-3:latest');
 const availableModels = ref(['gemma-3:latest', 'llama3', 'mistral', 'phi-3']);
+const isAsideCollapsed = ref(false);
+
+const toggleAside = () => {
+  isAsideCollapsed.value = !isAsideCollapsed.value;
+};
 
 onMounted(async () => {
   try {
