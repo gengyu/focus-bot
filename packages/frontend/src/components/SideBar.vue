@@ -1,5 +1,5 @@
 <template>
-  <div class="w-20 bg-gray-800 text-white p-4 flex flex-col justify-between items-center">
+  <div class="w-15 bg-gray-800 text-white p-4 flex flex-col justify-between items-center">
     <div class="flex flex-col gap-6">
       <!-- 聊天入口 -->
       <router-link to="/chat" class="w-6 h-6">
