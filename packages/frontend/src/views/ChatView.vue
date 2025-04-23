@@ -21,8 +21,12 @@
         </div>
       </nav>
     </aside>
-    <div class=" flex-1 flex flex-col min-w-0">
-      <header class="bg-white h-14 flex items-center px-8 border-b border-[#e5e7eb] shadow-[0_2px_4px_rgba(0,0,0,0.04)] text-left sticky top-0 z-10">
+    <div class=" flex-1 relative flex flex-col min-w-0
+    h-screen
+overflow-y-auto scrollbar-thin scrollbar-track-transparent scrollbar-thumb-gray-300 hover:scrollbar-thumb-gray-400
+">
+<!--      bg-white border-b border-[#e5e7eb] shadow-[0_2px_4px_rgba(0,0,0,0.04)]-->
+      <header class=" h-14 flex items-center px-8  text-left sticky top-0 z-10">
         <div class="flex items-center">
           <h1 class="text-md font-bold text-[#1f2937] m-0 mr-4">Ollama</h1>
 
@@ -85,10 +89,10 @@
             </Listbox>
           </div>
 
-
         </div>
       </header>
-      <main class="flex-1 bg-[#f9fafb] rounded-b-xl shadow-[0_4px_12px_rgba(0,0,0,0.06)] mx-6 mb-6 min-h-0 overflow-y-auto scrollbar-thin scrollbar-track-transparent scrollbar-thumb-gray-300 hover:scrollbar-thumb-gray-400">
+<!--      shadow-[0_4px_12px_rgba(0,0,0,0.06)]-->
+      <main class="flex-1 rounded-b-xl mx-6 mb-6 min-h-0 ">
         <ChatWindow :model="selectedModel" />
       </main>
     </div>
