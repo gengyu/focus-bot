@@ -1,7 +1,9 @@
 <template>
   <div class="flex min-h-screen bg-[#f5f6fa]">
-    <aside class="transition-all duration-300 bg-white border-r border-[#e5e7eb] flex flex-col pb-5 shadow-[2px_0_8px_rgba(0,0,0,0.04)]"
-      :class="[isAsideCollapsed ? 'w-10 overflow-hidden' : 'w-60']">
+    <aside
+        class="transition-all duration-300 bg-white border-r border-[#e5e7eb] flex flex-col pb-5 shadow-[2px_0_8px_rgba(0,0,0,0.04)]"
+        :class="[isAsideCollapsed ? 'w-10 overflow-hidden' : 'w-60']"
+    >
       <div class="flex items-center h-14 px-3 border-b border-[#f0f0f0]">
         <span class="text-base mr-2.5">🧠</span>
         <span class="text-xl font-bold text-[#1f2937]">智AI助手</span>
@@ -10,47 +12,64 @@
         <div v-for="group in groupedChats" :key="group.title" class="mb-4">
           <div class="pl-6 text-sm text-gray-500 mb-2">{{ group.title }}</div>
           <ul class="pl-6 m-0">
-            <li v-for="chat in group.chats" :key="chat.id"
+            <li
+                @click="handlerSelectChat(chat.id)"
+                v-for="chat in group.chats"
+                :key="chat.id"
                 class="px-3 py-2.5 rounded-lg text-[#374151] cursor-pointer mb-1.5 transition-colors duration-200"
                 :class="{
-                  'bg-[#e0e7ef] text-[#2563eb] font-semibold': chat.isActive,
-                  'hover:bg-[#e0e7ef] hover:text-[#2563eb] hover:font-semibold': !chat.isActive
-                }">
+                'bg-[#e0e7ef] text-[#2563eb] font-semibold': chat.isActive,
+                'hover:bg-[#e0e7ef] hover:text-[#2563eb] hover:font-semibold': !chat.isActive
+              }"
+            >
               {{ chat.title }}
             </li>
           </ul>
         </div>
       </nav>
     </aside>
-    <div ref="messageContainer" class=" flex-1 relative flex flex-col min-w-0
-    h-screen  scroll-smooth
-overflow-y-auto scrollbar-thin scrollbar-track-transparent scrollbar-thumb-gray-300 hover:scrollbar-thumb-gray-400
-">
-<!--      bg-white border-b border-[#e5e7eb] shadow-[0_2px_4px_rgba(0,0,0,0.04)]-->
-      <header class=" h-14 flex items-center px-8  text-left sticky top-0 z-10">
+    <div
+        ref="messageContainer"
+        class="flex-1 relative flex flex-col min-w-0 h-screen scroll-smooth overflow-y-auto scrollbar-thin scrollbar-track-transparent scrollbar-thumb-gray-300 hover:scrollbar-thumb-gray-400"
+    >
+      <header class="h-14 flex items-center px-8 text-left sticky top-0 z-10">
         <div class="flex items-center">
-          <button @click="toggleAside" class="p-2 hover:bg-gray-100 rounded-lg transition-colors mr-2">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+          <button
+              @click="toggleAside"
+              class="p-2 hover:bg-gray-100 rounded-lg transition-colors mr-2"
+          >
+            <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-5 w-5 text-gray-500"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+            >
+              <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M4 6h16M4 12h16M4 18h16"
+              />
             </svg>
           </button>
           <h1 class="text-md font-bold text-[#1f2937] m-0 mr-4">Ollama</h1>
 
-          <div class="model-select px-3 py-1   " >
-            <Listbox v-model="selectedPerson">
+          <div class="model-select px-3 py-1">
+            <Listbox v-model="selectedModel" @update:model-value="handlerSelectModel">
               <div class="relative">
                 <ListboxButton
                     class="relative w-full cursor-default rounded-lg bg-white py-2 pl-3 pr-10 text-left shadow-md focus:outline-none focus-visible:border-indigo-500 focus-visible:ring-2 focus-visible:ring-white/75 focus-visible:ring-offset-2 focus-visible:ring-offset-orange-300 sm:text-sm"
                 >
-                  <span class="block truncate">{{ selectedPerson.name }}</span>
+                  <span class="block truncate">{{ selectedModel.name }}</span>
                   <span
                       class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2"
                   >
-            <ChevronUpDownIcon
-                class="h-5 w-5 text-gray-400"
-                aria-hidden="true"
-            />
-          </span>
+                    <ChevronUpDownIcon
+                        class="h-5 w-5 text-gray-400"
+                        aria-hidden="true"
+                    />
+                  </span>
                 </ListboxButton>
 
                 <transition
@@ -63,30 +82,29 @@ overflow-y-auto scrollbar-thin scrollbar-track-transparent scrollbar-thumb-gray-
                   >
                     <ListboxOption
                         v-slot="{ active, selected }"
-                        v-for="person in people"
-                        :key="person.name"
-                        :value="person"
+                        v-for="model in models"
+                        :key="model.name"
+                        :value="model"
                         as="template"
                     >
                       <li
                           :class="[
-                  active ? 'bg-amber-100 text-amber-900' : 'text-gray-900',
-                  'relative cursor-default select-none py-2 pl-10 pr-4',
-                ]"
+                          active ? 'bg-amber-100 text-amber-900' : 'text-gray-900',
+                          'relative cursor-default select-none py-2 pl-10 pr-4',
+                        ]"
                       >
-                <span
-                    :class="[
-                    selected ? 'font-medium' : 'font-normal',
-                    'block truncate',
-                  ]"
-                >{{ person.name }}</span
-                >
+                        <span
+                            :class="[
+                            selected ? 'font-medium' : 'font-normal',
+                            'block truncate',
+                          ]"
+                        >{{ model.name }}</span>
                         <span
                             v-if="selected"
                             class="absolute inset-y-0 left-0 flex items-center pl-3 text-amber-600"
                         >
-                  <CheckIcon class="h-5 w-5" aria-hidden="true" />
-                </span>
+                          <CheckIcon class="h-5 w-5" aria-hidden="true"/>
+                        </span>
                       </li>
                     </ListboxOption>
                   </ListboxOptions>
@@ -94,14 +112,14 @@ overflow-y-auto scrollbar-thin scrollbar-track-transparent scrollbar-thumb-gray-
               </div>
             </Listbox>
           </div>
-
         </div>
       </header>
-<!--      shadow-[0_4px_12px_rgba(0,0,0,0.06)]-->
-      <main class="flex-1 flex justify-center rounded-b-xl mx-6 mb-6 min-h-0  ">
-        <ChatWindow :model="selectedModel"
-                    @scroll="handlerScroll"
-                    class="max-w-260"/>
+      <main class="flex-1 flex justify-center rounded-b-xl mx-6 mb-6 min-h-0">
+        <ChatWindow
+            :chat-messages="activeChatMessages"
+            @scroll="handlerScroll"
+            class="max-w-260"
+        />
       </main>
     </div>
   </div>
@@ -109,24 +127,65 @@ overflow-y-auto scrollbar-thin scrollbar-track-transparent scrollbar-thumb-gray-
 
 <script setup lang="ts">
 import ChatWindow from '../components/ChatWindow.vue';
-import { onMounted, ref, computed } from 'vue';
-import { configAPI } from '../services/api';
-import { Listbox, ListboxButton, ListboxOption, ListboxOptions } from '@headlessui/vue'
-import { CheckIcon, ChevronUpDownIcon } from '@heroicons/vue/20/solid'
+import {onMounted, ref, computed, watch, nextTick} from 'vue';
+import {configAPI} from '../services/api';
+import {Listbox, ListboxButton, ListboxOption, ListboxOptions} from '@headlessui/vue'
+import {CheckIcon, ChevronUpDownIcon} from '@heroicons/vue/20/solid'
+import {useProviderStore} from "@/store/providerStore.ts";
+import {Model} from "../../../../share/type.ts";
+import {useDialogStore} from "@/store/dialogStore.ts";
 
-// 模拟聊天数据
-const chats = ref([
-  { id: 1, title: '默认助手', timestamp: new Date(), isActive: true },
-  { id: 2, title: 'demo', timestamp: new Date(Date.now() - 24 * 60 * 60 * 1000), isActive: false },
-  { id: 3, title: '网页生成', timestamp: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000), isActive: false },
-  { id: 4, title: 'One Word One...', timestamp: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000), isActive: false },
-]);
 
-const messageContainer = ref<HTMLElement | null>(null);
+const {providerConfig} = useProviderStore();
+const models = computed<Model[]>(() => {
+  const models = providerConfig?.providers?.filter(provider => provider.enabled) || []
+  return models.flatMap(provider => provider.models) || [];
+});
+
+const selectedModel = ref<Model>({
+  id: '',
+  name: '',
+  description: '',
+  size: '',
+  enabled: false,
+});
+
+
+const {dialogState, updateModel, setActiveDialog} = useDialogStore();
+const activeChatMessages = computed(() => {
+  const activeDialog = dialogState.dialogs.find(dialog => dialog.id === dialogState.activeDialogId);
+  return activeDialog?.messages || [];
+});
+
+// 监听model变化，更新activeDialog.model
+const handlerSelectModel = () => {
+  nextTick(() => {
+    updateModel(selectedModel.value)
+  });
+}
+
+const handlerSelectChat = (chatId: string)=> {
+  setActiveDialog(chatId)
+}
+
+watch(() => dialogState.activeDialogId, () => {
+  const activeDialog = dialogState.dialogs.find(dialog => dialog.id === dialogState.activeDialogId);
+  if (activeDialog?.model) {
+    selectedModel.value = activeDialog.model!;
+  }else {
+   if(models?.value.length> 0) selectedModel.value = models.value[0];
+  }
+}, {
+  immediate: true,
+});
+
+
+const messageContainer = ref<HTMLElement | undefined>(undefined);
+
 
 const handlerScroll = () => {
-  if(messageContainer.value){
-    const container = messageContainer.value;
+  if (messageContainer.value) {
+    const container: HTMLElement = messageContainer.value;
     const scrollOptions = {
       top: container.scrollHeight,
       behavior: 'smooth' as ScrollBehavior
@@ -147,13 +206,13 @@ const groupedChats = computed(() => {
   thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
   const groups = [
-    { title: '今天', chats: [] },
-    { title: '昨天', chats: [] },
-    { title: '最近7天', chats: [] },
-    { title: '最近30天', chats: [] },
+    {title: '今天', chats: []},
+    {title: '昨天', chats: []},
+    {title: '最近7天', chats: []},
+    {title: '最近30天', chats: []},
   ];
 
-  chats.value.forEach(chat => {
+  dialogState.dialogs.forEach(chat => {
     const chatDate = new Date(chat.timestamp);
     if (chatDate >= today) {
       groups[0].chats.push(chat);
@@ -170,49 +229,37 @@ const groupedChats = computed(() => {
   return groups.filter(group => group.chats.length > 0);
 });
 
-const people = [
-  { name: 'Wade Cooper' },
-  { name: 'Arlene Mccoy' },
-  { name: 'Devon Webb' },
-  { name: 'Tom Cook' },
-  { name: 'Tanya Fox' },
-  { name: 'Hellen Schmidt' },
-];
-const selectedPerson = ref(people[0]);
 
-
-
-
-const selectedModel = ref('gemma-3:latest');
-const availableModels = ref(['gemma-3:latest', 'llama3', 'mistral', 'phi-3']);
+// const selectedModel = ref('gemma-3:latest');
+// const availableModels = ref(['gemma-3:latest', 'llama3', 'mistral', 'phi-3']);
 const isAsideCollapsed = ref(false);
 
 const toggleAside = () => {
   isAsideCollapsed.value = !isAsideCollapsed.value;
 };
 
-onMounted(async () => {
-  try {
-    // 从配置中加载可用模型
-    const config = await configAPI.loadConfig();
-    if (config.mcpServers) {
-      // 合并所有服务器的模型列表
-      const allModels = Object.values(config.mcpServers)
-        .flatMap((server: any) => server.models || [])
-        .filter((model: string) => model); // 过滤空值
-
-      if (allModels.length > 0) {
-        availableModels.value = allModels;
-        // 如果当前选择的模型不在列表中，则选择第一个
-        if (!availableModels.value.includes(selectedModel.value)) {
-          selectedModel.value = availableModels.value[0];
-        }
-      }
-    }
-  } catch (error) {
-    console.error('加载模型列表失败:', error);
-  }
-});
+// onMounted(async () => {
+//   try {
+//     // 从配置中加载可用模型
+//     const config = await configAPI.loadConfig();
+//     if (config.mcpServers) {
+//       // 合并所有服务器的模型列表
+//       const allModels = Object.values(config.mcpServers)
+//           .flatMap((server: any) => server.models || [])
+//           .filter((model: string) => model); // 过滤空值
+//
+//       if (allModels.length > 0) {
+//         availableModels.value = allModels;
+//         // 如果当前选择的模型不在列表中，则选择第一个
+//         if (!availableModels.value.includes(selectedModel.value)) {
+//           selectedModel.value = availableModels.value[0];
+//         }
+//       }
+//     }
+//   } catch (error) {
+//     console.error('加载模型列表失败:', error);
+//   }
+// });
 </script>
 
 <style lang="less">

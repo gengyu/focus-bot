@@ -2,7 +2,8 @@
   <div class="flex flex-1 flex-col rounded-xl ">
     <!-- 消息列表区域 -->
     <div class="flex-1 px-6 py-4" ref="messageContainer">
-      <div v-for="message in messages" :key="message.timestamp" class="mb-6">
+
+      <div v-for="message in chatMessages" :key="message.timestamp" class="mb-6">
         <div class="flex" :class="message.role === 'user' ? 'justify-end' : 'justify-start'">
           <!-- 头像 -->
           <div v-if="message.role !== 'user'" class="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center mr-3">
@@ -143,11 +144,13 @@
 
 <script setup lang="ts">
 import { ref, onMounted, computed, defineProps, watch } from 'vue';
-import { ChatAPI, type ChatMessage } from '../services/chatApi';
+import { ChatAPI } from '../services/chatApi';
 import { configAPI } from '../services/api';
+import type {ChatMessage} from "../../../../share/type.ts";
 
 const props = defineProps<{
   model?: string
+  chatMessages?: ChatMessage[]
 }>();
 
 const chatApi = new ChatAPI();

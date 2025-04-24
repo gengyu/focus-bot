@@ -3,13 +3,16 @@
     <!-- 左侧服务商抽屉导航 -->
     <div class="w-56 border-r pr-4 overflow-y-auto">
       <!-- 启用按钮 -->
-      <div v-for="(provider, idx) in providers" :key="provider.id" @click="selectedProviderIdx = idx"
+      <div v-for="(provider, idx) in  providerConfig.providers" :key="provider.id"
+           @click="handlerSelectProvider(idx)"
         :class="['cursor-pointer flex items-center px-4 py-2 rounded-lg mb-2 transition-all duration-200 ease-in-out',
           selectedProviderIdx === idx ? 'bg-primary shadow-sm transform scale-102' :
           'hover:bg-base-200 hover:shadow-sm']">
         <span class="font-medium text-[15px]">{{ provider.name }}</span>
         <span class="ml-auto " @click.stop>
-          <Switch  v-model="provider.enabled" as="template" v-slot="{ checked }">
+          <Switch  v-model="provider.enabled"
+                   @update:modelValue="hanlderProviderEnabled"
+                   as="template" v-slot="{ checked }">
             <button
                 class="relative inline-flex h-6 w-11 items-center rounded-full"
                 :class="checked ? 'bg-[rgba(34,197,94,0.8)]' : 'bg-gray-200'"
@@ -133,7 +136,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
+import {ref, computed, onMounted, watch} from 'vue';
 import { Combobox,ComboboxInput, ComboboxButton, ComboboxOptions, ComboboxOption, Switch } from '@headlessui/vue';
 import { ChevronUpDownIcon, ArrowPathIcon } from '@heroicons/vue/20/solid';
 // import { useToast } from 'vue-toastification';
@@ -141,81 +144,10 @@ import { configAPI } from '@/services/api';
 import { toast } from 'vue-sonner'
 import type {Model, Provider} from "../../../../../share/type.ts";
 import { useProviderStore } from '@/store/providerStore';
+import {storeToRefs} from "pinia";
 
 
 
-// 默认供应商配置
-const defaultProviders: Provider[] = [
-  {
-    id: 'ollama',
-    name: 'Ollama',
-    enabled: true,
-    apiUrl: 'http://localhost:11434',
-    apiKey: '',
-    models: [
-      {id: 'llama2', name: 'Llama 2', description: '开源大语言模型', size: '7B', enabled: true},
-      {id: 'codellama', name: 'Code Llama', description: '代码专用模型', size: '7B', enabled: true},
-      {id: 'mistral', name: 'Mistral', description: '高性能开源模型', size: '7B', enabled: true}
-    ]
-  },
-  {
-    id: 'openai',
-    name: 'OpenAI',
-    enabled: false,
-    apiUrl: 'https://api.openai.com/v1',
-    apiKey: '',
-    models: [
-      {id: 'gpt-4', name: 'GPT-4', description: '最强大的 GPT 模型', size: '1.76T', enabled: true},
-      {id: 'gpt-3.5-turbo', name: 'GPT-3.5 Turbo', description: '性能均衡模型', size: '175B', enabled: true}
-    ]
-  },
-  {
-    id: 'gemini',
-    name: 'Google Gemini',
-    enabled: false,
-    apiUrl: 'https://generativelanguage.googleapis.com',
-    apiKey: '',
-    models: [
-      {id: 'gemini-pro', name: 'Gemini Pro', description: '通用型大语言模型', size: '1.37T', enabled: true},
-      {id: 'gemini-pro-vision', name: 'Gemini Pro Vision', description: '多模态模型', size: '1.37T', enabled: true}
-    ]
-  },
-  {
-    id: 'kimi',
-    name: 'Kimi',
-    enabled: false,
-    apiUrl: 'https://api.moonshot.cn/v1',
-    apiKey: '',
-    models: [
-      {id: 'moonshot-v1', name: 'Moonshot', description: '通用大语言模型', size: '70B', enabled: true}
-    ]
-  },
-  {
-    id: 'doubao',
-    name: '豆包',
-    enabled: false,
-    apiUrl: 'https://api.doubao.com/v1',
-    apiKey: '',
-    models: [
-      {id: 'doubao-v1', name: '豆包大模型', description: '通用大语言模型', size: '70B', enabled: true}
-    ]
-  },
-  {
-    id: 'aliyun',
-    name: '阿里云通义千问',
-    enabled: false,
-    apiUrl: 'https://dashscope.aliyuncs.com/api/v1',
-    apiKey: '',
-    models: [
-      {id: 'qwen-max', name: 'Qwen Max', description: '最强性能模型', size: '189B', enabled: true},
-      {id: 'qwen-plus', name: 'Qwen Plus', description: '通用大语言模型', size: '14B', enabled: true},
-      {id: 'qwen-turbo', name: 'Qwen Turbo', description: '快速响应模型', size: '7B', enabled: true}
-    ]
-  }
-];
-
-const selectedProviderIdx = ref(0);
-const currentProvider = computed(() => providers.value[selectedProviderIdx.value]);
 const showPassword = ref(false);
 const query = ref('');
 
@@ -235,15 +167,52 @@ const getDefaultApiUrl = (providerId: string): string => {
   }
 };
 
-const providerStore = useProviderStore();
-const providers = computed(() => providerStore.providerConfig.providers);
+const {providerConfig, resetSettings, updateProvider} = useProviderStore();
+
+
+const selectedProviderIdx = ref(0);
+
+const currentProvider = ref<Provider>()
+if(providerConfig.providers.length>0){
+  currentProvider.value = providerConfig.providers[selectedProviderIdx.value];
+}else {
+  watch(()=>providerConfig.providers, ()=> {
+    currentProvider.value = providerConfig.providers[selectedProviderIdx.value];
+  }, { once: true})
+}
+
+
+const  handlerSelectProvider = (idx)=> {
+  selectedProviderIdx.value = idx;
+  currentProvider.value = providerConfig.providers[selectedProviderIdx.value];
+}
+
+// 关闭启用服务商方法
+const hanlderProviderEnabled = (value)=> {
+  updateProvider(currentProvider.value.id, {
+    enabled: value,
+    // models: currentProvider.value.models
+  });
+}
+
+const saveSettings= ()=> {
+  if(!currentProvider.value) return;
+  updateProvider(currentProvider.value.id, {
+    apiKey: currentProvider.value.apiKey,
+    apiUrl: currentProvider.value.apiUrl,
+    enabled: currentProvider.value.enabled,
+    models: currentProvider.value.models
+  });
+}
+
+
+// const currentProvider = computed(() => providers.value[selectedProviderIdx.value]);
 // ... existing code ...
 // const providers = ref<Provider[]>([]);
 
 // 从后端获取模型列表
-const fetchModels = async (providerId: string) => {
+const fetchModels = async (providerId: string, provider?: Provider) => {
   try {
-    const provider = providers.value.find(p => p.id === providerId);
     if (!provider) throw new Error('未找到服务商');
     const apiUrl = provider.apiUrl;
     const apiKey = provider.apiKey;
@@ -355,15 +324,17 @@ const fetchModels = async (providerId: string) => {
 };
 
 // 刷新当前供应商的模型列表
-const refreshModels = async () => {
-  if (!currentProvider.value) return;
-  const models = await fetchModels(currentProvider.value.id);
+const refreshModels = async ( ) => {
+  const providerId = currentProvider.value?.id;
+
+  if (!providerId) return;
+  const models = await fetchModels(providerId, currentProvider.value);
   if (models.length > 0) {
     currentProvider.value.models = models.map(model => ({
       ...model,
       enabled: true
     }));
-    await saveSettings();
+    // await saveSettings();
     toast.success('模型列表已更新');
   }
 };
@@ -388,61 +359,4 @@ const addNewModel = async (model: Model) => {
 };
 
 
-const loadSettings = async () => {
-  try {
-    // 初始化供应商列表
-    providers.value = JSON.parse(JSON.stringify(defaultProviders));
-    
-    // 从后端加载用户配置
-    const config = await configAPI.getModelConfig();
-    if (config && config.providers) {
-      providers.value = providers.value.map(provider => {
-        const savedProvider = config.providers.find(p => p.id === provider.id);
-        if (savedProvider) {
-          return {
-            ...provider,
-            enabled: savedProvider.enabled,
-            apiUrl: savedProvider.apiUrl,
-            apiKey: savedProvider.apiKey,
-            models: savedProvider.models
-          };
-        }
-        return provider;
-      });
-    }
-  } catch (error) {
-    console.error('加载设置失败:', error);
-    toast.error('加载设置失败');
-  }
-};
-
-// 保存模型
-const saveSettings = async () => {
-  try {
-
-
-    await configAPI.saveModelConfig({ providers: providers.value });
-    toast.success('设置已保存');
-  } catch (error) {
-    console.error('保存设置失败:', error);
-    toast.error(`保存设置失败: ${error}`);
-  }
-};
-
-const resetSettings = async () => {
-  if (confirm('确定要重置所有设置吗？')) {
-    providers.value = providers.value.map(provider => ({
-      ...provider,
-      enabled: provider.id === 'ollama',
-      apiUrl: getDefaultApiUrl(provider.id),
-      apiKey: '',
-      models: provider.models.map(model => ({ ...model, enabled: true }))
-    }));
-    await saveSettings();
-  }
-};
-
-onMounted(() => {
-  loadSettings();
-});
 </script>

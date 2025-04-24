@@ -15,5 +15,29 @@ export interface Provider {
 }
 
 export interface ProviderConfig {
-  providers?: Provider[];
+  providers: Provider[];
+}
+
+
+export interface ChatMessage {
+  id: string;
+  role: 'user' | 'assistant';
+  content: string;
+  timestamp: number;
+  type: 'text' | 'image';
+  imageUrl?: string;
+}
+
+
+export interface Dialog {
+  id: string;
+  title: string;
+  messages: ChatMessage[];
+  timestamp: number;
+  model?: Model
+}
+
+export interface DialogState {
+  dialogs: Dialog[];
+  activeDialogId: string | null;
 }
