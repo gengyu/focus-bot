@@ -1,7 +1,7 @@
 import {Body, Controller, Get, Param, Post} from '../decorators';
 import {ConfigService, FileConfigService} from '../services/configService';
 import {ResultHelper} from './routeHelper';
-import {ProviderConfig} from "../../../../share/type.ts";
+import { type ProviderConfig} from "../../../../share/type";
 
 const fileConfigService = new FileConfigService();
 const configService = new ConfigService();

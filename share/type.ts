@@ -20,7 +20,6 @@ export interface ProviderConfig {
 
 
 export interface ChatMessage {
-  id: string;
   role: 'user' | 'assistant';
   content: string;
   timestamp: number;
@@ -28,11 +27,21 @@ export interface ChatMessage {
   imageUrl?: string;
 }
 
+export interface Chat {
+  id: string;
+  messages: ChatMessage[];
+  create_time: string;
+  update_time: string;
+  content_hash?: string;
+  share_id?: string;
+}
+
 
 export interface Dialog {
-  id: string;
+  dialogId: string;
   title: string;
-  messages: ChatMessage[];
+  // messages: ChatMessage[];
+  // chatId: string,
   timestamp: number;
   model?: Model
 }

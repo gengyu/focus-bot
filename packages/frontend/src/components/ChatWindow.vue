@@ -6,7 +6,8 @@
       <div v-for="message in chatMessages" :key="message.timestamp" class="mb-6">
         <div class="flex" :class="message.role === 'user' ? 'justify-end' : 'justify-start'">
           <!-- 头像 -->
-          <div v-if="message.role !== 'user'" class="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center mr-3">
+          <div v-if="message.role !== 'user'"
+               class="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center mr-3">
             <span class="text-green-600 text-sm">AI</span>
           </div>
           <!-- 消息气泡 -->
@@ -28,7 +29,8 @@
             </div>
           </div>
           <!-- 用户头像 -->
-          <div v-if="message.role === 'user'" class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center ml-3">
+          <div v-if="message.role === 'user'"
+               class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center ml-3">
             <span class="text-blue-600 text-sm">我</span>
           </div>
         </div>
@@ -45,9 +47,11 @@
       <div v-if="imagePreview" class="mb-3 flex items-center gap-2">
         <div class="relative w-20 h-20 rounded-lg overflow-hidden border border-gray-200">
           <img :src="imagePreview" alt="图片预览" class="w-full h-full object-cover">
-          <button @click="cancelImageUpload" class="absolute top-1 right-1 bg-black/50 rounded-full p-1 hover:bg-black/70">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          <button @click="cancelImageUpload"
+                  class="absolute top-1 right-1 bg-black/50 rounded-full p-1 hover:bg-black/70">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24"
+                 stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
             </svg>
           </button>
         </div>
@@ -55,74 +59,86 @@
       </div>
 
       <!-- 输入框区域 -->
-      <div >
+      <div>
         <!-- 服务商选择 -->
-<!--        <select v-model="selectedProvider" class="px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm w-32 focus:outline-none focus:border-blue-500">-->
-<!--          <option v-for="provider in providers" :key="provider.id" :value="provider.id">{{ provider.name }}</option>-->
-<!--        </select>-->
+        <!--        <select v-model="selectedProvider" class="px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm w-32 focus:outline-none focus:border-blue-500">-->
+        <!--          <option v-for="provider in providers" :key="provider.id" :value="provider.id">{{ provider.name }}</option>-->
+        <!--        </select>-->
         <!-- 模型选择 -->
-<!--        <select v-if="!props.model" v-model="selectedModel" class="px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm w-32 focus:outline-none focus:border-blue-500">-->
-<!--          <option v-for="model in availableModels" :key="model" :value="model">{{ model }}</option>-->
-<!--        </select>-->
+        <!--        <select v-if="!props.model" v-model="selectedModel" class="px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm w-32 focus:outline-none focus:border-blue-500">-->
+        <!--          <option v-for="model in availableModels" :key="model" :value="model">{{ model }}</option>-->
+        <!--        </select>-->
         <!-- 文本输入框 -->
 
 
-<!--          bg-gray-50 rounded-lg border border-gray-200 focus:outline-none focus:border-blue-500 focus:bg-white transition-colors overflow-y-auto-->
-          <div ref="editableDiv"
-            contenteditable="true"
-            class="min-h-[72px] max-h-[200px] w-full px-4 py-2.5  focus:outline-none"
-            :class="{'empty-content': !messageInput}"
-            @input="handleInput"
-            @keydown.enter.ctrl.prevent="sendMessage"
-            @paste.prevent="handlePaste"
-          ></div>
+        <!--          bg-gray-50 rounded-lg border border-gray-200 focus:outline-none focus:border-blue-500 focus:bg-white transition-colors overflow-y-auto-->
+        <div ref="editableDiv"
+             contenteditable="true"
+             class="min-h-[72px] max-h-[200px] w-full px-4 py-2.5  focus:outline-none"
+             :class="{'empty-content': !messageInput}"
+             @input="handleInput"
+             @keydown.enter.ctrl.prevent="sendMessage"
+             @paste.prevent="handlePaste"
+        ></div>
         <div class="flex justify-between">
           <!-- 功能按钮区 -->
           <div class=" bottom-2 left-3 flex items-center gap-2">
             <!-- 搜索按钮 -->
-            <button 
-              class="p-1.5 rounded-lg transition-colors" 
-              :class="[isSearchActive ? 'bg-blue-100' : 'hover:bg-gray-200']"
-              @click="toggleSearch"
+            <button
+                class="p-1.5 rounded-lg transition-colors"
+                :class="[isSearchActive ? 'bg-blue-100' : 'hover:bg-gray-200']"
+                @click="toggleSearch"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" :class="[isSearchActive ? 'text-blue-500' : 'text-gray-500']" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5"
+                   :class="[isSearchActive ? 'text-blue-500' : 'text-gray-500']" fill="none" viewBox="0 0 24 24"
+                   stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
               </svg>
             </button>
             <!-- 推理按钮 -->
-            <button 
-              class="p-1.5 rounded-lg transition-colors" 
-              :class="[isReasoningActive ? 'bg-blue-100' : 'hover:bg-gray-200']"
-              @click="toggleReasoning"
+            <button
+                class="p-1.5 rounded-lg transition-colors"
+                :class="[isReasoningActive ? 'bg-blue-100' : 'hover:bg-gray-200']"
+                @click="toggleReasoning"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" :class="[isReasoningActive ? 'text-blue-500' : 'text-gray-500']" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5"
+                   :class="[isReasoningActive ? 'text-blue-500' : 'text-gray-500']" fill="none" viewBox="0 0 24 24"
+                   stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
               </svg>
             </button>
             <!-- 图片上传按钮 -->
-            <label 
-              class="p-1.5 rounded-lg transition-colors cursor-pointer" 
-              :class="[isImageUploadActive ? 'bg-blue-100' : 'hover:bg-gray-200']"
+            <label
+                class="p-1.5 rounded-lg transition-colors cursor-pointer"
+                :class="[isImageUploadActive ? 'bg-blue-100' : 'hover:bg-gray-200']"
             >
               <input type="file" accept="image/*" class="hidden" @change="handleImageUpload">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" :class="[isImageUploadActive ? 'text-blue-500' : 'text-gray-500']" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5"
+                   :class="[isImageUploadActive ? 'text-blue-500' : 'text-gray-500']" fill="none" viewBox="0 0 24 24"
+                   stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
               </svg>
             </label>
 
           </div>
-<!--          <div class="text-xs text-gray-400 mt-1 text-right">按 Ctrl + Enter 发送</div>-->
+          <!--          <div class="text-xs text-gray-400 mt-1 text-right">按 Ctrl + Enter 发送</div>-->
 
           <!-- 发送按钮 -->
           <div class="flex items-center gap-2">
             <!-- 语音输入按钮 -->
-            <button 
-              class="p-1.5 rounded-lg transition-colors" 
-              :class="[isVoiceInputActive ? 'bg-blue-100' : 'hover:bg-gray-200']"
-              @click="toggleVoiceInput"
+            <button
+                class="p-1.5 rounded-lg transition-colors"
+                :class="[isVoiceInputActive ? 'bg-blue-100' : 'hover:bg-gray-200']"
+                @click="toggleVoiceInput"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" :class="[isVoiceInputActive ? 'text-blue-500' : 'text-gray-500']" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5"
+                   :class="[isVoiceInputActive ? 'text-blue-500' : 'text-gray-500']" fill="none" viewBox="0 0 24 24"
+                   stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"/>
               </svg>
             </button>
             <button
@@ -136,25 +152,27 @@
         </div>
 
       </div>
-  
-    
+
+
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed, defineProps, watch } from 'vue';
-import { ChatAPI } from '../services/chatApi';
-import { configAPI } from '../services/api';
+import {computed, defineProps, ref, watch} from 'vue';
 import type {ChatMessage} from "../../../../share/type.ts";
+import {chatAPI} from "@/services/chatApi.ts";
 
 const props = defineProps<{
   model?: string
   chatMessages?: ChatMessage[]
 }>();
 
-const chatApi = new ChatAPI();
-const messages = ref<ChatMessage[]>([]);
+
+
+
+
+
 const messageInput = ref('');
 const messageContainer = ref<HTMLElement | null>(null);
 const editableDiv = ref<HTMLElement | null>(null);
@@ -198,73 +216,43 @@ const toggleVoiceInput = () => {
 };
 
 // 服务商与模型相关
-const providers = ref<{id: string, name: string, models: string[]}[]>([]);
+const providers = ref<{ id: string, name: string, models: string[] }[]>([]);
 const selectedProvider = ref('');
-const selectedModel = ref(props.model || '');
+
 const availableModels = computed(() => {
   const p = providers.value.find(p => p.id === selectedProvider.value);
   return p ? p.models : [];
 });
 
-// 加载服务商配置
-const loadProviders = async () => {
-  // 假设 configAPI.loadConfig() 返回包含 mcpServers，每个 server 有 models 字段
-  const config = await configAPI.loadConfig();
-  providers.value = Object.entries(config.mcpServers || {}).map(([id, server]: [string, any]) => ({
-    id,
-    name: server.name || id,
-    models: server.models || ['gpt-3.5-turbo']
-  }));
-  if (providers.value.length > 0) {
-    selectedProvider.value = providers.value[0].id;
-    // 如果从父组件传入model，则使用传入的model，否则使用第一个可用的模型
-    if (props.model) {
-      selectedModel.value = props.model;
-    } else if (availableModels.value.length > 0) {
-      selectedModel.value = availableModels.value[0];
-    }
-  }
-};
-
-// 加载聊天历史
-const loadChatHistory = async () => {
-  try {
-    messages.value = await chatApi.getChatHistory();
-    scrollToBottom();
-  } catch (error) {
-    console.error('加载聊天历史失败:', error);
-  }
-};
-
 // 发送文本消息
 const sendMessage = async () => {
   // 如果既没有文本消息也没有图片，则不发送
   if (!messageInput.value.trim() && !imageFile.value) return;
-  
+
   try {
     // 如果有图片，先发送图片
-    if (imageFile.value) {
-      await handleImageMessage();
-    }
-    
+    // if (imageFile.value) {
+    //   await handleImageMessage();
+    // }
+
     // 如果有文本消息，发送文本
     if (messageInput.value.trim()) {
       // 添加用户消息
       const userMessage: ChatMessage = {
         role: 'user',
-        content: messageInput.value,
+        content: messageInput.value as string,
         type: 'text',
-        timestamp: Date.now()
+        timestamp: Date.now(),
       };
-      messages.value.push(userMessage);
+      // messages.value.push(userMessage);
       messageInput.value = '';
       scrollToBottom();
-      
+
       // 使用选定的模型
-      const modelToUse = props.model || selectedModel.value;
-      
-      const response = await chatApi.sendMessage(userMessage.content, selectedProvider.value, modelToUse);
-      messages.value.push(response);
+      const modelToUse = props.model
+
+      const response = await chatAPI.sendMessage(userMessage.content, selectedProvider.value, modelToUse);
+      // messages.value.push(response);
       scrollToBottom();
     }
   } catch (error) {
@@ -273,32 +261,32 @@ const sendMessage = async () => {
 };
 
 // 处理图片上传
-const handleImageUpload = async (event: Event) => {
-  const input = event.target as HTMLInputElement;
-  if (!input.files?.length) return;
+  const handleImageUpload = async (event: Event) => {
+    const input = event.target as HTMLInputElement;
+    if (!input.files?.length) return;
 
-  const file = input.files[0];
-  imageFile.value = file;
-  imageFileName.value = file.name;
-  isImageUploadActive.value = true;
-  
-  // 创建本地预览URL
-  const reader = new FileReader();
-  reader.onload = (e) => {
-    imagePreview.value = e.target?.result as string;
+    const file = input.files[0];
+    imageFile.value = file;
+    imageFileName.value = file.name;
+    isImageUploadActive.value = true;
+
+    // 创建本地预览URL
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      imagePreview.value = e.target?.result as string;
+    };
+    reader.readAsDataURL(file);
+
+    // 清除input的value，允许上传相同的文件
+    input.value = '';
   };
-  reader.readAsDataURL(file);
 
-  // 清除input的value，允许上传相同的文件
-  input.value = '';
-};
-
-const cancelImageUpload = () => {
-  imagePreview.value = null;
-  imageFileName.value = '';
-  imageFile.value = null;
-  isImageUploadActive.value = false;
-};
+  const cancelImageUpload = () => {
+    imagePreview.value = null;
+    imageFileName.value = '';
+    imageFile.value = null;
+    isImageUploadActive.value = false;
+  };
 
 // 发送消息时处理图片上传
 const handleImageMessage = async () => {
@@ -315,35 +303,29 @@ const handleImageMessage = async () => {
 };
 
 // 定义emit事件
-const emit = defineEmits<{
-  (e: 'scroll'): void
-}>();
+  const emit = defineEmits<{
+    (e: 'scroll'): void
+  }>();
 
 // 滚动到底部
-const scrollToBottom = () => {
+  const scrollToBottom = () => {
 
     // 发送滚动事件给父组件
     emit('scroll');
 
-};
+  };
 
-onMounted(() => {
-  loadChatHistory();
-});
 // 更新输入框内容
-const updateEditableContent = () => {
-  if (editableDiv.value) {
-    // editableDiv.value.innerText = messageInput.value;
-  }
-};
+  const updateEditableContent = () => {
+    if (editableDiv.value) {
+      // editableDiv.value.innerText = messageInput.value;
+    }
+  };
 
 // 监听输入框内容变化
-watch(messageInput, updateEditableContent);
+  watch(messageInput, updateEditableContent);
 
-onMounted(() => {
-  loadChatHistory();
-  loadProviders();
-});
+
 </script>
 
 <style scoped>

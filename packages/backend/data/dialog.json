@@ -1,0 +1,32 @@
+{
+  "dialogs": [
+    {
+      "dialogId": "1",
+      "title": "默认助手1",
+      "timestamp": 1745491793951,
+      "model": {
+        "id": "qwq:32b",
+        "name": "qwq:32b",
+        "description": "Ollama 本地模型",
+        "size": 19851349390,
+        "enabled": true
+      }
+    },
+    {
+      "dialogId": "2",
+      "title": "demo1",
+      "timestamp": 1745405393951
+    },
+    {
+      "dialogId": "3",
+      "title": "网页生成",
+      "timestamp": 1745232593951
+    },
+    {
+      "dialogId": "4",
+      "title": "One Word One...",
+      "timestamp": 1744195793951
+    }
+  ],
+  "activeDialogId": "1"
+}

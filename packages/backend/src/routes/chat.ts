@@ -6,12 +6,16 @@ import path from 'path';
 import {z} from 'zod';
 import {ReadableStream} from "node:stream/web";
 import {ResultHelper} from './routeHelper';
+import {DialogService} from "../services/dailogService.ts";
+import {type DialogState} from "../../../../share/type.ts";
 
 const chatService = new ChatService();
 const llmService = new LLMService({
   apiKey: process.env.OPENAI_API_KEY || '',
   model: process.env.DEFAULT_MODEL || 'gpt-3.5-turbo'
 });
+
+const dialogService = new DialogService();
 
 chatService.initialize().catch(error => {
   console.error('Failed to initialize chat service:', error);
@@ -145,6 +149,26 @@ export class ChatController {
       return ResultHelper.success({ imageUrl });
     } catch (error: any) {
       return ResultHelper.fail(error.message || 'Failed to upload image', null);
+    }
+  }
+
+  @Post('/saveDialogList')
+  async saveDialogConfig(@Body() config: DialogState) {
+    try {
+      await dialogService.saveDialogList(config);
+      return ResultHelper.success(null);
+    } catch (err: any) {
+      return ResultHelper.fail(err.message, null);
+    }
+  }
+
+  @Post('/getDialogList')
+  async getDialogList() {
+    try {
+       const data = await dialogService.getDialogList();
+      return ResultHelper.success(data);
+    } catch (err: any) {
+      return ResultHelper.fail(err.message, null);
     }
   }
 }

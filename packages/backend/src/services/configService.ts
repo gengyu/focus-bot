@@ -1,20 +1,17 @@
 import {PersistenceOptions, PersistenceService} from './persistenceService';
-import {spawn, ChildProcess} from 'child_process';
 import {
-  MCPConfig,
-  IConfigService,
-  ConfigValidationResult,
-  ConfigValidationError,
   ConfigStorageOptions,
+  ConfigValidationError,
+  ConfigValidationResult,
+  IConfigService,
+  MCPConfig,
   MCPConfigListItem
 } from '../types/config';
 import {Client} from "@modelcontextprotocol/sdk/client/index.js";
 import {StdioClientTransport,} from "@modelcontextprotocol/sdk/client/stdio.js";
 import {StatusService} from "./statusService";
 import path from "path";
-import {ProviderConfig} from "../../../../share/type.ts";
-
-
+import {ProviderConfig} from "../../../../share/type";
 
 // import {Transport} from '@modelcontextprotocol/sdk/shared/transport.js';
 
@@ -311,5 +308,9 @@ export class ConfigService {
     }
   }
 
+
 }
+
+
+
 

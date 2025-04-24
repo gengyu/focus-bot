@@ -13,13 +13,13 @@
           <div class="pl-6 text-sm text-gray-500 mb-2">{{ group.title }}</div>
           <ul class="pl-6 m-0">
             <li
-                @click="handlerSelectChat(chat.id)"
+                @click="handlerSelectChat(chat.dialogId)"
                 v-for="chat in group.chats"
-                :key="chat.id"
+                :key="chat.dialogId"
                 class="px-3 py-2.5 rounded-lg text-[#374151] cursor-pointer mb-1.5 transition-colors duration-200"
                 :class="{
-                'bg-[#e0e7ef] text-[#2563eb] font-semibold': chat.isActive,
-                'hover:bg-[#e0e7ef] hover:text-[#2563eb] hover:font-semibold': !chat.isActive
+                'bg-[#e0e7ef] text-[#2563eb] font-semibold': dialogState.activeDialogId === chat.dialogId,
+                'hover:bg-[#e0e7ef] hover:text-[#2563eb] hover:font-semibold': dialogState.activeDialogId !== chat.dialogId
               }"
             >
               {{ chat.title }}
@@ -132,8 +132,9 @@ import {configAPI} from '../services/api';
 import {Listbox, ListboxButton, ListboxOption, ListboxOptions} from '@headlessui/vue'
 import {CheckIcon, ChevronUpDownIcon} from '@heroicons/vue/20/solid'
 import {useProviderStore} from "@/store/providerStore.ts";
-import {Model} from "../../../../share/type.ts";
+import {type Chat, type ChatMessage, Dialog, Model} from "../../../../share/type.ts";
 import {useDialogStore} from "@/store/dialogStore.ts";
+import {chatAPI} from "@/services/chatApi.ts";
 
 
 const {providerConfig} = useProviderStore();
@@ -150,10 +151,16 @@ const selectedModel = ref<Model>({
   enabled: false,
 });
 
+watch(() => models.value, (newModels) => {
+  if(!selectedModel.value.id){
+    selectedModel.value = newModels[0];
+  }
+})
+
 
 const {dialogState, updateModel, setActiveDialog} = useDialogStore();
 const activeChatMessages = computed(() => {
-  const activeDialog = dialogState.dialogs.find(dialog => dialog.id === dialogState.activeDialogId);
+  const activeDialog = dialogState.dialogs.find(dialog => dialog.dialogId === dialogState.activeDialogId);
   return activeDialog?.messages || [];
 });
 
@@ -169,15 +176,32 @@ const handlerSelectChat = (chatId: string)=> {
 }
 
 watch(() => dialogState.activeDialogId, () => {
-  const activeDialog = dialogState.dialogs.find(dialog => dialog.id === dialogState.activeDialogId);
+
+  const activeDialog = dialogState.dialogs.find(dialog => dialog.dialogId === dialogState.activeDialogId);
+  console.log(activeDialog,55555)
   if (activeDialog?.model) {
     selectedModel.value = activeDialog.model!;
   }else {
-   if(models?.value.length> 0) selectedModel.value = models.value[0];
+   if(models.value.length> 0) selectedModel.value = models.value[0];
   }
-}, {
-  immediate: true,
 });
+
+
+
+
+const messages = ref<ChatMessage[]>([]);
+// 加载聊天历史
+const loadChatHistory = async () => {
+  try {
+    messages.value = await chatAPI.getChatHistory();
+  } catch (error) {
+    console.error('加载聊天历史失败:', error);
+  }
+};
+watch(() => dialogState.activeDialogId, (newDialogs) => {
+  loadChatHistory()
+});
+
 
 
 const messageContainer = ref<HTMLElement | undefined>(undefined);
@@ -195,7 +219,7 @@ const handlerScroll = () => {
 };
 
 // 计算分组的聊天列表
-const groupedChats = computed(() => {
+const groupedChats = computed<Array<{ title: string; chats: Dialog[]}>>(() => {
   const now = new Date();
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const yesterday = new Date(today);
