@@ -49,7 +49,7 @@
               </div>
               <ComboboxOptions class="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
                 <ComboboxOption
-                  v-slot="{ active, selected }"
+                  v-slot="{ active }"
                   :value="getDefaultApiUrl(currentProvider.id)"
                   as="template"
                 >
@@ -84,9 +84,18 @@
             </div>
           </div>
           <div class="space-y-2">
-            <label class="label">
-              <span class="label-text">可用模型</span>
-            </label>
+            <div class="flex items-center justify-between">
+              <label class="label">
+                <span class="label-text">可用模型</span>
+              </label>
+              <button 
+                @click="refreshModels"
+                class="btn btn-sm btn-ghost"
+                title="刷新模型列表"
+              >
+                <ArrowPathIcon class="h-4 w-4" />
+              </button>
+            </div>
             <div v-for="model in currentProvider.models" :key="model.id" class="flex items-center justify-between p-2 bg-base-200 rounded-lg">
               <div class="flex items-center space-x-4">
                 <input type="checkbox" v-model="model.enabled" class="checkbox checkbox-sm" />
@@ -97,6 +106,19 @@
               </div>
               <div class="text-sm text-gray-500">{{ model.size }}</div>
             </div>
+            <!-- 添加新模型按钮 -->
+            <button 
+              @click="addNewModel({ 
+                id: 'new-model-' + Date.now(),
+                name: '新模型',
+                description: '自定义模型',
+                size: '未知',
+                enabled: true
+              })"
+              class="btn btn-sm btn-outline w-full mt-2"
+            >
+              添加新模型
+            </button>
           </div>
         </div>
       </template>
@@ -113,7 +135,11 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
 import { Combobox,ComboboxInput, ComboboxButton, ComboboxOptions, ComboboxOption, Switch } from '@headlessui/vue';
-import { ChevronUpDownIcon } from '@heroicons/vue/20/solid';
+import { ChevronUpDownIcon, ArrowPathIcon } from '@heroicons/vue/20/solid';
+import { useToast } from 'vue-toastification';
+import { configAPI } from '@/services/api';
+
+const toast = useToast();
 
 interface Model {
   id: string;
@@ -132,7 +158,8 @@ interface Provider {
   models: Model[];
 }
 
-const providers = ref<Provider[]>([
+// 默认供应商配置
+const defaultProviders: Provider[] = [
   {
     id: 'ollama',
     name: 'Ollama',
@@ -222,37 +249,100 @@ const getDefaultApiUrl = (providerId: string): string => {
   }
 };
 
+const providers = ref<Provider[]>([]);
+
+// 从后端获取模型列表
+const fetchModels = async (providerId: string) => {
+  try {
+    const response = await fetch(`/api/providers/${providerId}/models`);
+    if (!response.ok) throw new Error('获取模型列表失败');
+    const data = await response.json();
+    return data.models;
+  } catch (error) {
+    console.error('获取模型列表失败:', error);
+    toast.error('获取模型列表失败');
+    return [];
+  }
+};
+
+// 刷新当前供应商的模型列表
+const refreshModels = async () => {
+  if (!currentProvider.value) return;
+  const models = await fetchModels(currentProvider.value.id);
+  if (models.length > 0) {
+    currentProvider.value.models = models.map(model => ({
+      ...model,
+      enabled: true
+    }));
+    await saveSettings();
+    toast.success('模型列表已更新');
+  }
+};
+
+// 添加新模型
+const addNewModel = async (model: Model) => {
+  if (!currentProvider.value) return;
+  try {
+    const response = await fetch(`/api/providers/${currentProvider.value.id}/models`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(model)
+    });
+    if (!response.ok) throw new Error('添加模型失败');
+    currentProvider.value.models.push({ ...model, enabled: true });
+    await saveSettings();
+    toast.success('模型添加成功');
+  } catch (error) {
+    console.error('添加模型失败:', error);
+    toast.error('添加模型失败');
+  }
+};
+
 const loadSettings = async () => {
   try {
-    const savedSettings = localStorage.getItem('modelSettings');
-    if (savedSettings) {
-      const parsed = JSON.parse(savedSettings);
-      providers.value = providers.value.map(provider => ({
-        ...provider,
-        ...parsed[provider.id]
-      }));
+    // 初始化供应商列表
+    providers.value = JSON.parse(JSON.stringify(defaultProviders));
+    
+    // 从后端加载用户配置
+    const config = await configAPI.getModelConfig();
+    if (config && config.providers) {
+      providers.value = providers.value.map(provider => {
+        const savedProvider = config.providers.find(p => p.id === provider.id);
+        if (savedProvider) {
+          return {
+            ...provider,
+            enabled: savedProvider.enabled,
+            apiUrl: savedProvider.apiUrl,
+            apiKey: savedProvider.apiKey,
+            models: savedProvider.models
+          };
+        }
+        return provider;
+      });
     }
   } catch (error) {
     console.error('加载设置失败:', error);
+    toast.error('加载设置失败');
   }
 };
 
 const saveSettings = async () => {
   try {
-    const settings = providers.value.reduce((acc, provider) => {
-      acc[provider.id] = {
+    const config = {
+      providers: providers.value.map(provider => ({
+        id: provider.id,
         enabled: provider.enabled,
         apiUrl: provider.apiUrl,
         apiKey: provider.apiKey,
         models: provider.models
-      };
-      return acc;
-    }, {} as Record<string, any>);
-    localStorage.setItem('modelSettings', JSON.stringify(settings));
-    alert('设置已保存');
+      }))
+    };
+
+    await configAPI.saveModelConfig(config);
+    toast.success('设置已保存');
   } catch (error) {
     console.error('保存设置失败:', error);
-    alert(`保存设置失败: ${error}`);
+    toast.error(`保存设置失败: ${error}`);
   }
 };
 
