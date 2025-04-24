@@ -136,7 +136,7 @@
 import { ref, computed, onMounted } from 'vue';
 import { Combobox,ComboboxInput, ComboboxButton, ComboboxOptions, ComboboxOption, Switch } from '@headlessui/vue';
 import { ChevronUpDownIcon, ArrowPathIcon } from '@heroicons/vue/20/solid';
-import { useToast } from 'vue-toastification';
+import { useToast } from 'vue-toastification/composition';
 import { configAPI } from '@/services/api';
 
 const toast = useToast();
@@ -167,9 +167,9 @@ const defaultProviders: Provider[] = [
     apiUrl: 'http://localhost:11434',
     apiKey: '',
     models: [
-      { id: 'llama2', name: 'Llama 2', description: '开源大语言模型', size: '7B', enabled: true },
-      { id: 'codellama', name: 'Code Llama', description: '代码专用模型', size: '7B', enabled: true },
-      { id: 'mistral', name: 'Mistral', description: '高性能开源模型', size: '7B', enabled: true }
+      {id: 'llama2', name: 'Llama 2', description: '开源大语言模型', size: '7B', enabled: true},
+      {id: 'codellama', name: 'Code Llama', description: '代码专用模型', size: '7B', enabled: true},
+      {id: 'mistral', name: 'Mistral', description: '高性能开源模型', size: '7B', enabled: true}
     ]
   },
   {
@@ -179,8 +179,8 @@ const defaultProviders: Provider[] = [
     apiUrl: 'https://api.openai.com/v1',
     apiKey: '',
     models: [
-      { id: 'gpt-4', name: 'GPT-4', description: '最强大的 GPT 模型', size: '1.76T', enabled: true },
-      { id: 'gpt-3.5-turbo', name: 'GPT-3.5 Turbo', description: '性能均衡模型', size: '175B', enabled: true }
+      {id: 'gpt-4', name: 'GPT-4', description: '最强大的 GPT 模型', size: '1.76T', enabled: true},
+      {id: 'gpt-3.5-turbo', name: 'GPT-3.5 Turbo', description: '性能均衡模型', size: '175B', enabled: true}
     ]
   },
   {
@@ -190,8 +190,8 @@ const defaultProviders: Provider[] = [
     apiUrl: 'https://generativelanguage.googleapis.com',
     apiKey: '',
     models: [
-      { id: 'gemini-pro', name: 'Gemini Pro', description: '通用型大语言模型', size: '1.37T', enabled: true },
-      { id: 'gemini-pro-vision', name: 'Gemini Pro Vision', description: '多模态模型', size: '1.37T', enabled: true }
+      {id: 'gemini-pro', name: 'Gemini Pro', description: '通用型大语言模型', size: '1.37T', enabled: true},
+      {id: 'gemini-pro-vision', name: 'Gemini Pro Vision', description: '多模态模型', size: '1.37T', enabled: true}
     ]
   },
   {
@@ -201,7 +201,7 @@ const defaultProviders: Provider[] = [
     apiUrl: 'https://api.moonshot.cn/v1',
     apiKey: '',
     models: [
-      { id: 'moonshot-v1', name: 'Moonshot', description: '通用大语言模型', size: '70B', enabled: true }
+      {id: 'moonshot-v1', name: 'Moonshot', description: '通用大语言模型', size: '70B', enabled: true}
     ]
   },
   {
@@ -211,7 +211,7 @@ const defaultProviders: Provider[] = [
     apiUrl: 'https://api.doubao.com/v1',
     apiKey: '',
     models: [
-      { id: 'doubao-v1', name: '豆包大模型', description: '通用大语言模型', size: '70B', enabled: true }
+      {id: 'doubao-v1', name: '豆包大模型', description: '通用大语言模型', size: '70B', enabled: true}
     ]
   },
   {
@@ -221,12 +221,12 @@ const defaultProviders: Provider[] = [
     apiUrl: 'https://dashscope.aliyuncs.com/api/v1',
     apiKey: '',
     models: [
-      { id: 'qwen-max', name: 'Qwen Max', description: '最强性能模型', size: '189B', enabled: true },
-      { id: 'qwen-plus', name: 'Qwen Plus', description: '通用大语言模型', size: '14B', enabled: true },
-      { id: 'qwen-turbo', name: 'Qwen Turbo', description: '快速响应模型', size: '7B', enabled: true }
+      {id: 'qwen-max', name: 'Qwen Max', description: '最强性能模型', size: '189B', enabled: true},
+      {id: 'qwen-plus', name: 'Qwen Plus', description: '通用大语言模型', size: '14B', enabled: true},
+      {id: 'qwen-turbo', name: 'Qwen Turbo', description: '快速响应模型', size: '7B', enabled: true}
     ]
   }
-]);
+];
 
 const selectedProviderIdx = ref(0);
 const currentProvider = computed(() => providers.value[selectedProviderIdx.value]);
