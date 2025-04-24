@@ -136,10 +136,10 @@
 import { ref, computed, onMounted } from 'vue';
 import { Combobox,ComboboxInput, ComboboxButton, ComboboxOptions, ComboboxOption, Switch } from '@headlessui/vue';
 import { ChevronUpDownIcon, ArrowPathIcon } from '@heroicons/vue/20/solid';
-import { useToast } from 'vue-toastification/composition';
+// import { useToast } from 'vue-toastification';
 import { configAPI } from '@/services/api';
+import { toast } from 'vue-sonner'
 
-const toast = useToast();
 
 interface Model {
   id: string;

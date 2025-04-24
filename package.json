@@ -32,7 +32,6 @@
   },
   "dependencies": {
     "@radix-ui/colors": "^3.0.0",
-    "radix-vue": "^1.9.17",
-    "vue-toastification": "^1.7.14"
+    "radix-vue": "^1.9.17"
   }
 }
