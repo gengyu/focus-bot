@@ -2,9 +2,26 @@
   <div class="bg-white rounded-lg shadow p-6 flex h-[600px]">
     <!-- 左侧服务商抽屉导航 -->
     <div class="w-56 border-r pr-4 overflow-y-auto">
-      <div v-for="(provider, idx) in providers" :key="provider.id" @click="selectedProviderIdx = idx" :class="['cursor-pointer flex items-center px-3 py-2 rounded mb-2', selectedProviderIdx === idx ? 'bg-primary text-white' : 'hover:bg-base-200']">
-        <span class="font-medium">{{ provider.name }}</span>
-        <span v-if="provider.enabled" class="ml-auto text-xs bg-green-100 text-green-600 px-2 py-0.5 rounded">已启用</span>
+      <!-- 启用按钮 -->
+      <div v-for="(provider, idx) in providers" :key="provider.id" @click="selectedProviderIdx = idx"
+        :class="['cursor-pointer flex items-center px-4 py-2 rounded-lg mb-2 transition-all duration-200 ease-in-out',
+          selectedProviderIdx === idx ? 'bg-primary shadow-sm transform scale-102' :
+          'hover:bg-base-200 hover:shadow-sm']">
+        <span class="font-medium text-[15px]">{{ provider.name }}</span>
+        <span class="ml-auto " @click.stop>
+          <Switch  v-model="provider.enabled" as="template" v-slot="{ checked }">
+            <button
+                class="relative inline-flex h-6 w-11 items-center rounded-full"
+                :class="checked ? 'bg-[rgba(34,197,94,0.8)]' : 'bg-gray-200'"
+            >
+              <span class="sr-only">Enable notifications</span>
+              <span
+                  :class="checked ? 'translate-x-6' : 'translate-x-1'"
+                  class="inline-block h-4 w-4 transform rounded-full bg-white transition"
+              />
+            </button>
+        </Switch>
+        </span>
       </div>
     </div>
     <!-- 右侧配置表单 -->
@@ -12,24 +29,59 @@
       <h2 class="text-xl font-semibold mb-4">模型服务配置</h2>
       <template v-if="currentProvider">
         <div class="flex items-center mb-4">
-          <h3 class="text-lg font-medium mr-4">{{ currentProvider.name }}</h3>
-          <label class="cursor-pointer">
-            <input type="checkbox" v-model="currentProvider.enabled" class="toggle toggle-primary" />
-            <span class="ml-2 text-sm">启用</span>
-          </label>
+          <h3 class="text-lg font-medium">{{ currentProvider.name }}</h3>
         </div>
-        <div v-if="currentProvider.enabled" class="space-y-4">
-          <div class="form-control">
+        <div  class="space-y-4">
+          <div class="form-control relative">
             <label class="label">
               <span class="label-text">API 地址</span>
             </label>
-            <input type="text" v-model="currentProvider.apiUrl" :placeholder="getDefaultApiUrl(currentProvider.id)" class="input input-bordered w-full" />
+            <Combobox v-model="currentProvider.apiUrl">
+              <div class="relative">
+                <ComboboxInput
+                    class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:border-blue-500"
+                  :placeholder="getDefaultApiUrl(currentProvider.id)"
+                   @change="query = $event.target.value"
+                />
+                <ComboboxButton class="absolute inset-y-0 right-0 flex items-center pr-2">
+                  <ChevronUpDownIcon class="h-5 w-5 text-gray-400" aria-hidden="true" />
+                </ComboboxButton>
+              </div>
+              <ComboboxOptions class="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
+                <ComboboxOption
+                  v-slot="{ active, selected }"
+                  :value="getDefaultApiUrl(currentProvider.id)"
+                  as="template"
+                >
+                  <li :class="['relative cursor-default select-none py-2 pl-3 pr-9', active ? 'bg-primary/10 text-primary' : 'text-gray-900']">
+                    <span class="block truncate">{{ getDefaultApiUrl(currentProvider.id) }}</span>
+                  </li>
+                </ComboboxOption>
+              </ComboboxOptions>
+            </Combobox>
           </div>
-          <div class="form-control">
+          <div class="form-control relative">
             <label class="label">
               <span class="label-text">API 密钥</span>
             </label>
-            <input type="password" v-model="currentProvider.apiKey" placeholder="输入 API 密钥" class="input input-bordered w-full" />
+            <div class="relative">
+              <input
+                type="password"
+                v-model="currentProvider.apiKey"
+                placeholder="输入 API 密钥"
+                class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:border-blue-500"/>
+              <button
+                type="button"
+                class="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-500"
+                @click="togglePasswordVisibility"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+                  <path v-if="showPassword" stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
+                  <path v-if="showPassword" stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  <path v-else stroke-linecap="round" stroke-linejoin="round" d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88" />
+                </svg>
+              </button>
+            </div>
           </div>
           <div class="space-y-2">
             <label class="label">
@@ -60,7 +112,8 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
-import { settingsAPI } from '../../services/SettingsApi';
+import { Combobox,ComboboxInput, ComboboxButton, ComboboxOptions, ComboboxOption, Switch } from '@headlessui/vue';
+import { ChevronUpDownIcon } from '@heroicons/vue/20/solid';
 
 interface Model {
   id: string;
@@ -150,6 +203,12 @@ const providers = ref<Provider[]>([
 
 const selectedProviderIdx = ref(0);
 const currentProvider = computed(() => providers.value[selectedProviderIdx.value]);
+const showPassword = ref(false);
+const query = ref('');
+
+const togglePasswordVisibility = () => {
+  showPassword.value = !showPassword.value;
+};
 
 const getDefaultApiUrl = (providerId: string): string => {
   switch (providerId) {

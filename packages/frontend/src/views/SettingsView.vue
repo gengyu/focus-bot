@@ -55,14 +55,14 @@
     </aside>
     
     <!-- 主内容区 -->
-    <div class="flex-1 p-6">
+    <div class="flex-1 p-4 h-full overscroll-y-auto">
       <header class="app-header mb-6">
         <div class="flex justify-between items-center">
-          <h1 class="text-2xl font-bold">设置</h1>
+          <h1 class="text-xl font-bold">{{ pageTitle }}</h1>
         </div>
       </header>
 
-    <main class="main-content">
+    <main class="main-content ">
       <router-view></router-view>
     </main>
   </div>
@@ -70,6 +70,8 @@
 </template>
 
 <script setup lang="ts">
+import { ref, watch } from 'vue';
+import { useRoute } from 'vue-router';
 import {
   CloudIcon,
   CubeIcon,
@@ -84,4 +86,25 @@ import {
   CircleStackIcon,
   InformationCircleIcon
 } from '@heroicons/vue/24/outline';
+
+const route = useRoute();
+const pageTitle = ref('设置');
+
+const titleMap = {
+  '/settings/model': '模型服务',
+  '/settings/search': '网络搜索',
+  '/settings/server': 'MCP 服务器',
+  '/settings/general': '常规设置',
+  '/settings/display': '显示设置',
+  '/settings/miniapp': '小程序设置',
+  '/settings/shortcut': '快捷方式',
+  '/settings/assistant': '快捷助手',
+  '/settings/phrase': '快捷短语',
+  '/settings/data': '数据设置',
+  '/settings/about': '关于我们'
+};
+
+watch(() => route.path, (newPath) => {
+  pageTitle.value = titleMap[newPath] || '设置';
+}, { immediate: true });
 </script>
