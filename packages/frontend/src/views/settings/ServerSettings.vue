@@ -13,6 +13,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue';
+import log from "loglevel";
 
 const settings = ref({
   serverUrl: localStorage.getItem('serverUrl') || ''
@@ -20,12 +21,14 @@ const settings = ref({
 
 const saveSettings = () => {
   localStorage.setItem('serverUrl', settings.value.serverUrl);
+  log.info('Server settings saved:', settings.value.serverUrl);
   alert('设置已保存');
 };
 
 const resetSettings = () => {
   if (confirm('确定要重置所有设置吗？')) {
     settings.value.serverUrl = '';
+    log.info('Server settings reset to default.');
   }
 };
 </script>

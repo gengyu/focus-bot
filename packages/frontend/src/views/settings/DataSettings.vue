@@ -21,12 +21,14 @@ const settings = ref({
 
 const saveSettings = () => {
   localStorage.setItem('dataPath', settings.value.dataPath);
+  log.info('Data settings saved:', settings.value.dataPath);
   alert('设置已保存');
 };
 
 const resetSettings = () => {
   if (confirm('确定要重置所有设置吗？')) {
     settings.value.dataPath = '';
+    log.info('Data settings reset to default.');
   }
 };
 </script>

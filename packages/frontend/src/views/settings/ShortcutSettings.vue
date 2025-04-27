@@ -13,6 +13,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue';
+import log from "loglevel";
 
 const settings = ref({
   shortcuts: localStorage.getItem('shortcuts') || '{}'
@@ -20,12 +21,14 @@ const settings = ref({
 
 const saveSettings = () => {
   localStorage.setItem('shortcuts', settings.value.shortcuts);
+  log.info('Shortcut settings saved:', settings.value.shortcuts);
   alert('设置已保存');
 };
 
 const resetSettings = () => {
   if (confirm('确定要重置所有设置吗？')) {
     settings.value.shortcuts = '{}';
+    log.info('Shortcut settings reset to default.');
   }
 };
 </script>
