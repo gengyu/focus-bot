@@ -13,6 +13,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue';
+import log from "loglevel";
 
 const settings = ref({
   assistantMode: localStorage.getItem('assistantMode') || 'basic'
@@ -20,12 +21,14 @@ const settings = ref({
 
 const saveSettings = () => {
   localStorage.setItem('assistantMode', settings.value.assistantMode);
+  log.info('Assistant settings saved:', settings.value.assistantMode);
   alert('设置已保存');
 };
 
 const resetSettings = () => {
   if (confirm('确定要重置所有设置吗？')) {
     settings.value.assistantMode = 'basic';
+    log.info('Assistant settings reset to default.');
   }
 };
 </script>

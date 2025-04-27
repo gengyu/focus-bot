@@ -52,6 +52,7 @@
 import { ref } from 'vue';
 import { configAPI } from '../../services/api';
 import type { MCPConfig } from '../../types/config';
+import log from "loglevel";
 
 const settings = ref<MCPConfig>({
   serverUrl: '',
@@ -67,7 +68,7 @@ const loadSettings = async () => {
     const config = await configAPI.getConfig();
     settings.value = config;
   } catch (error) {
-    console.error('加载设置失败:', error);
+    log.error("Failed to load settings:", error);
   }
 };
 
@@ -77,7 +78,7 @@ const saveSettings = async () => {
     await configAPI.saveConfig(settings.value);
     alert('设置已保存');
   } catch (error) {
-    console.error('保存设置失败:', error);
+    log.error("Failed to save settings:", error);
     alert(`保存设置失败: ${error}`);
   }
 };

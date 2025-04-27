@@ -1,6 +1,7 @@
 import { API_BASE_URL } from './api';
 import {TransportAdapter, type TransportRequest, TransportType} from "../transports";
 import {type ChatMessage,  type DialogState} from "../../../../share/type.ts";
+import log from "loglevel";
 
 
 
@@ -44,7 +45,7 @@ export class ChatAPI {
   async getChatHistory(): Promise<ChatMessage[]> {
     const req = { method: 'getChatHistory', payload: {} };
     const res = await this.transport.invokeDirect(req);
-    console.log(res)
+    log.info(res);
     if (!res.success) throw new Error(`获取聊天历史失败: ${res.error}`);
     return res.data;
   }

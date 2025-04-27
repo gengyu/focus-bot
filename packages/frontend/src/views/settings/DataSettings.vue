@@ -13,6 +13,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue';
+import log from "loglevel";
 
 const settings = ref({
   dataPath: localStorage.getItem('dataPath') || ''

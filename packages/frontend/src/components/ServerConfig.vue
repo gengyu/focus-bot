@@ -59,6 +59,7 @@ import { ref, onMounted, reactive } from 'vue';
 import { configAPI } from '../services/api';
 import type { MCPConfig, MCPServerConfig } from '../types/config';
 import { useRoute } from "vue-router";
+import log from "loglevel";
 
 interface Capability {
   name: string;
@@ -151,7 +152,7 @@ onMounted(async () => {
         }
       }
   } catch (error) {
-    console.error('加载配置失败:', error);
+    log.error("Failed to load server config:", error);
   }
 });
 

@@ -353,7 +353,7 @@ const addNewModel = async (model: Model) => {
     await saveSettings();
     toast.success('模型添加成功');
   } catch (error) {
-    console.error('添加模型失败:', error);
+    log.error("Failed to add model:", error);
     toast.error('添加模型失败');
   }
 };

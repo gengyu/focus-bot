@@ -96,6 +96,7 @@ import { PlayIcon, StopIcon,
 
   ArrowTopRightOnSquareIcon } from '@heroicons/vue/20/solid'
 import {TrashIcon } from '@heroicons/vue/24/outline'
+import log from "loglevel";
 
 interface Config extends ConfigListItem {
 }
@@ -133,7 +134,7 @@ const toggleExpand = async (config: Config) => {
       configTools.value[config.id] = Object.values(mcpConfig.mcpServers || {});
     } catch (err) {
       toolsError.value[config.id] = err instanceof Error ? err.message : '加载工具列表失败';
-      console.error('加载工具列表失败:', err);
+      log.error("Failed to load tool list:", err);
     } finally {
       loadingTools.value[config.id] = false;
     }
@@ -149,7 +150,7 @@ const fetchConfigs = async () => {
     configs.value = await configAPI.getConfigList();
   } catch (err) {
     error.value = err instanceof Error ? err.message : '获取配置列表失败';
-    console.error('获取配置列表失败:', err);
+    log.error("Failed to fetch config list:", err);
   } finally {
     loading.value = false;
   }
@@ -163,7 +164,7 @@ const toggleMCP = async (config: Config) => {
     // 更新本地状态
     config.isRunning = newStatus;
   } catch (err) {
-    console.error('切换MCP状态失败:', err);
+    log.error("Failed to switch MCP status:", err);
     // 显示错误提示
     error.value = err instanceof Error ? err.message : '切换MCP状态失败';
   }
@@ -175,7 +176,7 @@ const capabilities = async (config: Config) => {
     // 更新本地状态
     config.isRunning = newStatus;
   } catch (err) {
-    console.error('切换MCP状态失败:', err);
+    log.error("Failed to switch MCP status:", err);
     // 显示错误提示
     error.value = err instanceof Error ? err.message : '切换MCP状态失败';
   }
@@ -187,7 +188,7 @@ const deleteConfig = async (configId: string) => {
     await configAPI.deleteConfig(configId);
     configs.value = configs.value.filter(config => config.id !== configId);
   } catch (err) {
-    console.error('删除配置失败:', err);
+    log.error("Failed to delete config:", err);
     error.value = err instanceof Error ? err.message : '删除配置失败';
   }
 };

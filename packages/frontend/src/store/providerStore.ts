@@ -3,6 +3,7 @@ import {type Ref, ref} from 'vue';
 import type {ProviderConfig, Provider} from '../../../../share/type';
 import {configAPI} from "../services/api.ts";
 import {toast} from "vue-sonner";
+import log from "loglevel";
 
 // 默认供应商配置
 
@@ -115,7 +116,7 @@ export const useProviderStore = defineStore<string, {
       }
     } catch (error) {
       providerConfig.value.providers = getDefaultProviders()
-      console.error('加载设置失败:', error);
+      log.error("Failed to load settings:", error);
       toast.error('加载设置失败');
     }
   }
@@ -144,7 +145,7 @@ export const useProviderStore = defineStore<string, {
       await configAPI.saveModelConfig(providerConfig.value);
       toast.success('设置已保存');
     } catch (error) {
-      console.error('保存设置失败:', error);
+      log.error("Failed to save settings:", error);
       toast.error(`保存设置失败: ${error}`);
     }
   };
