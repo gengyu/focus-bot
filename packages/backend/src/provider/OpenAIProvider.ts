@@ -1,6 +1,6 @@
 import OpenAI from 'openai';
 import axios from "axios";
-import {LLMProvider, ProviderConfig} from "./LLMProvider";
+import {LLMProvider, ProviderConfig, ProviderResponseChunk} from "./LLMProvider";
 import {type ChatCompletionMessageParam} from "openai/resources";
 
 // import { Ollama } from "ollama";
@@ -38,7 +38,7 @@ export class OpenAIProvider implements LLMProvider {
         stream: false
       });
 
-
+      console.log(response.choices)
       return response.choices[0].message;
     } catch (error) {
       console.error('OpenAI API Error:', error);
@@ -56,12 +56,14 @@ export class OpenAIProvider implements LLMProvider {
         stream: true
       });
       for await (const part of stream) {
+        console.log(part.choices[0].delta)
         yield {
           content: part.choices[0].delta.content as string,
           reasoningContent: part.choices[0].delta.content as string,
           provider: 'openai',
-          model: this.config.model as string
-        };
+          model: this.config.model as string,
+          role: part.choices[0].delta.role
+        } as ProviderResponseChunk;
       }
     } catch (error) {
       console.error('OpenAI API Stream Error:', error);

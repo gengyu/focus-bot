@@ -1,10 +1,14 @@
+import type { ChatCompletionChunk } from "openai/resources/chat/completions";
+type Delta = ChatCompletionChunk.Choice.Delta;
 
-
-export interface ProviderResponseChunk {
-    content: string | null,
-    reasoningContent: string | null,
-    provider: string | null,
-    model: string | null
+export interface ProviderResponseChunk extends Delta {
+    content: string | null;
+    reasoningContent: string | null;
+    provider: string;
+    model: string;
+    role: 'developer' | 'system' | 'user' | 'assistant' | 'tool';
+    timestamp?: number;
+    error?: string;
 }
 
 
