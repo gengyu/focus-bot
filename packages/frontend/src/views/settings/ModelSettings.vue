@@ -317,7 +317,7 @@ const fetchModels = async (providerId: string, provider?: Provider) => {
     }
     return models;
   } catch (error: any) {
-    console.error('获取模型列表失败:', error);
+    log.error("Failed to fetch model list:", error);
     toast.error('获取模型列表失败: ' + error.message);
     return [];
   }

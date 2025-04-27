@@ -3,7 +3,8 @@ import App from './App.vue';
 import router from './router/index'; // 修改为使用路径别名
 import './styles/index.css';
 import {createPinia} from "pinia";
-
+import log from "loglevel";
+log.setLevel("info");
 
 const store = createPinia();
 

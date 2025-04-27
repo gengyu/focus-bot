@@ -135,6 +135,7 @@ import {useProviderStore} from "@/store/providerStore.ts";
 import {type Chat, type ChatMessage, Dialog, Model} from "../../../../share/type.ts";
 import {useDialogStore} from "@/store/dialogStore.ts";
 import {chatAPI} from "@/services/chatApi.ts";
+import log from "loglevel";
 
 
 const {providerConfig} = useProviderStore();
@@ -195,7 +196,7 @@ const loadChatHistory = async () => {
   try {
     messages.value = await chatAPI.getChatHistory();
   } catch (error) {
-    console.error('加载聊天历史失败:', error);
+    log.error("Failed to load chat history:", error);
   }
 };
 watch(() => dialogState.activeDialogId, (newDialogs) => {
@@ -281,7 +282,7 @@ const toggleAside = () => {
 //       }
 //     }
 //   } catch (error) {
-//     console.error('加载模型列表失败:', error);
+//     log.error('Failed to load model list:', error);
 //   }
 // });
 </script>

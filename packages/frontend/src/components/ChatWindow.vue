@@ -162,6 +162,7 @@
 import {computed, defineProps, ref, watch} from 'vue';
 import type {ChatMessage} from "../../../../share/type.ts";
 import {chatAPI} from "@/services/chatApi.ts";
+import log from "loglevel";
 
 const props = defineProps<{
   model?: string
@@ -256,7 +257,7 @@ const sendMessage = async () => {
       scrollToBottom();
     }
   } catch (error) {
-    console.error('发送消息失败:', error);
+    log.error("Failed to send message:", error);
   }
 };
 
@@ -298,7 +299,7 @@ const handleImageMessage = async () => {
     scrollToBottom();
     cancelImageUpload(); // 清除预览
   } catch (error) {
-    console.error('上传图片失败:', error);
+    log.error("Failed to upload image:", error);
   }
 };
 
