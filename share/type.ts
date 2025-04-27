@@ -28,7 +28,7 @@ export interface ChatMessage {
 }
 
 export interface Chat {
-  id: string;
+  chatId: string;
   messages: ChatMessage[];
   create_time: string;
   update_time: string;

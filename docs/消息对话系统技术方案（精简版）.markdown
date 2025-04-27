@@ -1,0 +1,110 @@
+# 消息对话系统技术方案（精简版）
+
+## 1. 数据流转图
+```mermaid
+graph TD
+    A[前端] -->|1. 打开对话框，加载历史| B[后端]
+    B -->|2. 查询历史| D[MongoDB]
+    D -->|3. 返回历史| B
+    B -->|4. 显示历史，禁用发送| A
+    A -->|5. 输入消息，点击发送| B
+    B -->|6. 调用| C[第三方API]
+    C -->|7. 流式响应| B
+    B -->|8. 持久化消息| D
+    B -->|9. SSE实时响应| A
+    A -->|10. 终止流| B
+```
+
+**步骤**：
+1. 前端请求历史消息。
+2. 后端查询 MongoDB。
+3. MongoDB 返回历史消息。
+4. 前端显示历史，禁用发送。
+5. 用户发送消息（仅响应结束后允许）。
+6. 后端调用第三方API。
+7. 第三方API返回流式数据。
+8. 后端持久化消息。
+9. 后端通过 SSE 推送实时响应。
+10. 前端终止流。
+
+## 2. 接口设计与数据结构
+
+### 2.1 数据结构
+- **MongoDB 集合**：`messages`
+- **字段**：
+  ```json
+  {
+    "chatId": "string", // 聊天窗口ID
+    "sender": "user | bot", // 发送者
+    "content": "string", // 消息内容
+    "timestamp": "ISODate" // 时间戳
+  }
+  ```
+
+### 2.2 接口设计
+
+#### 2.2.1 发送消息
+- **端点**：`POST /api/messages`
+- **描述**：用户发送消息，后端持久化并触发第三方API。
+- **请求**：
+  ```json
+  {
+    "chatId": "string",
+    "content": "string",
+    "sender": "user"
+  }
+  ```
+- **响应**：
+  - **200 OK**：`{}`
+  - **400**：`{ "error": "Invalid chatId or content" }`
+  - **500**：`{ "error": "Failed to save message" }`
+
+#### 2.2.2 加载历史消息
+- **端点**：`GET /api/messages/:chatId`
+- **描述**：获取聊天窗口历史消息。
+- **响应**：
+  - **200 OK**：
+    ```json
+    [{ "chatId": "string", "sender": "user | bot", "content": "string", "timestamp": "ISODate" }, ...]
+    ```
+  - **400**：`{ "error": "Invalid chatId" }`
+  - **500**：`{ "error": "Failed to fetch messages" }`
+
+#### 2.2.3 SSE 流
+- **端点**：`GET /api/stream/:chatId`
+- **描述**：接收第三方API流式响应。
+- **响应**：
+  - **Content-Type**：`text/event-stream`
+  - **格式**：
+    ```
+    data: <message content>\n\n
+    event: end\ndata: Stream ended\n\n
+    event: error\ndata: <error message>\n\n
+    ```
+
+#### 2.2.4 终止流
+- **端点**：`POST /api/stream/:chatId/terminate`
+- **描述**：终止 SSE 流。
+- **响应**：
+  - **200 OK**：`{}`
+  - **400**：`{ "error": "Invalid chatId" }`
+  - **500**：`{ "error": "Failed to terminate stream" }`
+
+## 3. 交互说明
+- **打开对话框**：
+  - 前端请求 `/api/messages/:chatId`，加载历史消息。
+  - 加载期间，发送按钮禁用。
+  - 历史消息渲染到对话框。
+- **发送消息**：
+  - 用户输入消息，点击发送。
+  - 前端检查是否加载完成且无活跃响应（SSE流）。
+  - 若允许，发送 POST 请求到 `/api/messages`。
+  - 后端保存消息，调用第三方API。
+  - SSE 流实时更新前端对话框。
+  - 响应期间，发送按钮禁用。
+- **约束**：
+  - 加载历史时禁止发送消息。
+  - 每个对话窗口一次只能发送一个消息，需等待响应结束。
+- **终止流**：
+  - 用户点击“停止流”，发送 POST 请求到 `/api/stream/:chatId/terminate`。
+  - 前端关闭 SSE 连接，启用发送按钮。

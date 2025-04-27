@@ -1,23 +1,14 @@
 import fs from 'fs';
 import path from 'path';
 import {PersistenceService, PersistenceOptions} from './persistenceService';
+import {type ChatMessage} from "../../../../share/type.ts";
 
-export interface ChatMessage {
-  role: 'user' | 'assistant';
-  content: string;
-  timestamp: number;
-  type: 'text' | 'image';
-  imageUrl?: string;
+import {WritableStream} from "node:stream/web";
+
+interface ChatHistory {
+  [chatId: string]: ChatMessage[];
 }
 
-export interface Chat {
-  id: string;
-  messages: ChatMessage[];
-  create_time: string;
-  update_time: string;
-  content_hash?: string;
-  share_id?: string;
-}
 
 export class ChatService {
 
@@ -33,59 +24,77 @@ export class ChatService {
     });
   }
 
-  async initialize(): Promise<void> {
-    try {
-      await this.persistenceService.initialize();
-      // Initialize with empty array if needed
-      const history = await this.getMessages();
-      if (!history || !Array.isArray(history)) {
-        await this.saveChatHistory([]);
-      }
-    } catch (error) {
-      console.error('Chat service initialization error:', error);
-      // Initialize with empty array on error
-      await this.saveChatHistory([]);
-    }
-  }
+  // async initialize(): Promise<void> {
+  //   try {
+  //     await this.persistenceService.initialize();
+  //     // Initialize with empty array if needed
+  //     const history = await this.getMessages();
+  //     if (!history || !Array.isArray(history)) {
+  //       await this.saveChatHistory({});
+  //     }
+  //   } catch (error) {
+  //     console.error('Chat service initialization error:', error);
+  //     // Initialize with empty array on error
+  //     await this.saveChatHistory({});
+  //   }
+  // }
 
-  async saveChatHistory(messages: ChatMessage[]): Promise<void> {
+  private async saveChatHistory(chatHistory: ChatHistory): Promise<void> {
     try {
       //@ts-ignore
-      await this.persistenceService.saveData(messages);
+      await this.persistenceService.saveData(chatHistory);
     } catch (error) {
       throw new Error(`Failed to save chat history: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 
-  async loadChatHistory(): Promise<ChatMessage[]> {
+
+  // 使用流持久化数据
+   getWriteStorageStream(chatId: string): WritableStream {
+    let message: ChatMessage
+    return new WritableStream<ChatMessage>({
+      start() {
+        //  持久化缓存
+        console.log('persistent cache start')
+      },
+      write(chunk) {
+        message = chunk;
+      },
+      close: async () => {
+        const chatHistory = await this.loadChatHistory();
+        chatHistory[chatId] = chatHistory[chatId] || [];
+        chatHistory[chatId].push(message);
+        this.saveChatHistory(chatHistory);
+      }
+    });
+  }
+
+  private async loadChatHistory(): Promise<ChatHistory> {
     try {
-      const data = await this.persistenceService.loadData();
-      return (data as ChatMessage[]).map(msg => ({
-        role: msg.role || 'user',
-        content: msg.content,
-        timestamp: msg.timestamp,
-        type: msg.type,
-        ...(msg.imageUrl && {imageUrl: msg.imageUrl})
-      }));
+      return await this.persistenceService.loadData();
     } catch (error) {
       if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
-        return [];
+        return {};
       }
       throw new Error(`Failed to load chat history: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 
-  async addMessage(message: ChatMessage): Promise<void> {
-    const history = await this.loadChatHistory();
-    history.push(message);
-    await this.saveChatHistory(history);
+
+  async pushMessage(chatId: string, message: ChatMessage): Promise<void> {
+    const chatHistory = await this.loadChatHistory();
+    if (chatHistory[chatId]) {
+      chatHistory[chatId].push(message);
+    } else {
+      chatHistory[chatId] = [message];
+    }
+    await this.saveChatHistory(chatHistory);
   }
 
-  async getMessages(): Promise<ChatMessage[]> {
-    return await this.loadChatHistory();
+  async getMessages(chatId: string): Promise<ChatMessage[]> {
+    const data = await this.loadChatHistory();
+    return data[chatId] || [];
   }
 
-  public stopAutoBackup(): void {
-    this.persistenceService.stopAutoBackup();
-  }
+
 }

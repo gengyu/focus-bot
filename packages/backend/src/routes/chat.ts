@@ -1,5 +1,5 @@
 import {Body, Controller, Post, SSE} from '../decorators';
-import {ChatMessage, ChatService} from '../services/chatService';
+import { ChatService} from '../services/chatService';
 import {LLMService} from '../services/LLMService';
 import multer from '@koa/multer';
 import path from 'path';
@@ -7,7 +7,7 @@ import {z} from 'zod';
 import {ReadableStream} from "node:stream/web";
 import {ResultHelper} from './routeHelper';
 import {DialogService} from "../services/dailogService.ts";
-import {type DialogState} from "../../../../share/type.ts";
+import {ChatMessage, type DialogState} from "../../../../share/type.ts";
 
 const chatService = new ChatService();
 const llmService = new LLMService({
@@ -17,9 +17,7 @@ const llmService = new LLMService({
 
 const dialogService = new DialogService();
 
-chatService.initialize().catch(error => {
-  console.error('Failed to initialize chat service:', error);
-});
+
 
 const upload = multer({
   storage: multer.diskStorage({
@@ -41,116 +39,93 @@ const messageBodySchema = z.object({
 export class ChatController {
   @Post('/getChatHistory')
   async getHistory(@Body('cccc') cc: string) {
-    const messages = await chatService.getMessages();
+    const messages = await chatService.getMessages('23134');
     return ResultHelper.success(messages);
   }
 
   @SSE('/sendMessage')
   async postMessage(@Body() body: any) {
     try {
+      const message: string = body.message;
+      const chatId: string = body.chatId;
+      const providerId: string = body.providerId;
+      const model = body.model;
+      const apiKey = body.apiKey;
+
       const userMessage: ChatMessage = {
+        // chatId,
         role: 'user',
-        content: body.message,
+        content: message,
+        timestamp: Date.now(),
+        type: 'text'
+      }
+      await chatService.pushMessage(chatId, userMessage);
+
+      // 动态选择服务商和模型
+
+      const llm = new LLMService({
+        baseURL: 'http://localhost:11434',
+        apiKey: apiKey,
+        model: model
+      });
+
+
+      const assistantMessage: ChatMessage = {
+        role: 'assistant',
+        content: '',
         timestamp: Date.now(),
         type: 'text'
       };
-      await chatService.addMessage(userMessage);
 
-      const messages = await chatService.getMessages();
-      const chatMessages = messages.map(msg => ({
-        role: msg.role,
-        content: msg.content || ''
-      }));
-
-      // 动态选择服务商和模型
-      let llm;
-      let providerCache: { [key: string]: { apiKey: string; defaultModel: string; } } | null = null;
-
-      async function loadProviderConfig() {
-        if (providerCache !== null) return;
-
-        try {
-          const fs = await import('fs');
-          const rawdata = await fs.promises.readFile('./src/config/providerConfig.json');
-          providerCache = JSON.parse(rawdata.toString());
-        } catch (err) {
-          console.error('Error loading provider config:', err);
-          providerCache = {};
-        }
-      }
-
-      function getProviderConfig(providerId: string): { apiKey: string; defaultModel: string; } | null {
-        if (providerCache === null) {
-          loadProviderConfig();
-        }
-
-        return providerCache ? providerCache[providerId] || null : null;
-      }
-
-      if (body.providerId) {
-        const providerConfig = getProviderConfig(body.providerId);
-        if (!providerConfig) {
-          throw new Error(`Provider ${body.providerId} not found`);
-        }
-        llm = new LLMService({
-          apiKey: providerConfig.apiKey,
-          model: body.model || providerConfig.defaultModel || 'gpt-3.5-turbo'
-        });
-      } else {
-        llm = llmService;
-      }
-
-      const stream = await llm.streamChat(chatMessages);
-      const readableStream = new ReadableStream({
+      const stream = await llm.streamChat([userMessage]);
+      const readableStream = new ReadableStream<string>({
         async start(controller) {
+          controller.enqueue(JSON.stringify(assistantMessage));
+        },
+        async pull(controller) {
           for await (const chunk of stream) {
-
             const content = chunk.content || '';
             if (content) {
-              controller.enqueue(`data: ${JSON.stringify({ content })}\n\n`);
+              controller.enqueue(content);
             }
           }
-          const assistantMessage: ChatMessage = {
-            role: 'assistant',
-            content: '',
-            timestamp: Date.now(),
-            type: 'text'
-          };
-          await chatService.addMessage(assistantMessage);
           controller.close();
         }
       });
-
-      return readableStream;
+      const [stream1, stream2] = readableStream.tee();
+      stream2.pipeTo(chatService.getWriteStorageStream(chatId)).catch(error => {
+        console.error('Error writing to storage:', error);
+      });
+      return stream1;
     } catch (err: any) {
       console.error('Error in postMessage:', err);
       return ResultHelper.fail(err.message, null);
     }
   }
 
-  @Post('/image')
-  async uploadImage(  body: any) {
-    // 注意：图片上传接口如需支持自动注入需配合中间件处理，这里暂保留body参数
-    // 实际项目中建议将文件上传逻辑迁移到专用中间件或服务
-    // 这里假设body.image为图片文件名
-    try {
-      const file = body.file;
-      if (!file) {
-        return ResultHelper.fail('No image file uploaded', null);
-      }
-      const imageUrl = `/images/${file.filename}`;
-      await chatService.addMessage({
-        role: 'user',
-        content: '',
-        timestamp: Date.now(),
-        type: 'image',
-        imageUrl
-      });
-      return ResultHelper.success({ imageUrl });
-    } catch (error: any) {
-      return ResultHelper.fail(error.message || 'Failed to upload image', null);
-    }
-  }
+  // @Post('/image')
+  // async uploadImage(  body: any) {
+  //   // 注意：图片上传接口如需支持自动注入需配合中间件处理，这里暂保留body参数
+  //   // 实际项目中建议将文件上传逻辑迁移到专用中间件或服务
+  //   // 这里假设body.image为图片文件名
+  //   try {
+  //     const file = body.file;
+  //     if (!file) {
+  //       return ResultHelper.fail('No image file uploaded', null);
+  //     }
+  //     const imageUrl = `/images/${file.filename}`;
+  //     await chatService.pushMessage({
+  //       role: 'user',
+  //       content: '',
+  //       timestamp: Date.now(),
+  //       type: 'image',
+  //       imageUrl
+  //     });
+  //     return ResultHelper.success({ imageUrl });
+  //   } catch (error: any) {
+  //     return ResultHelper.fail(error.message || 'Failed to upload image', null);
+  //   }
+  // }
 
   @Post('/saveDialogList')
   async saveDialogConfig(@Body() config: DialogState) {
@@ -165,7 +140,7 @@ export class ChatController {
   @Post('/getDialogList')
   async getDialogList() {
     try {
-       const data = await dialogService.getDialogList();
+      const data = await dialogService.getDialogList();
       return ResultHelper.success(data);
     } catch (err: any) {
       return ResultHelper.fail(err.message, null);

@@ -13,12 +13,13 @@ export class OpenAIProvider implements LLMProvider {
 
   constructor(config: ProviderConfig) {
     this.config = {
-      model: 'gpt-3.5-turbo',
+
       temperature: 0.7,
       maxTokens: 2000,
       ...config,
+      model: 'deepseek-r1:1.5b',
       apiKey: 'ollama',
-      baseURL: "http://localhost:11434/"
+      baseURL: 'http://localhost:11434/v1', // Ollama 的本地 API 端点
     };
 
     this.openai = new OpenAI({
@@ -36,6 +37,7 @@ export class OpenAIProvider implements LLMProvider {
         max_tokens: this.config.maxTokens,
         stream: false
       });
+
 
       return response.choices[0].message;
     } catch (error) {
@@ -79,3 +81,17 @@ export class OpenAIProvider implements LLMProvider {
   }
 }
 
+
+// async function test(){
+//   try {
+//
+//     const open = new OpenAIProvider({} as ProviderConfig);
+//     const res = await open.chat([{role: 'user', content: 'hello'}])
+//     console.log(res, 333);
+//   }catch (e) {
+//     console.log(e);
+//   }
+//
+// }
+//
+// test();

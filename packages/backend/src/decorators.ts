@@ -117,7 +117,7 @@ export function registerControllers(controllers: any[]) {
       // @ts-ignore
       if (route.method === 'sse') {
 
-        router.post(fullPath, async (ctx: any, next: any) => {
+        router.post(fullPath, async (ctx:any, next: any) => {
           const token = new Date().getTime().toString() + Math.random().toString(36).substring(2);
 
 
@@ -143,17 +143,17 @@ export function registerControllers(controllers: any[]) {
               args[i] = bodyParam.key ? ctx.request.body?.[bodyParam.key] : ctx.request.body;
               continue;
             }
-            args[i] = 'ctxxxxxx';
+            args[i] = '';
           }
 
           // 使用缓存，设置请求参数  #todo
-          newMap.set(token, {a: 12321, args})
+          newMap.set(token, { args})
           ctx.body = ResultHelper.success({
             url: `${ctx.request.origin}${fullPath}?token=${token}`,
           });
         });
 
-        router.get(fullPath, async (ctx: any, next: any) => {
+        router.get(fullPath, async (ctx, next: any) => {
           ctx.set('Content-Type', 'text/event-stream');
           ctx.set('Cache-Control', 'no-cache');
           ctx.set('Connection', 'keep-alive');
@@ -165,23 +165,31 @@ export function registerControllers(controllers: any[]) {
           const parsm = newMap.get(ctx.query.token);
           newMap.delete(ctx.query.token);
 
-          const result = await handler.apply(instance, parsm.args);
-          ctx.res.write(`data: ${JSON.stringify(parsm)}\n\n`);
           try {
-            if (result && typeof result[Symbol.asyncIterator] === 'function') {
-              for await (const data of result) {
-                ctx.res.write(`data: ${JSON.stringify(data)}\n\n`);
-              }
-            } else if (result && typeof result[Symbol.iterator] === 'function') {
-              for (const data of result) {
-                ctx.res.write(`data: ${JSON.stringify(data)}\n\n`);
-              }
-            } else {
-              ctx.res.write(`data: ${JSON.stringify(result)}\n\n`);
+            const result: ReadableStream = await handler.apply(instance, parsm.args);
+            if (result.locked) {
+              throw new Error('Stream is already locked');
             }
-          }catch (e) {
-            console.log('error=', e);
+            const reader = result.getReader();
+            
+            try {
+              while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+                console.log(value,333)
+                // 将二进制数据转换为字符串
+                // const text = new TextDecoder().decode(value);
+                // 发送SSE格式的数据
+                ctx.res.write(`data: ${value}\n\n`);
+              }
+            } finally {
+              reader.releaseLock();
+            }
+          } catch (error) {
+            console.error('SSE处理错误:', error);
+            ctx.res.write(`event: error\ndata: ${JSON.stringify({ error: '处理流数据时发生错误' })}\n\n`);
           } finally {
+            ctx.res.write('event: end\ndata: Stream ended\n\n');
             ctx.res.end();
           }
 
