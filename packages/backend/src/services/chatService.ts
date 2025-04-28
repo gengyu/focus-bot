@@ -14,8 +14,10 @@ export class ChatService {
 
   // private chat: Chat;
   private persistenceService: PersistenceService;
+  private llmService: any; // 使用any类型暂时避免循环依赖问题
 
-  constructor(options?: PersistenceOptions) {
+  constructor(llmService: any, options?: PersistenceOptions) {
+    this.llmService = llmService;
     this.persistenceService = new PersistenceService({
       dataDir: options?.dataDir || path.join(process.cwd(), 'data'),
       configFileName: 'chat_history.json',
@@ -66,6 +68,11 @@ export class ChatService {
         this.saveChatHistory(chatHistory, chatId);
       }
     });
+  }
+  
+  async chat(messages: Array<{ role: string; content: string }>) {
+    // 使用LLMService处理聊天请求
+    return this.llmService.chat(messages);
   }
 
   private async loadChatHistory(chatId: string): Promise<ChatMessage[]> {

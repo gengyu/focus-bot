@@ -299,11 +299,25 @@ export class ConfigService {
 
 
   async getModelConfig(): Promise<ProviderConfig> {
-
     try {
       return await this.persistenceService.loadData();
     } catch (error) {
       throw new Error(`Failed to load settting data ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  }
+
+  async getLLMConfigs(): Promise<ProviderConfig[] | ProviderConfig> {
+    try {
+      const config = await this.getModelConfig();
+      return config;
+    } catch (error) {
+      console.error(`Failed to get LLM configs: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      // 返回默认配置
+      return {
+        provider: 'openai',
+        apiKey: '',
+        baseURL: ''
+      }  as any;
     }
   }
 
@@ -314,7 +328,17 @@ export class ConfigService {
       if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
         return;
       }
-      throw new Error(`Failed to load settting data: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error(`Failed to save settting data: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  }
+
+  async updateConfig(newConfig: any): Promise<void> {
+    try {
+      // 更新配置并保存
+      this.config = {...(this.config || {}), ...newConfig};
+      await this.persistenceService.saveData(this.config);
+    } catch (error) {
+      throw new Error(`Failed to update config: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 
