@@ -170,10 +170,6 @@ const props = defineProps<{
 }>();
 
 
-
-
-
-
 const messageInput = ref('');
 const messageContainer = ref<HTMLElement | null>(null);
 const editableDiv = ref<HTMLElement | null>(null);

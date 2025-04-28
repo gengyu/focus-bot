@@ -5,10 +5,10 @@
       "title": "默认助手1",
       "timestamp": 1745491793951,
       "model": {
-        "id": "qwq:32b",
-        "name": "qwq:32b",
+        "id": "gemma3:1b",
+        "name": "gemma3:1b",
         "description": "Ollama 本地模型",
-        "size": 19851349390,
+        "size": 815319791,
         "enabled": true
       }
     },

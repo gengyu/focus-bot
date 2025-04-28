@@ -38,8 +38,8 @@ const messageBodySchema = z.object({
 @Controller('/invoke/chat')
 export class ChatController {
   @Post('/getChatHistory')
-  async getHistory(@Body('cccc') cc: string) {
-    const messages = await chatService.getMessages('23134');
+  async getHistory(@Body('chatId') chatId: string) {
+    const messages = await chatService.getMessages(chatId);
     return ResultHelper.success(messages);
   }
 
