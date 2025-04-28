@@ -29,10 +29,10 @@ export class OpenAIProvider implements LLMProvider {
     });
   }
 
-  async chat(messages: Array<{ role: string; content: string }>) {
+  async chat(messages: Array<{ role: string; content: string }>, model: string) {
     try {
       const response = await this.openai.chat.completions.create({
-        model: this.config.model!,
+        model: model,
         messages: messages as ChatCompletionMessageParam[],
         temperature: this.config.temperature,
         max_tokens: this.config.maxTokens,
