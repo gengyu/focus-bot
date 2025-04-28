@@ -1,6 +1,6 @@
 import type {MCPConfig} from '../types/config';
 import {TransportAdapter, TransportType} from "../transports";
-import type {ProviderConfig, ProviderConfig} from "../../../../share/type.ts";
+import type {AppSetting, AppSetting} from "../../../../share/type.ts";
 
 export const API_BASE_URL = 'http://localhost:3000';
 
@@ -22,14 +22,14 @@ const transport = new TransportAdapter(TransportType.HTTP, {
 });
 
 export class ConfigAPI {
-    async getModelConfig(): Promise<ProviderConfig> {
+    async getModelConfig(): Promise<AppSetting> {
         const req = {method: 'getModelConfig', payload: {}};
         const res = await transport.invokeDirect(req);
         if (!res.success) throw new Error(`获取模型配置失败: ${res.error}`);
         return res.data;
     }
 
-    async saveModelConfig(config: ProviderConfig): Promise<void> {
+    async saveModelConfig(config: AppSetting): Promise<void> {
         const req = {method: 'saveModelConfig', payload: config};
         const res = await transport.invokeDirect(req);
         if (!res.success) throw new Error(`保存模型配置失败: ${res.error}`);

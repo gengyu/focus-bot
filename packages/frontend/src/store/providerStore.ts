@@ -1,13 +1,13 @@
 import {defineStore} from 'pinia';
 import {type Ref, ref} from 'vue';
-import type {ProviderConfig, Provider} from '../../../../share/type';
+import type {AppSetting, ProviderConfig} from '../../../../share/type';
 import {configAPI} from "../services/api.ts";
 import {toast} from "vue-sonner";
 import log from "loglevel";
 
 // 默认供应商配置
 
-const getDefaultProviders = (): Provider[] => {
+const getDefaultProviders = (): ProviderConfig[] => {
   return [
     {
       id: 'ollama',
@@ -79,14 +79,14 @@ const getDefaultProviders = (): Provider[] => {
 };
 
 export const useProviderStore = defineStore<string, {
-  providerConfig: Ref<ProviderConfig>,
+  providerConfig: Ref<AppSetting>,
   resetSettings(): Promise<void>,
-  updateProvider(providerId: string, newProvider: Partial<Provider>): Promise<void>
+  updateProvider(providerId: string, newProvider: Partial<ProviderConfig>): Promise<void>
   // providerConfig: Ref<ProviderConfig>,
   // setProviders: (newProviders: Provider[]) => void,
   // resetProviders: () => void
 }>('provider', () => {
-  const providerConfig = ref<ProviderConfig>({
+  const providerConfig = ref<AppSetting>({
     providers: []
   });
 
@@ -150,7 +150,7 @@ export const useProviderStore = defineStore<string, {
     }
   };
 
-  const updateProvider = async (providerId: string, newProvider: Provider) => {
+  const updateProvider = async (providerId: string, newProvider: ProviderConfig) => {
     providerConfig.value.providers = providerConfig.value.providers?.map(provider => {
       if (provider.id === providerId) {
         return {

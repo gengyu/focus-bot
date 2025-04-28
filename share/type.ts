@@ -6,17 +6,28 @@ export interface Model {
   size: string;
   enabled: boolean;
 }
-export interface Provider {
+export interface ProviderConfig {
   id: string;
   name: string;
   enabled: boolean;
   apiUrl: string;
   apiKey: string;
   models: Model[];
+
+  temperature?: number;
+  maxTokens?: number;
 }
 
-export interface ProviderConfig {
-  providers: Provider[];
+// export interface ProviderConfig {
+//   apiKey: string;
+//   model?: string;
+//   temperature?: number;
+//   maxTokens?: number;
+//   baseURL?: string;
+// }
+
+export interface AppSetting {
+  providers: ProviderConfig[];
 }
 
 

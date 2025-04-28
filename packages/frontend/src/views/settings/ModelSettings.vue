@@ -142,7 +142,7 @@ import { ChevronUpDownIcon, ArrowPathIcon } from '@heroicons/vue/20/solid';
 // import { useToast } from 'vue-toastification';
 import { configAPI } from '@/services/api';
 import { toast } from 'vue-sonner'
-import type {Model, Provider} from "../../../../../share/type.ts";
+import type {Model, ProviderConfig} from "../../../../../share/type.ts";
 import { useProviderStore } from '@/store/providerStore';
 import {storeToRefs} from "pinia";
 
@@ -172,7 +172,7 @@ const {providerConfig, resetSettings, updateProvider} = useProviderStore();
 
 const selectedProviderIdx = ref(0);
 
-const currentProvider = ref<Provider>()
+const currentProvider = ref<ProviderConfig>()
 if(providerConfig.providers.length>0){
   currentProvider.value = providerConfig.providers[selectedProviderIdx.value];
 }else {
@@ -211,7 +211,7 @@ const saveSettings= ()=> {
 // const providers = ref<Provider[]>([]);
 
 // 从后端获取模型列表
-const fetchModels = async (providerId: string, provider?: Provider) => {
+const fetchModels = async (providerId: string, provider?: ProviderConfig) => {
   try {
     if (!provider) throw new Error('未找到服务商');
     const apiUrl = provider.apiUrl;

@@ -1,7 +1,8 @@
 import OpenAI from 'openai';
 import axios from "axios";
-import {LLMProvider, ProviderConfig, ProviderResponseChunk} from "./LLMProvider";
+import {LLMProvider, ProviderResponseChunk} from "./LLMProvider";
 import {type ChatCompletionMessageParam} from "openai/resources";
+import {ProviderConfig} from "../../../../share/type.ts";
 
 // import { Ollama } from "ollama";
 

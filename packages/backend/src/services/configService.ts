@@ -11,7 +11,7 @@ import {Client} from "@modelcontextprotocol/sdk/client/index.js";
 import {StdioClientTransport,} from "@modelcontextprotocol/sdk/client/stdio.js";
 import {StatusService} from "./statusService";
 import path from "path";
-import {ProviderConfig} from "../../../../share/type";
+import {AppSetting, ProviderConfig} from "../../../../share/type";
 
 import Setting from '../../data/settting.json'
 
@@ -278,12 +278,12 @@ export class FileConfigService implements IConfigService {
 
 export class ConfigService {
 
-  private config: typeof Setting | undefined;
+  private config: AppSetting | undefined;
 
-  private persistenceService: PersistenceService;
+  private persistenceService: PersistenceService<AppSetting>;
 
   constructor(options?: PersistenceOptions) {
-    this.persistenceService = new PersistenceService({
+    this.persistenceService = new PersistenceService<AppSetting>({
       dataDir: options?.dataDir || path.join(process.cwd(), 'data'),
       configFileName: 'settting.json',
       backupInterval: options?.backupInterval ?? 3600000, // 默认1小时
@@ -292,13 +292,17 @@ export class ConfigService {
     // this.config = Setting;
   }
 
-  async getSetting(){
+  async getSetting(): Promise<AppSetting>{
     if(this.config) return this.config;
     return this.config = await this.persistenceService.loadData();
   }
 
+  async getProviderConfig(): Promise<ProviderConfig[]> {
+    const config =await this.getSetting();
+    return config?.providers
+  }
 
-  async getModelConfig(): Promise<ProviderConfig> {
+  async getModelConfig(): Promise<AppSetting> {
     try {
       return await this.persistenceService.loadData();
     } catch (error) {
@@ -306,7 +310,7 @@ export class ConfigService {
     }
   }
 
-  async getLLMConfigs(): Promise<ProviderConfig[] | ProviderConfig> {
+  async getLLMConfigs(): Promise<AppSetting[] | AppSetting> {
     try {
       const config = await this.getModelConfig();
       return config;
@@ -321,7 +325,7 @@ export class ConfigService {
     }
   }
 
-  async saveModelConfig(configs: ProviderConfig): Promise<void> {
+  async saveModelConfig(configs: AppSetting): Promise<void> {
     try {
       await this.persistenceService.saveData(configs);
     } catch (error) {

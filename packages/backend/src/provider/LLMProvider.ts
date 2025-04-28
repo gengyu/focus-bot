@@ -21,12 +21,12 @@ export interface LLMProvider {
     getModels: () => Promise<any>;
 }
 
-export interface ProviderConfig {
-    apiKey: string;
-    model?: string;
-    temperature?: number;
-    maxTokens?: number;
-    baseURL?: string;
-}
-
-
+// export interface ProviderConfig {
+//     apiKey: string;
+//     model?: string;
+//     temperature?: number;
+//     maxTokens?: number;
+//     baseURL?: string;
+// }
+//
+//

@@ -12,7 +12,7 @@ export interface PersistenceOptions {
 	maxBackups?: number; // 最大备份文件数量，默认24个
 }
 
-export class PersistenceService extends EventEmitter {
+export class PersistenceService<T=any> extends EventEmitter {
 	static readonly EVENT_MCP_AUTO_START = 'mcpAutoStart';
 	private dataDir: string;
 	private backupInterval: number;
@@ -55,7 +55,7 @@ export class PersistenceService extends EventEmitter {
 		}
 	}
 
-	async saveData(data: any, id?: string): Promise<void> {
+	async saveData(data: T, id?: string): Promise<void> {
 		const filePath = this.getConfigPath(id);
 		try {
 			await fs.promises.writeFile(
@@ -68,14 +68,14 @@ export class PersistenceService extends EventEmitter {
 		}
 	}
 
-	async loadData(id?: string): Promise<MCPConfig | any> {
+	async loadData(id?: string): Promise<T> {
 		const filePath = this.getConfigPath(id);
 		try {
 			if (!(await this.exists(filePath))) {
-				return {};
+				return {} as T;
 			}
 			const data = await fs.promises.readFile(filePath, 'utf-8');
-			return JSON.parse(data);
+			return JSON.parse(data) as T;
 		} catch (error) {
 			if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
 				throw new Error('Configuration file not found');
