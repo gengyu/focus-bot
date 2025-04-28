@@ -4,10 +4,10 @@ import {PersistenceService, PersistenceOptions} from './persistenceService';
 import {type ChatMessage} from "../../../../share/type.ts";
 
 import {WritableStream} from "node:stream/web";
-
-interface ChatHistory {
-  [chatId: string]: ChatMessage[];
-}
+//
+// interface ChatHistory {
+//   [chatId: string]: ChatMessage[];
+// }
 
 
 export class ChatService {
@@ -39,10 +39,10 @@ export class ChatService {
   //   }
   // }
 
-  private async saveChatHistory(chatHistory: ChatHistory): Promise<void> {
+  private async saveChatHistory(chatHistory: ChatMessage[], chatId: string): Promise<void> {
     try {
       //@ts-ignore
-      await this.persistenceService.saveData(chatHistory);
+      await this.persistenceService.saveData(chatHistory, chatId);
     } catch (error) {
       throw new Error(`Failed to save chat history: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
@@ -53,28 +53,27 @@ export class ChatService {
    getWriteStorageStream(chatId: string): WritableStream {
     let message: ChatMessage
     return new WritableStream<ChatMessage>({
-      start() {
+      start(chunk) {
         //  持久化缓存
-        console.log('persistent cache start')
+        console.log('persistent cache start', chunk)
       },
       write(chunk) {
         message = chunk;
       },
       close: async () => {
-        const chatHistory = await this.loadChatHistory();
-        chatHistory[chatId] = chatHistory[chatId] || [];
-        chatHistory[chatId].push(message);
-        this.saveChatHistory(chatHistory);
+        const chatHistory = await this.loadChatHistory(chatId);
+        chatHistory.push(message);
+        this.saveChatHistory(chatHistory, chatId);
       }
     });
   }
 
-  private async loadChatHistory(): Promise<ChatHistory> {
+  private async loadChatHistory(chatId: string): Promise<ChatMessage[]> {
     try {
-      return await this.persistenceService.loadData();
+      return await this.persistenceService.loadData(chatId);
     } catch (error) {
       if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
-        return {};
+        return [];
       }
       throw new Error(`Failed to load chat history: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
@@ -82,19 +81,18 @@ export class ChatService {
 
 
   async pushMessage(chatId: string, message: ChatMessage): Promise<void> {
-    const chatHistory = await this.loadChatHistory();
-    if (chatHistory[chatId]) {
-      chatHistory[chatId].push(message);
+    let chatHistory = await this.loadChatHistory(chatId);
+    if (chatHistory) {
+      chatHistory.push(message);
     } else {
-      chatHistory[chatId] = [message];
+      chatHistory = [message];
     }
-    await this.saveChatHistory(chatHistory);
+    await this.saveChatHistory(chatHistory, chatId);
   }
 
   async getMessages(chatId: string): Promise<ChatMessage[]> {
-    const data = await this.loadChatHistory();
-    return data[chatId] || [];
+    const data = await this.loadChatHistory(chatId);
+    return  data || [];
   }
-
 
 }
