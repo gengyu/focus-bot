@@ -1,6 +1,6 @@
 import { API_BASE_URL } from './api';
 import {TransportAdapter, type TransportRequest, TransportType} from "../transports";
-import {type ChatMessage,  type DialogState} from "../../../../share/type.ts";
+import {type ChatMessage, type DialogState, type Model} from "../../../../share/type.ts";
 import log from "loglevel";
 
 
@@ -14,8 +14,8 @@ export class ChatAPI {
 
 
 
-  async sendMessage(message: string, providerId?: string, model?: string): Promise<ChatMessage> {
-    const req: TransportRequest = { method: 'sendMessage', payload: { message, providerId, model } };
+  async sendMessage(message: string, model:Model,  chatId: string): Promise<ChatMessage> {
+    const req: TransportRequest = { method: 'sendMessage', payload: { message, model , chatId} };
     this.transport.invokeStream(req);
 
     // const res = await transport.invokeStream(req);

@@ -44,13 +44,9 @@ export class ChatController {
   }
 
   @SSE('/sendMessage')
-  async postMessage(@Body() body: any) {
+  async postMessage(@Body('message') message: string, @Body('chatId') chatId: string, @Body('model') model: string) {
     try {
-      const message: string = body.message;
-      const chatId: string = body.chatId;
-      const providerId: string = body.providerId;
-      const model = body.model;
-      const apiKey = body.apiKey;
+
 
       const userMessage: ChatMessage = {
         // chatId,

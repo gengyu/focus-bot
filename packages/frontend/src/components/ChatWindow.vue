@@ -160,12 +160,13 @@
 
 <script setup lang="ts">
 import {computed, defineProps, ref, watch} from 'vue';
-import type {ChatMessage} from "../../../../share/type.ts";
+import type {ChatMessage, Model} from "../../../../share/type.ts";
 import {chatAPI} from "@/services/chatApi.ts";
 import log from "loglevel";
 
 const props = defineProps<{
-  model?: string
+  model?: Model
+  chatId?: string
   chatMessages?: ChatMessage[]
 }>();
 
@@ -248,7 +249,7 @@ const sendMessage = async () => {
       // 使用选定的模型
       const modelToUse = props.model
 
-      const response = await chatAPI.sendMessage(userMessage.content, selectedProvider.value, modelToUse);
+      const response = await chatAPI.sendMessage(userMessage.content, modelToUse, props.chatId);
       // messages.value.push(response);
       scrollToBottom();
     }

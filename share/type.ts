@@ -1,5 +1,6 @@
 export interface Model {
   id: string;
+  providerId: string;
   name: string;
   description: string;
   size: string;

@@ -12,7 +12,8 @@
           "name": "gemma3:1b",
           "description": "Ollama 本地模型",
           "size": 815319791,
-          "enabled": true
+          "enabled": true,
+          "providerId": "ollama"
         }
       ],
       "providerId": "ollama"
@@ -29,14 +30,16 @@
           "name": "GPT-4",
           "description": "最强大的 GPT 模型",
           "size": "1.76T",
-          "enabled": true
+          "enabled": true,
+          "providerId": "openai"
         },
         {
           "id": "gpt-3.5-turbo",
           "name": "GPT-3.5 Turbo",
           "description": "性能均衡模型",
           "size": "175B",
-          "enabled": true
+          "enabled": true,
+          "providerId": "openai"
         }
       ]
     },
@@ -52,14 +55,16 @@
           "name": "Gemini Pro",
           "description": "通用型大语言模型",
           "size": "1.37T",
-          "enabled": true
+          "enabled": true,
+          "providerId": "gemini"
         },
         {
           "id": "gemini-pro-vision",
           "name": "Gemini Pro Vision",
           "description": "多模态模型",
           "size": "1.37T",
-          "enabled": true
+          "enabled": true,
+          "providerId": "gemini"
         }
       ]
     },
@@ -75,7 +80,8 @@
           "name": "Moonshot",
           "description": "通用大语言模型",
           "size": "70B",
-          "enabled": true
+          "enabled": true,
+          "providerId": "kimi"
         }
       ]
     },
@@ -91,7 +97,8 @@
           "name": "豆包大模型",
           "description": "通用大语言模型",
           "size": "70B",
-          "enabled": true
+          "enabled": true,
+          "providerId": "doubao"
         }
       ]
     },
@@ -107,21 +114,24 @@
           "name": "Qwen Max",
           "description": "最强性能模型",
           "size": "189B",
-          "enabled": true
+          "enabled": true,
+          "providerId": "aliyun"
         },
         {
           "id": "qwen-plus",
           "name": "Qwen Plus",
           "description": "通用大语言模型",
           "size": "14B",
-          "enabled": true
+          "enabled": true,
+          "providerId": "aliyun"
         },
         {
           "id": "qwen-turbo",
           "name": "Qwen Turbo",
           "description": "快速响应模型",
           "size": "7B",
-          "enabled": true
+          "enabled": true,
+          "providerId": "aliyun"
         }
       ]
     }
