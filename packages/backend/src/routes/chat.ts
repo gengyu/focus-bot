@@ -7,7 +7,7 @@ import {z} from 'zod';
 import {ReadableStream} from "node:stream/web";
 import {ResultHelper} from './routeHelper';
 import {DialogService} from "../services/dailogService.ts";
-import {ChatMessage, type DialogState} from "../../../../share/type.ts";
+import {ChatMessage, type DialogState, Model} from "../../../../share/type.ts";
 
 const chatService = new ChatService();
 const llmService = new LLMService({
@@ -44,7 +44,7 @@ export class ChatController {
   }
 
   @SSE('/sendMessage')
-  async postMessage(@Body('message') message: string, @Body('chatId') chatId: string, @Body('model') model: string) {
+  async postMessage(@Body('message') message: string, @Body('chatId') chatId: string, @Body('model') model: Model) {
     try {
 
 
@@ -61,8 +61,8 @@ export class ChatController {
 
       const llm = new LLMService({
         baseURL: 'http://localhost:11434',
-        apiKey: apiKey,
-        model: model
+        apiKey: '',
+        model: model.id
       });
 
 

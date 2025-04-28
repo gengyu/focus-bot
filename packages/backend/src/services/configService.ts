@@ -13,6 +13,8 @@ import {StatusService} from "./statusService";
 import path from "path";
 import {ProviderConfig} from "../../../../share/type";
 
+import Setting from '../../data/settting.json'
+
 // import {Transport} from '@modelcontextprotocol/sdk/shared/transport.js';
 
 export class FileConfigService implements IConfigService {
@@ -274,9 +276,9 @@ export class FileConfigService implements IConfigService {
 }
 
 
-
-
 export class ConfigService {
+
+  private config: typeof Setting | undefined;
 
   private persistenceService: PersistenceService;
 
@@ -287,9 +289,17 @@ export class ConfigService {
       backupInterval: options?.backupInterval ?? 3600000, // 默认1小时
       maxBackups: options?.maxBackups ?? 24 // 默认24个备份
     });
+    // this.config = Setting;
   }
 
+  async getSetting(){
+    if(this.config) return this.config;
+    return this.config = await this.persistenceService.loadData();
+  }
+
+
   async getModelConfig(): Promise<ProviderConfig> {
+
     try {
       return await this.persistenceService.loadData();
     } catch (error) {
