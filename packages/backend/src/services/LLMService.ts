@@ -1,46 +1,26 @@
 
 import {OpenAIProvider} from "../provider/OpenAIProvider";
 import {LLMProvider, ProviderConfig} from "../provider/LLMProvider";
+import {ConfigService} from "./configService.ts";
 // import {Ollama} from "ollama";
 //
 // console.log(Ollama)
 
 export class LLMService {
     private providerCache: Map<string, LLMProvider> = new Map();
-    private providerFactory: Record<string, (config: ProviderConfig) => LLMProvider> = {
-        openai: (config: ProviderConfig) => new OpenAIProvider(config),
-        // gemini: (config: ProviderConfig) => new GeminiProvider(config), // 需要实现 GeminiProvider
-    };
-    private defaultProvider: string;
-    private defaultConfig: ProviderConfig;
 
-    constructor(configs: ProviderConfig[] | ProviderConfig) {
-        if (Array.isArray(configs)) {
-            configs.forEach(cfg => {
-                if (cfg.provider) {
-                    const factory = this.providerFactory[cfg.provider];
-                    if (factory) {
-                        this.providerCache.set(cfg.provider, factory(cfg));
-                    }
-                }
-            });
-            this.defaultProvider = configs[0]?.provider || 'openai';
-            this.defaultConfig = configs[0];
-        } else {
-            const factory = this.providerFactory[configs.provider];
-            if (factory) {
-                this.providerCache.set(configs.provider, factory(configs));
-            }
-            this.defaultProvider = configs.provider || 'openai';
-            this.defaultConfig = configs;
-        }
+    private configService: ConfigService
+
+    constructor(config: ConfigService) {
+        this.configService =config
     }
 
     private getProvider(provider: string, config?: ProviderConfig): LLMProvider {
         if (this.providerCache.has(provider)) {
             return this.providerCache.get(provider)!;
         }
-        const factory = this.providerFactory[provider];
+        this.configService.getLLMConfigs();
+        const factory = this.providerCache.get[provider];
         if (factory) {
             const instance = factory(config || this.defaultConfig);
             this.providerCache.set(provider, instance);
