@@ -1,6 +1,6 @@
 import 'reflect-metadata';
 import Router from 'koa-router';
-import {ResultHelper} from "./routes/routeHelper";
+import {ResultHelper} from "../routes/routeHelper.ts";
 
 export const router = new Router();
 

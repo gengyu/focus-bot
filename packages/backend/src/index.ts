@@ -3,7 +3,7 @@ import Router from 'koa-router';
 import cors from '@koa/cors';
 import bodyParser from 'koa-bodyparser';
 
-import { router as decoratorRouter, registerControllers } from './decorators';
+import { router as decoratorRouter, registerControllers } from './decorators/decorators.ts';
 import { ChatController } from './routes/chat';
 import { ConfigController } from './routes/config';
 import {SettingController} from "./routes/setting";

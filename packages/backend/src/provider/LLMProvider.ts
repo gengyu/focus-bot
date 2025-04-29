@@ -1,4 +1,5 @@
 import type { ChatCompletionChunk } from "openai/resources/chat/completions";
+import type {ChatMessage} from "../../../../share/type.ts";
 type Delta = ChatCompletionChunk.Choice.Delta;
 
 export interface ProviderResponseChunk extends Delta {
@@ -16,8 +17,8 @@ export interface ProviderResponseChunk extends Delta {
 
 export interface LLMProvider {
 
-    chat(messages: Array<{ role: string; content: string }>, model: string):Promise<any>;
-    streamChat (messages: Array<{ role: string; content: string }>, model: string): AsyncGenerator<ProviderResponseChunk, void, unknown>;
+    chat(message: ChatMessage, model: string):Promise<any>;
+    streamChat (message: ChatMessage, model: string): AsyncGenerator<ProviderResponseChunk, void, unknown>;
     getModels: () => Promise<any>;
 }
 

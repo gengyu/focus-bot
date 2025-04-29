@@ -1,21 +1,72 @@
-import {PersistenceOptions, PersistenceService} from './persistenceService';
+import { ChildProcess, spawn } from 'child_process';
 import {
   ConfigStorageOptions,
-  ConfigValidationError,
-  ConfigValidationResult,
+  ConfigValidationError, ConfigValidationResult,
   IConfigService,
-  MCPConfig,
-  MCPConfigListItem
-} from '../types/config';
-import {Client} from "@modelcontextprotocol/sdk/client/index.js";
-import {StdioClientTransport,} from "@modelcontextprotocol/sdk/client/stdio.js";
-import {StatusService} from "./statusService";
+  MCPConfig, MCPConfigListItem,
+  MCPServerConfig
+} from '../types/config.ts';
+import {PersistenceService} from "../services/PersistenceService.ts";
+import {StatusService} from "./statusService.ts";
 import path from "path";
-import {AppSetting, ProviderConfig} from "../../../../share/type";
 
-import Setting from '../../data/settting.json'
+export class MCPService {
+  private servers: Map<string, ChildProcess> = new Map();
 
-// import {Transport} from '@modelcontextprotocol/sdk/shared/transport.js';
+  constructor(private config: MCPConfig) {}
+
+  async startServers() {
+    const { mcpServers } = this.config;
+    
+    for (const [name, serverConfig] of Object.entries(mcpServers)) {
+      await this.startServer(name, serverConfig);
+    }
+  }
+
+  private async startServer(name: string, config: MCPServerConfig) {
+    if (this.servers.has(name)) {
+      throw new Error(`Server ${name} is already running`);
+    }
+
+    const server = spawn(config.command, config.args);
+
+    server.stdout.on('data', (data) => {
+      console.log(`[${name}] stdout: ${data}`);
+    });
+
+    server.stderr.on('data', (data) => {
+      console.error(`[${name}] stderr: ${data}`);
+    });
+
+    server.on('close', (code) => {
+      console.log(`[${name}] process exited with code ${code}`);
+      this.servers.delete(name);
+    });
+
+    this.servers.set(name, server);
+  }
+
+  async stopServers() {
+    for (const [name, server] of this.servers) {
+      await this.stopServer(name);
+    }
+  }
+
+  private async stopServer(name: string) {
+    const server = this.servers.get(name);
+    if (!server) {
+      return;
+    }
+
+    server.kill();
+    this.servers.delete(name);
+  }
+
+  getRunningServers(): string[] {
+    return Array.from(this.servers.keys());
+  }
+}
+
 
 export class FileConfigService implements IConfigService {
   private runningMCPs: Set<string> = new Set();
@@ -274,81 +325,4 @@ export class FileConfigService implements IConfigService {
     }
   }
 }
-
-
-export class ConfigService {
-
-  private config: AppSetting | undefined;
-
-  private persistenceService: PersistenceService<AppSetting>;
-
-  constructor(options?: PersistenceOptions) {
-    this.persistenceService = new PersistenceService<AppSetting>({
-      dataDir: options?.dataDir || path.join(process.cwd(), 'data'),
-      configFileName: 'settting.json',
-      backupInterval: options?.backupInterval ?? 3600000, // 默认1小时
-      maxBackups: options?.maxBackups ?? 24 // 默认24个备份
-    });
-    // this.config = Setting;
-  }
-
-  async getSetting(): Promise<AppSetting>{
-    if(this.config) return this.config;
-    return this.config = await this.persistenceService.loadData();
-  }
-
-  async getProviderConfig(): Promise<ProviderConfig[]> {
-    const config =await this.getSetting();
-    return config?.providers
-  }
-
-  async getModelConfig(): Promise<AppSetting> {
-    try {
-      return await this.persistenceService.loadData();
-    } catch (error) {
-      throw new Error(`Failed to load settting data ${error instanceof Error ? error.message : 'Unknown error'}`);
-    }
-  }
-
-  async getLLMConfigs(): Promise<AppSetting[] | AppSetting> {
-    try {
-      const config = await this.getModelConfig();
-      return config;
-    } catch (error) {
-      console.error(`Failed to get LLM configs: ${error instanceof Error ? error.message : 'Unknown error'}`);
-      // 返回默认配置
-      return {
-        provider: 'openai',
-        apiKey: '',
-        baseURL: ''
-      }  as any;
-    }
-  }
-
-  async saveModelConfig(configs: AppSetting): Promise<void> {
-    try {
-      await this.persistenceService.saveData(configs);
-    } catch (error) {
-      if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
-        return;
-      }
-      throw new Error(`Failed to save settting data: ${error instanceof Error ? error.message : 'Unknown error'}`);
-    }
-  }
-
-  async updateConfig(newConfig: any): Promise<void> {
-    try {
-      // 更新配置并保存
-      this.config = {...(this.config || {}), ...newConfig};
-      await this.persistenceService.saveData(this.config);
-    } catch (error) {
-      throw new Error(`Failed to update config: ${error instanceof Error ? error.message : 'Unknown error'}`);
-    }
-  }
-
-
-}
-
-
-
 

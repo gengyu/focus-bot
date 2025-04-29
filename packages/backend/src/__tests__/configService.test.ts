@@ -1,4 +1,4 @@
-import { FileConfigService } from '../services/configService';
+import { FileConfigService } from '../services/AppSettingService';
 import { MCPConfig } from '../types/config';
 import fs from 'fs';
 import path from 'path';

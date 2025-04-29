@@ -1,9 +1,5 @@
 import fs from 'fs';
 import path from 'path';
-import {MCPConfig} from '../types/config';
-import {EventEmitter} from 'events';
-import {createReadStream, createWriteStream} from 'fs';
-import readline from 'readline';
 
 export interface PersistenceOptions {
 	dataDir?: string;
@@ -12,7 +8,7 @@ export interface PersistenceOptions {
 	maxBackups?: number; // 最大备份文件数量，默认24个
 }
 
-export class PersistenceService<T=any> extends EventEmitter {
+export class PersistenceService<T = any> {
 	static readonly EVENT_MCP_AUTO_START = 'mcpAutoStart';
 	private dataDir: string;
 	private backupInterval: number;
@@ -22,7 +18,6 @@ export class PersistenceService<T=any> extends EventEmitter {
 
 
 	constructor(options: PersistenceOptions) {
-		super();
 		this.dataDir = options.dataDir || path.join(process.cwd(), 'data');
 		this.backupInterval = options.backupInterval || 3600000; // 默认1小时
 		this.maxBackups = options.maxBackups || 24; // 默认24个备份
@@ -42,7 +37,7 @@ export class PersistenceService<T=any> extends EventEmitter {
 
 	private getConfigPath(id?: string): string {
 		const configFileName = this.configFileName.replace('.json', '');
-		const fileName = id ?  `${configFileName}/${id}.json` : `${configFileName}.json` ;
+		const fileName = id ? `${configFileName}/${id}.json` : `${configFileName}.json`;
 		return path.join(this.dataDir, fileName);
 	}
 
@@ -68,7 +63,7 @@ export class PersistenceService<T=any> extends EventEmitter {
 		}
 	}
 
-	async loadData(id?: string): Promise<T> {
+	async loadData(id?: string): Promise<T > {
 		const filePath = this.getConfigPath(id);
 		try {
 			if (!(await this.exists(filePath))) {
@@ -87,16 +82,28 @@ export class PersistenceService<T=any> extends EventEmitter {
 	private async backupData(): Promise<void> {
 		try {
 			const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-			const backupPath = path.join(this.dataDir, `config.${timestamp}.backup.json`);
+			const configFileName = this.configFileName.replace('.json', '');
 
-			// 备份所有配置文件
-			const files = await fs.promises.readdir(this.dataDir);
-			const configFiles = files.filter(file => file.startsWith('config_') && file.endsWith('.json'));
+			// 备份主配置文件
+			const mainConfigPath = this.getConfigPath();
+			if (await this.exists(mainConfigPath)) {
+				const mainBackupPath = path.join(this.dataDir, `${configFileName}.${timestamp}.backup.json`);
+				await fs.promises.copyFile(mainConfigPath, mainBackupPath);
+			}
 
-			for (const file of configFiles) {
-				const sourcePath = path.join(this.dataDir, file);
-				const backupFilePath = path.join(this.dataDir, `${file.replace('.json', '')}.${timestamp}.backup.json`);
-				await fs.promises.copyFile(sourcePath, backupFilePath);
+			// 备份子配置文件
+			const configDirPath = path.join(this.dataDir, configFileName);
+			if (await this.exists(configDirPath)) {
+				const files = await fs.promises.readdir(configDirPath);
+				const jsonFiles = files.filter(file => file.endsWith('.json'));
+
+				for (const file of jsonFiles) {
+					const sourcePath = path.join(configDirPath, file);
+					const backupDirPath = path.join(this.dataDir, `${configFileName}.${timestamp}.backup`);
+					await fs.promises.mkdir(backupDirPath, {recursive: true});
+					const backupFilePath = path.join(backupDirPath, file);
+					await fs.promises.copyFile(sourcePath, backupFilePath);
+				}
 			}
 
 			await this.cleanupOldBackups();
@@ -108,8 +115,11 @@ export class PersistenceService<T=any> extends EventEmitter {
 	private async cleanupOldBackups(): Promise<void> {
 		try {
 			const files = await fs.promises.readdir(this.dataDir);
+			const configFileName = this.configFileName.replace('.json', '');
+			const backupPattern = new RegExp(`^${configFileName}\..*\.backup(?:\.json|\/.*\.json)$`);
+
 			const backupFiles = files
-				.filter(file => file.match(/^config.*\.backup\.json$/))
+				.filter(file => backupPattern.test(file))
 				.map(file => ({
 					name: file,
 					path: path.join(this.dataDir, file),
@@ -120,7 +130,17 @@ export class PersistenceService<T=any> extends EventEmitter {
 			if (backupFiles.length > this.maxBackups) {
 				const filesToDelete = backupFiles.slice(this.maxBackups);
 				for (const file of filesToDelete) {
-					await fs.promises.unlink(file.path);
+					if (file.name.endsWith('.json')) {
+						await fs.promises.unlink(file.path);
+					} else {
+						// 删除备份目录及其内容
+						const backupDir = file.path;
+						const backupFiles = await fs.promises.readdir(backupDir);
+						for (const backupFile of backupFiles) {
+							await fs.promises.unlink(path.join(backupDir, backupFile));
+						}
+						await fs.promises.rmdir(backupDir);
+					}
 				}
 			}
 		} catch (error) {
@@ -129,12 +149,12 @@ export class PersistenceService<T=any> extends EventEmitter {
 	}
 
 	private startAutoBackup(): void {
-		// if (this.backupTimer) {
-		// 	clearInterval(this.backupTimer);
-		// }
-		// this.backupTimer = setInterval(() => {
-		// 	this.backupData();
-		// }, this.backupInterval);
+		if (this.backupTimer) {
+			clearInterval(this.backupTimer);
+		}
+		this.backupTimer = setInterval(() => {
+			this.backupData();
+		}, this.backupInterval);
 	}
 
 	public stopAutoBackup(): void {

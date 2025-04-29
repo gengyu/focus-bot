@@ -1,31 +1,31 @@
-// import {ChatService} from "./chatService.ts";
-// import {ConfigService} from "./configService.ts";
-// import {LLMService} from "./LLMService.ts";
+// import {ChatService} from "./ChatService.ts";
+// import {AppSettingService} from "./AppSettingService.ts";
+// import {ChatService} from "./ChatService.ts";
 // import {type ChatMessage} from "../../../share/type.ts";
 //
 //
 // export class Service {
 // 	chatService: ChatService;
-// 	configService: ConfigService;
-// 	llmService: LLMService;
+// 	configService: AppSettingService;
+// 	llmService: ChatService;
 //
 // 	constructor() {
 // 		// 初始化服务，保持清晰的依赖关系
-// 		this.configService = new ConfigService();
-// 		this.llmService = new LLMService(this.configService); // 传递配置
+// 		this.configService = new AppSettingService();
+// 		this.llmService = new ChatService(this.configService); // 传递配置
 // 		this.chatService = new ChatService(this.llmService);
 // 	}
 //
-// 	// // 独立操作 ConfigService
+// 	// // 独立操作 AppSettingService
 // 	async updateConfig(newConfig: any) {
 // 	// 	await this.configService.updateConfig(newConfig);
-// 	// 	// 配置变更后，重载 LLMService
-// 	// 	this.llmService = new LLMService(this.configService);
+// 	// 	// 配置变更后，重载 ChatService
+// 	// 	this.llmService = new ChatService(this.configService);
 // 	// 	// 重新创建ChatService，传入更新后的LLMService
 // 	// 	this.chatService = new ChatService(this.llmService);
 // 	// }
 // 	//
-// 	// // 独立操作 LLMService
+// 	// // 独立操作 ChatService
 // 	// async getLLMModels(providerId?: string) {
 // 	// 	return this.llmService.getModels(providerId);
 // 	// }
@@ -41,7 +41,7 @@
 // 	// // 动态添加/停用 provider
 // 	// reloadLLMProviders(configs: any[]) {
 // 	// 	// 使用新配置重新创建LLMService
-// 	// 	this.llmService = new LLMService(configs);
+// 	// 	this.llmService = new ChatService(configs);
 // 	// 	// 更新ChatService，确保它使用最新的LLMService
 // 	// 	this.chatService = new ChatService(this.llmService);
 // 	// }

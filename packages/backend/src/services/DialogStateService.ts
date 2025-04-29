@@ -1,17 +1,19 @@
-import {PersistenceOptions, PersistenceService} from "./persistenceService.ts";
 import path from "path";
 import {DialogState} from "../../../../share/type";
+import {PersistenceOptions, PersistenceService} from './PersistenceService.ts';
+import {Singleton} from "../decorators/Singleton.ts";
 
-export class DialogService {
 
-  private persistenceService: PersistenceService;
+@Singleton()
+export class DialogStateService {
+  private persistenceService: PersistenceService<DialogState>;
 
   constructor(options?: PersistenceOptions) {
-    this.persistenceService = new PersistenceService({
+    this.persistenceService = new PersistenceService<DialogState>({
       dataDir: options?.dataDir || path.join(process.cwd(), 'data'),
       configFileName: 'dialog.json',
       backupInterval: options?.backupInterval ?? 3600000, // 默认1小时
-      maxBackups: options?.maxBackups ?? 24 // 默认24个备份
+      maxBackups: options?.maxBackups ?? 24, // 默认24个备份
     });
   }
 
@@ -19,7 +21,7 @@ export class DialogService {
     try {
       return await this.persistenceService.loadData();
     } catch (error) {
-      throw new Error(`Failed to load settting data ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error(`获取对话列表失败: ${error instanceof Error ? error.message : '未知错误'}`);
     }
   }
 
@@ -30,7 +32,7 @@ export class DialogService {
       if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
         return;
       }
-      throw new Error(`Failed to load settting data: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error(`保存对话列表失败: ${error instanceof Error ? error.message : '未知错误'}`);
     }
   }
 }

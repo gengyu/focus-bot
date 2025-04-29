@@ -1,7 +1,7 @@
-import {Body, Controller, Get, Param, Post, Service} from '../decorators';
-import {FileConfigService} from '../services/configService';
+import {Body, Controller, Get, Param, Post, Service} from '../decorators/decorators.ts';
+import {FileConfigService} from '../services/AppSettingService.ts';
 import {ResultHelper} from './routeHelper';
-import {LLMService} from "../services/LLMService";
+import {ChatService} from "../services/ChatService.ts";
 import {ProviderConfig} from "../../../../share/type.ts";
 
 
@@ -13,7 +13,7 @@ export class SettingController {
 
   @Post('/getModels')
   async getModels(@Body() modelConfig: ProviderConfig) {
-    const llmService = new LLMService(modelConfig as any);
+    const llmService = new ChatService(modelConfig as any);
     const config = await llmService.getModels();
     return ResultHelper.success(config);
   }
