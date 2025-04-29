@@ -1,5 +1,5 @@
 {
-  "name": "focus-bot",
+  "name": "@focus-bot/native",
   "version": "0.1.0",
   "description": "A powerful LLM conversation client with multi-model support",
   "main": "src/main/main.ts",

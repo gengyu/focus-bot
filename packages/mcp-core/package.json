@@ -1,5 +1,5 @@
 {
-  "name": "@mcp-connect/core",
+  "name": "@focus-bot/core",
   "version": "1.0.0",
   "private": false,
   "description": "A simple, easy-to-use library for developing and debugging MCP (Model Context Protocol) based systems",

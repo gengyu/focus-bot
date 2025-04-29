@@ -1,5 +1,5 @@
 {
-  "name": "@mcp-connect/root",
+  "name": "@focus-bot/root",
   "private": true,
   "version": "1.0.0",
   "description": "MCP-Connect - A development and debugging toolkit for Model Context Protocol based systems",
