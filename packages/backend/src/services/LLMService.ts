@@ -19,6 +19,7 @@ export class LLMService {
         this.configService =config
     }
 
+    // 单例 #todo
     private async getLLmIntance(providerId: string): Promise<LLMProvider> {
         if (this.providerCache.has(providerId)) {
             return this.providerCache.get(providerId)!;
