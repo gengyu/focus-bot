@@ -17,7 +17,7 @@
   "dependencies": {
     "@koa/cors": "^5.0.0",
     "@koa/multer": "^3.1.0",
-    "@mcp-connect/core": "workspace:*",
+    "@focus-bot/core": "workspace:*",
     "@modelcontextprotocol/sdk": "^1.9.0",
     "dotenv": "^16.4.7",
     "koa": "^2.16.1",
