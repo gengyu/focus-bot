@@ -9,7 +9,8 @@
         "name": "gemma3:1b",
         "description": "Ollama 本地模型",
         "size": 815319791,
-        "enabled": true
+        "enabled": true,
+        "providerId": "ollama"
       }
     },
     {

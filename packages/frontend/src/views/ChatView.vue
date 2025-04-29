@@ -133,14 +133,14 @@ import {onMounted, ref, computed, watch, nextTick} from 'vue';
 import {configAPI} from '../services/api';
 import {Listbox, ListboxButton, ListboxOption, ListboxOptions} from '@headlessui/vue'
 import {CheckIcon, ChevronUpDownIcon} from '@heroicons/vue/20/solid'
-import {useProviderStore} from "@/store/providerStore.ts";
+import {useAppSettingStore} from "@/store/appSettingStore.js";
 import {type Chat, type ChatMessage, Dialog, Model} from "../../../../share/type.ts";
 import {useDialogStore} from "@/store/dialogStore.ts";
 import {chatAPI} from "@/services/chatApi.ts";
 import log from "loglevel";
 
 
-const {providerConfig} = useProviderStore();
+const {providerConfig} = useAppSettingStore();
 const models = computed<Model[]>(() => {
   const models = providerConfig?.providers?.filter(provider => provider.enabled) || []
   return models.flatMap(provider => provider.models) || [];

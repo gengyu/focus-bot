@@ -24,9 +24,22 @@ export class ChatHistoryService {
 
 	private async saveChatHistory(chatHistory: ChatMessage[], chatId: string): Promise<void> {
 		try {
-			await this.persistenceService.saveData(chatHistory, chatId);
+			await this.persistenceService.saveData({[chatId]: chatHistory}, chatId);
 		} catch (error) {
 			throw new Error(`保存聊天历史失败: ${error instanceof Error ? error.message : '未知错误'}`);
+		}
+	}
+
+	private async loadChatHistory(chatId: string): Promise<ChatMessage[]> {
+		try {
+			const chatHistory = await this.persistenceService.loadData(chatId);
+			if (chatHistory) return chatHistory[chatId] || []
+			return []
+		} catch (error) {
+			if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
+				return [];
+			}
+			throw new Error(`加载聊天历史失败: ${error instanceof Error ? error.message : '未知错误'}`);
 		}
 	}
 
@@ -47,17 +60,6 @@ export class ChatHistoryService {
 				this.saveChatHistory(chatHistory, chatId);
 			}
 		});
-	}
-
-	private async loadChatHistory(chatId: string): Promise<ChatMessage[]> {
-		try {
-			return await this.persistenceService.loadData(chatId) || [];
-		} catch (error) {
-			if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
-				return [];
-			}
-			throw new Error(`加载聊天历史失败: ${error instanceof Error ? error.message : '未知错误'}`);
-		}
 	}
 
 	async pushMessage(chatId: string, message: ChatMessage): Promise<void> {

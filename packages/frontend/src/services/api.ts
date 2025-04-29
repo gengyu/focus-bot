@@ -23,14 +23,14 @@ const transport = new TransportAdapter(TransportType.HTTP, {
 
 export class ConfigAPI {
     async getModelConfig(): Promise<AppSetting> {
-        const req = {method: 'getModelConfig', payload: {}};
+        const req = {method: 'getAppSetting', payload: {}};
         const res = await transport.invokeDirect(req);
         if (!res.success) throw new Error(`获取模型配置失败: ${res.error}`);
         return res.data;
     }
 
     async saveModelConfig(config: AppSetting): Promise<void> {
-        const req = {method: 'saveModelConfig', payload: config};
+        const req = {method: 'saveAppSetting', payload: config};
         const res = await transport.invokeDirect(req);
         if (!res.success) throw new Error(`保存模型配置失败: ${res.error}`);
     }

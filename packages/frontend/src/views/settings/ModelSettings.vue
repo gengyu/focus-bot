@@ -143,7 +143,7 @@ import { ChevronUpDownIcon, ArrowPathIcon } from '@heroicons/vue/20/solid';
 import { configAPI } from '@/services/api';
 import { toast } from 'vue-sonner'
 import type {Model, ProviderConfig} from "../../../../../share/type.ts";
-import { useProviderStore } from '@/store/providerStore';
+import { useAppSettingStore } from '@/store/appSettingStore.ts';
 import {storeToRefs} from "pinia";
 
 
@@ -167,7 +167,7 @@ const getDefaultApiUrl = (providerId: string): string => {
   }
 };
 
-const {providerConfig, resetSettings, updateProvider} = useProviderStore();
+const {providerConfig, resetSettings, updateProvider} = useAppSettingStore();
 
 
 const selectedProviderIdx = ref(0);

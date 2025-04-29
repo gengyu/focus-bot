@@ -14,7 +14,7 @@ export class ChatService {
 	private providerCache: Map<string, LLMProvider> = new Map();
 	private providerFactory: Record<string, (config: ProviderConfig) => LLMProvider> = {
 		// @ts-ignore
-		openai: (config: ProviderConfig) => new OpenAIProvider(config),
+		ollama: (config: ProviderConfig) => new OpenAIProvider(config),
 		// 如需支持 GeminiProvider，请实现对应 Provider 并在 providerFactory 注册
 		// gemini: (config: ProviderConfig) => new GeminiProvider(config), // 需要实现 GeminiProvider
 	};
