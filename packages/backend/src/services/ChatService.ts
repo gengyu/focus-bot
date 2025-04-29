@@ -60,7 +60,9 @@ export class ChatService {
 	) {
 		const llmProvider = await this.getLLmIntance(model.providerId);
 		await this.chatHistoryService.pushMessage(chatId, message);
-		const stream = llmProvider.streamChat([message], model.id);
+		console.log(33333, llmProvider)
+
+		const stream =  llmProvider.streamChat([message], model.id);
 		const assistantMessage: ChatMessage = {
 			role: 'assistant',
 			content: '',

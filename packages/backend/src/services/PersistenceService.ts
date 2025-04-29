@@ -53,6 +53,9 @@ export class PersistenceService<T = any> {
 	async saveData(data: T, id?: string): Promise<void> {
 		const filePath = this.getConfigPath(id);
 		try {
+			// 确保文件和路径存在
+			await fs.promises.mkdir(path.dirname(filePath), {recursive: true});
+			// 保存文件
 			await fs.promises.writeFile(
 				filePath,
 				JSON.stringify(data, null, 2),
