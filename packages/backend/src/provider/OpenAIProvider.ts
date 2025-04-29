@@ -21,7 +21,7 @@ export class OpenAIProvider implements LLMProvider {
     });
   }
 
-  async chat(messages:ChatMessage[], modelId: string) {
+  async chat(messages:ChatMessage[], modelId: string, signal?: AbortSignal) {
     try {
       const msgs = messages.map((msg) => {
         return {
@@ -34,7 +34,8 @@ export class OpenAIProvider implements LLMProvider {
         messages: msgs as ChatCompletionMessageParam[],
         temperature: this.config.temperature,
         max_tokens: this.config.maxTokens,
-        stream: false
+        stream: false,
+        signal: signal
       });
 
       console.log(response.choices)
@@ -45,7 +46,7 @@ export class OpenAIProvider implements LLMProvider {
     }
   }
 
-  async *streamChat(messages: ChatMessage[], modelId: string) {
+  async *streamChat(messages: ChatMessage[], modelId: string, signal?: AbortSignal) {
     // as ChatCompletionMessageParam[]
     const msgs: ChatCompletionMessageParam[] = messages.map((msg) => {
       return {
@@ -56,10 +57,11 @@ export class OpenAIProvider implements LLMProvider {
     try {
       const stream = await this.openai.chat.completions.create({
         model: modelId,
-        messages: msgs ,
+        messages: msgs,
         temperature: this.config.temperature,
         max_tokens: this.config.maxTokens,
-        stream: true
+        stream: true,
+        signal: signal
       });
       for await (const part of stream) {
         yield {

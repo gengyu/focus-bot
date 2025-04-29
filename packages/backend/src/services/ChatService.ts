@@ -76,13 +76,18 @@ export class ChatService {
 				// controller.enqueue(JSON.stringify(assistantMessage));
 			},
 			async pull(controller) {
-				for await (const chunk of stream) {
-					const content = chunk.content || '';
-					if (content) {
-						controller.enqueue(chunk);
+				try {
+					for await (const chunk of stream) {
+						const content = chunk.content || '';
+						if (content) {
+							controller.enqueue(chunk);
+						}
 					}
+				} catch (err) {
+					console.error('Stream error:', err);
+				} finally {
+					controller.close();
 				}
-				controller.close();
 			}
 		});
 		const [stream1, stream2] = readableStream.tee();
