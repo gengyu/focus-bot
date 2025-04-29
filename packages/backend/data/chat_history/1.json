@@ -12,7 +12,8 @@
       "provider": "openai",
       "model": "deepseek-r1:1.5b",
       "role": "assistant",
-      "timestamp": 1745933284
+      "timestamp": 1745933284,
+      "type": "text"
     }
   ]
 }

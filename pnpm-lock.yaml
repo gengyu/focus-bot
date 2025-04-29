@@ -17,15 +17,15 @@ importers:
 
   packages/backend:
     dependencies:
+      '@focus-bot/core':
+        specifier: workspace:*
+        version: link:../mcp-core
       '@koa/cors':
         specifier: ^5.0.0
         version: 5.0.0
       '@koa/multer':
         specifier: ^3.1.0
         version: 3.1.0(multer@1.4.5-lts.2)
-      '@mcp-connect/core':
-        specifier: workspace:*
-        version: link:../mcp-core
       '@modelcontextprotocol/sdk':
         specifier: ^1.9.0
         version: 1.9.0

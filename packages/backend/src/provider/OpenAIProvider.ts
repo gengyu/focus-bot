@@ -69,6 +69,7 @@ export class OpenAIProvider implements LLMProvider {
           model: modelId,
           role: part.choices[0].delta.role,
           timestamp: part.created,
+          type: 'text'
         } as ProviderResponseChunk;
       }
     } catch (error) {

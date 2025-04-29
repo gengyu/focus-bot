@@ -13,13 +13,13 @@
           <div class="pl-6 text-sm text-gray-500 mb-2">{{ group.title }}</div>
           <ul class="pl-6 m-0">
             <li
-                @click="handlerSelectChat(chat.dialogId)"
+                @click="handlerSelectChat(chat.id)"
                 v-for="chat in group.chats"
-                :key="chat.dialogId"
+                :key="chat.id"
                 class="px-3 py-2.5 rounded-lg text-[#374151] cursor-pointer mb-1.5 transition-colors duration-200"
                 :class="{
-                'bg-[#e0e7ef] text-[#2563eb] font-semibold': dialogState.activeDialogId === chat.dialogId,
-                'hover:bg-[#e0e7ef] hover:text-[#2563eb] hover:font-semibold': dialogState.activeDialogId !== chat.dialogId
+                'bg-[#e0e7ef] text-[#2563eb] font-semibold': dialogState.activeDialogId === chat.id,
+                'hover:bg-[#e0e7ef] hover:text-[#2563eb] hover:font-semibold': dialogState.activeDialogId !== chat.id
               }"
             >
               {{ chat.title }}
@@ -116,7 +116,7 @@
       </header>
       <main class="flex-1 flex justify-center rounded-b-xl mx-6 mb-6 min-h-0">
         <ChatWindow
-            :chat-messages="activeChatMessages"
+            :chat-messages="messages"
             :model="selectedModel"
             :chatId="dialogState.activeDialogId"
             @scroll="handlerScroll"
@@ -163,10 +163,6 @@ watch(() => models.value, (newModels) => {
 
 
 const {dialogState, updateModel, setActiveDialog} = useDialogStore();
-const activeChatMessages = computed(() => {
-  const activeDialog = dialogState.dialogs.find(dialog => dialog.dialogId === dialogState.activeDialogId);
-  return activeDialog?.messages || [];
-});
 
 // 监听model变化，更新activeDialog.model
 const handlerSelectModel = () => {
@@ -181,7 +177,7 @@ const handlerSelectChat = (chatId: string)=> {
 
 watch(() => dialogState.activeDialogId, () => {
 
-  const activeDialog = dialogState.dialogs.find(dialog => dialog.dialogId === dialogState.activeDialogId);
+  const activeDialog = dialogState.dialogs.find(dialog => dialog.id === dialogState.activeDialogId);
   console.log(activeDialog,55555)
   if (activeDialog?.model) {
     selectedModel.value = activeDialog.model!;
@@ -197,7 +193,7 @@ const messages = ref<ChatMessage[]>([]);
 // 加载聊天历史
 const loadChatHistory = async () => {
   try {
-    messages.value = await chatAPI.getChatHistory();
+    messages.value = await chatAPI.getChatHistory(dialogState.activeDialogId);
   } catch (error) {
     log.error("Failed to load chat history:", error);
   }

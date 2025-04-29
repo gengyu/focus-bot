@@ -1,7 +1,8 @@
 {
   "dialogs": [
     {
-      "dialogId": "1",
+      "id": "1",
+      "chatId": "1",
       "title": "默认助手1",
       "timestamp": 1745491793951,
       "model": {
@@ -14,17 +15,20 @@
       }
     },
     {
-      "dialogId": "2",
+      "id": "2",
+      "chatId": "2",
       "title": "demo1",
       "timestamp": 1745405393951
     },
     {
-      "dialogId": "3",
+      "id": "3",
+      "chatId": "3",
       "title": "网页生成",
       "timestamp": 1745232593951
     },
     {
-      "dialogId": "4",
+      "id": "4",
+      "chatId": "4",
       "title": "One Word One...",
       "timestamp": 1744195793951
     }

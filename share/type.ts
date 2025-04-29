@@ -41,7 +41,8 @@ export interface ChatMessage {
 }
 
 export interface Chat {
-  chatId: string;
+  id: string
+  dialogId: string;
   messages: ChatMessage[];
   create_time: string;
   update_time: string;
@@ -51,10 +52,9 @@ export interface Chat {
 
 
 export interface Dialog {
-  dialogId: string;
+  id: string;
   title: string;
-  // messages: ChatMessage[];
-  // chatId: string,
+  chatId: string,
   timestamp: number;
   model?: Model
 }

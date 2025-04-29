@@ -42,8 +42,8 @@ export class ChatAPI {
     return await response.json();
   }
 
-  async getChatHistory(): Promise<ChatMessage[]> {
-    const req = { method: 'getChatHistory', payload: {} };
+  async getChatHistory(chatId: string): Promise<ChatMessage[]> {
+    const req = { method: 'getChatHistory', payload: {chatId} };
     const res = await this.transport.invokeDirect(req);
     log.info(res);
     if (!res.success) throw new Error(`获取聊天历史失败: ${res.error}`);

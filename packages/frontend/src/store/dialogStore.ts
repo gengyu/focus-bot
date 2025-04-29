@@ -29,7 +29,7 @@ export const useDialogStore = defineStore<string, {
 
 
   const updateModel = (model: Model) => {
-    const dialog = dialogState.value.dialogs.find(d => d.dialogId === dialogState.value.activeDialogId);
+    const dialog = dialogState.value.dialogs.find(d => d.id === dialogState.value.activeDialogId);
     if (!dialog) {
       return;
     }
