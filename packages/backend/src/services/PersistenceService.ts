@@ -73,7 +73,8 @@ export class PersistenceService<T = any> {
 				return {} as T;
 			}
 			const data = await fs.promises.readFile(filePath, 'utf-8');
-			return JSON.parse(data) as T;
+			if(data) return JSON.parse(data) as T;
+			return {} as T;
 		} catch (error) {
 			if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
 				throw new Error('Configuration file not found');

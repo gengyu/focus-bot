@@ -1,0 +1,4 @@
+{
+  "ignore": ["logs/*", "node_modules/**/*"],
+  "watch": ["src/**/*"]
+}

@@ -4,14 +4,38 @@
       "id": "ollama",
       "name": "Ollama",
       "enabled": true,
-      "apiUrl": "http://localhost:11434",
+      "apiUrl": "http://localhost:11434/v1",
       "apiKey": "",
       "models": [
         {
-          "id": "gemma3:1b",
-          "name": "gemma3:1b",
+          "id": "gemma3:latest",
+          "name": "gemma3:latest",
           "description": "Ollama 本地模型",
-          "size": 815319791,
+          "size": 3338801804,
+          "enabled": true,
+          "providerId": "ollama"
+        },
+        {
+          "id": "qwq:32b",
+          "name": "qwq:32b",
+          "description": "Ollama 本地模型",
+          "size": 19851349390,
+          "enabled": true,
+          "providerId": "ollama"
+        },
+        {
+          "id": "chanwit/flux-7b:latest",
+          "name": "chanwit/flux-7b:latest",
+          "description": "Ollama 本地模型",
+          "size": 5131410276,
+          "enabled": true,
+          "providerId": "ollama"
+        },
+        {
+          "id": "deepseek-r1:1.5b",
+          "name": "deepseek-r1:1.5b",
+          "description": "Ollama 本地模型",
+          "size": 1117322599,
           "enabled": true,
           "providerId": "ollama"
         }

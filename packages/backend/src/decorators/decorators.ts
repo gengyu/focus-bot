@@ -167,16 +167,16 @@ export function registerControllers(controllers: any[]) {
 
           try {
             const result: ReadableStream = await handler.apply(instance, parsm.args);
-            if (result.locked) {
-              throw new Error('Stream is already locked');
-            }
+            // if (result.locked) {
+            //   throw new Error('Stream is already locked');
+            // }
             const reader = result.getReader();
             
             try {
               while (true) {
                 const { done, value } = await reader.read();
                 if (done) break;
-                console.log(value,333)
+
                 // 将二进制数据转换为字符串
                 // const text = new TextDecoder().decode(value);
                 // 发送SSE格式的数据
@@ -188,6 +188,7 @@ export function registerControllers(controllers: any[]) {
           } catch (error) {
             console.error('SSE处理错误:', error);
             ctx.res.write(`event: error\ndata: ${JSON.stringify({ error: '处理流数据时发生错误' })}\n\n`);
+            ctx.res.end();
           } finally {
             ctx.res.write('event: end\ndata: Stream ended\n\n');
             ctx.res.end();

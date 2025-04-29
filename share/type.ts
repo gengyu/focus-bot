@@ -33,6 +33,7 @@ export interface AppSetting {
 
 export interface ChatMessage {
   role: 'user' | 'assistant';
+  provider?: string
   content: string;
   timestamp: number;
   type: 'text' | 'image';
@@ -60,5 +61,5 @@ export interface Dialog {
 
 export interface DialogState {
   dialogs: Dialog[];
-  activeDialogId: string | null;
+  activeDialogId: string;
 }

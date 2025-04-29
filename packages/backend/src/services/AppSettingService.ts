@@ -33,6 +33,12 @@ export class AppSettingService {
 
 	async saveAppSetting(configs: AppSetting): Promise<void> {
 		try {
+			configs.providers.forEach((provider) => {
+				provider.models.forEach((model) => {
+					model.enabled = model.enabled ?? true;
+					model.providerId = provider.id
+				})
+			})
 			await this.persistenceService.saveData(configs);
 		} catch (error) {
 			if ((error as NodeJS.ErrnoException).code === 'ENOENT') {

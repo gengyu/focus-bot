@@ -1,5 +1,5 @@
 import {OpenAIProvider} from "../provider/OpenAIProvider";
-import {LLMProvider} from "../provider/LLMProvider";
+import {LLMProvider, ProviderResponseChunk} from "../provider/LLMProvider";
 import {AppSettingService} from "./AppSettingService.ts";
 import {type ChatMessage, Model, ProviderConfig} from "../../../../share/type.ts";
 import {ChatHistoryService} from "./ChatHistoryService.ts";
@@ -60,25 +60,24 @@ export class ChatService {
 	) {
 		const llmProvider = await this.getLLmIntance(model.providerId);
 		await this.chatHistoryService.pushMessage(chatId, message);
-		console.log(33333, llmProvider)
 
 		const stream =  llmProvider.streamChat([message], model.id);
-		const assistantMessage: ChatMessage = {
-			role: 'assistant',
-			content: '',
-			timestamp: Date.now(),
-			type: 'text'
-		};
+		// const assistantMessage: ChatMessage = {
+		// 	role: 'assistant',
+		// 	content: '',
+		// 	timestamp: Date.now(),
+		// 	type: 'text'
+		// };
 
-		const readableStream = new ReadableStream<string>({
+		const readableStream = new ReadableStream<ProviderResponseChunk>({
 			async start(controller) {
-				controller.enqueue(JSON.stringify(assistantMessage));
+				// controller.enqueue(JSON.stringify(assistantMessage));
 			},
 			async pull(controller) {
 				for await (const chunk of stream) {
 					const content = chunk.content || '';
 					if (content) {
-						controller.enqueue(content);
+						controller.enqueue(chunk);
 					}
 				}
 				controller.close();

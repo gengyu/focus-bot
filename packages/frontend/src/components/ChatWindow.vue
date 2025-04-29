@@ -224,7 +224,9 @@ const availableModels = computed(() => {
 
 // 发送文本消息
 const sendMessage = async () => {
+  chatAPI.sendMessage('who are you', props.model, props.chatId);
   // 如果既没有文本消息也没有图片，则不发送
+  return ;
   if (!messageInput.value.trim() && !imageFile.value) return;
 
   try {

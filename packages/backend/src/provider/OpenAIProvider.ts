@@ -62,13 +62,13 @@ export class OpenAIProvider implements LLMProvider {
         stream: true
       });
       for await (const part of stream) {
-        console.log(part.choices[0].delta)
         yield {
           content: part.choices[0].delta.content as string,
           reasoningContent: part.choices[0].delta.content as string,
           provider: 'openai',
           model: modelId,
-          role: part.choices[0].delta.role
+          role: part.choices[0].delta.role,
+          timestamp: part.created,
         } as ProviderResponseChunk;
       }
     } catch (error) {

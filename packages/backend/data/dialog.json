@@ -5,10 +5,10 @@
       "title": "默认助手1",
       "timestamp": 1745491793951,
       "model": {
-        "id": "gemma3:1b",
-        "name": "gemma3:1b",
+        "id": "deepseek-r1:1.5b",
+        "name": "deepseek-r1:1.5b",
         "description": "Ollama 本地模型",
-        "size": 815319791,
+        "size": 1117322599,
         "enabled": true,
         "providerId": "ollama"
       }

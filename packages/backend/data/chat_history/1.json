@@ -1,0 +1,18 @@
+{
+  "1": [
+    {
+      "role": "user",
+      "content": "who are you",
+      "timestamp": 1745933284420,
+      "type": "text"
+    },
+    {
+      "content": "<think><think>\n\n</think>\n\nGreetings! I'm DeepSeek-R1, an artificial intelligence assistant created by DeepSeek. I'm at your service and would be delighted to assist you with any inquiries or tasks you may have.",
+      "reasoningContent": "<think>",
+      "provider": "openai",
+      "model": "deepseek-r1:1.5b",
+      "role": "assistant",
+      "timestamp": 1745933284
+    }
+  ]
+}

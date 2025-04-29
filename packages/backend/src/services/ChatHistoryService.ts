@@ -39,6 +39,7 @@ export class ChatHistoryService {
 			if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
 				return [];
 			}
+			console.log(`加载聊天历史失败: ${error instanceof Error ? error.message : '未知错误'}`)
 			throw new Error(`加载聊天历史失败: ${error instanceof Error ? error.message : '未知错误'}`);
 		}
 	}
@@ -47,17 +48,19 @@ export class ChatHistoryService {
 	getWriteStorageStream(chatId: string): WritableStream {
 		let message: ChatMessage
 		return new WritableStream<ChatMessage>({
-			start(chunk) {
-				//  持久化缓存
-				console.log('persistent cache start', chunk)
-			},
+			// start(chunk) {
+			// 	//  持久化缓存
+			// 	console.log('persistent cache start', chunk.)
+			// },
 			write(chunk) {
-				message = chunk;
+
+				if(!message) message = chunk;
+				message.content += chunk.content;
 			},
 			close: async () => {
 				const chatHistory = await this.loadChatHistory(chatId);
 				chatHistory.push(message);
-				this.saveChatHistory(chatHistory, chatId);
+				await this.saveChatHistory(chatHistory, chatId);
 			}
 		});
 	}
