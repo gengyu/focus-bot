@@ -17,8 +17,8 @@ export interface ProviderResponseChunk extends Delta {
 
 export interface LLMProvider {
 
-    chat(message: ChatMessage, model: string):Promise<any>;
-    streamChat (message: ChatMessage, model: string): AsyncGenerator<ProviderResponseChunk, void, unknown>;
+    chat(message: ChatMessage[], modelId: string):Promise<any>;
+    streamChat (message: ChatMessage[], modelId: string): AsyncGenerator<ProviderResponseChunk, void, unknown>;
     getModels: () => Promise<any>;
 }
 

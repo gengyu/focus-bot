@@ -2,7 +2,7 @@ import OpenAI from 'openai';
 import axios from "axios";
 import {LLMProvider, ProviderResponseChunk} from "./LLMProvider";
 import {type ChatCompletionMessageParam} from "openai/resources";
-import {ProviderConfig} from "../../../../share/type.ts";
+import {type ChatMessage, ProviderConfig} from "../../../../share/type.ts";
 
 // import { Ollama } from "ollama";
 
@@ -13,27 +13,25 @@ export class OpenAIProvider implements LLMProvider {
   private config: ProviderConfig;
 
   constructor(config: ProviderConfig) {
-    this.config = {
-
-      temperature: 0.7,
-      maxTokens: 2000,
-      ...config,
-      model: 'deepseek-r1:1.5b',
-      apiKey: 'ollama',
-      baseURL: 'http://localhost:11434/v1', // Ollama 的本地 API 端点
-    };
+    this.config = config;
 
     this.openai = new OpenAI({
       apiKey: this.config.apiKey,
-      baseURL: this.config.baseURL
+      baseURL: this.config.apiUrl
     });
   }
 
-  async chat(messages: Array<{ role: string; content: string }>, model: string) {
+  async chat(messages:ChatMessage[], modelId: string) {
     try {
+      const msgs = messages.map((msg) => {
+        return {
+          role: msg.role,
+          content: msg.content
+        }
+      })
       const response = await this.openai.chat.completions.create({
-        model: model,
-        messages: messages as ChatCompletionMessageParam[],
+        model: modelId,
+        messages: msgs as ChatCompletionMessageParam[],
         temperature: this.config.temperature,
         max_tokens: this.config.maxTokens,
         stream: false
@@ -47,11 +45,18 @@ export class OpenAIProvider implements LLMProvider {
     }
   }
 
-  async *streamChat(messages: Array<{ role: string; content: string }>) {
+  async *streamChat(messages: ChatMessage[], modelId: string) {
+    // as ChatCompletionMessageParam[]
+    const msgs: ChatCompletionMessageParam[] = messages.map((msg) => {
+      return {
+        role: msg.role,
+        content: msg.content,
+      }
+    })
     try {
       const stream = await this.openai.chat.completions.create({
-        model: this.config.model!,
-        messages: messages as ChatCompletionMessageParam[],
+        model: modelId,
+        messages: msgs ,
         temperature: this.config.temperature,
         max_tokens: this.config.maxTokens,
         stream: true
@@ -62,7 +67,7 @@ export class OpenAIProvider implements LLMProvider {
           content: part.choices[0].delta.content as string,
           reasoningContent: part.choices[0].delta.content as string,
           provider: 'openai',
-          model: this.config.model as string,
+          model: modelId,
           role: part.choices[0].delta.role
         } as ProviderResponseChunk;
       }

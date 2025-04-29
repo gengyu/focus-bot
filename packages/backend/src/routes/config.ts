@@ -1,19 +1,20 @@
 import {Body, Controller, Post} from '../decorators/decorators.ts';
 import {AppSettingService} from '../services/AppSettingService.ts';
 import {ResultHelper} from './routeHelper';
-import {type AppSetting} from "../../../../share/type";
+import {type AppSetting, ProviderConfig} from "../../../../share/type";
+import {ChatService} from "../services/ChatService.ts";
 
 // const fileConfigService = new FileConfigService();
 
 @Controller('/invoke/config')
 export class ConfigController {
-	// private chatService: ChatService;
+	private chatService: ChatService;
 	// private dialogService: DialogStateService;
 	// private chatHistoryService: ChatHistoryService;
 	private appSettingService: AppSettingService;
 
 	constructor() {
-		// this.chatService = new ChatService();
+		this.chatService = new ChatService();
 		// this.dialogService = new DialogStateService();
 		// this.chatHistoryService = new ChatHistoryService();
 		this.appSettingService = new AppSettingService();
@@ -30,6 +31,13 @@ export class ConfigController {
 		await this.appSettingService.saveAppSetting(configs);
 		return ResultHelper.success();
 	}
+
+	@Post('/getModels')
+	async getModels(@Body() providerConfig: ProviderConfig) {
+ 		const models = this.chatService.getModels(providerConfig.id);
+		return ResultHelper.success(models);
+	}
+
 
 	// @Get('/')
 	// async getConfig() {

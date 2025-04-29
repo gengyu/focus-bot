@@ -13,30 +13,30 @@ export function Controller(prefix = ''): ClassDecorator {
   };
 }
 
-export function Service(): ClassDecorator {
-  return (target: any) => {
-    // Mark the class as a service
-    Reflect.defineMetadata('isService', true, target);
-
-    // 添加单例逻辑
-    const originalConstructor = target;
-    let instance: any;
-
-    // 重写构造函数
-    const newConstructor: any = function (...args: any[]) {
-      if (!instance) {
-        instance = new originalConstructor(...args);
-      }
-      return instance;
-    };
-
-    // 复制原型链
-    newConstructor.prototype = originalConstructor.prototype;
-
-    // 返回新的构造函数
-    return newConstructor;
-  };
-}
+// export function Service(): ClassDecorator {
+//   return (target: any) => {
+//     // Mark the class as a service
+//     Reflect.defineMetadata('isService', true, target);
+//
+//     // 添加单例逻辑
+//     const originalConstructor = target;
+//     let instance: any;
+//
+//     // 重写构造函数
+//     const newConstructor: any = function (...args: any[]) {
+//       if (!instance) {
+//         instance = new originalConstructor(...args);
+//       }
+//       return instance;
+//     };
+//
+//     // 复制原型链
+//     newConstructor.prototype = originalConstructor.prototype;
+//
+//     // 返回新的构造函数
+//     return newConstructor;
+//   };
+// }
 
 function createMethodDecorator(method: 'get' | 'post' | 'put' | 'delete' | 'sse') {
   return function(path: string): MethodDecorator {

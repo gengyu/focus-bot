@@ -49,7 +49,7 @@ export class ChatService {
 	) {
 		const llmProvider = await this.getLLmIntance(model.providerId);
 		await this.chatHistoryService.pushMessage(model.id, message);
-		const reponseMsg = await llmProvider.chat(message, chatId);
+		const reponseMsg = await llmProvider.chat([message], chatId);
 		await this.chatHistoryService.pushMessage(chatId, reponseMsg);
 	}
 
@@ -60,7 +60,7 @@ export class ChatService {
 	) {
 		const llmProvider = await this.getLLmIntance(model.providerId);
 		await this.chatHistoryService.pushMessage(chatId, message);
-		const stream = llmProvider.streamChat(message, model.id);
+		const stream = llmProvider.streamChat([message], model.id);
 		const assistantMessage: ChatMessage = {
 			role: 'assistant',
 			content: '',
