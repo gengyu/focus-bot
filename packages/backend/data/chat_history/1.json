@@ -14,6 +14,66 @@
       "role": "assistant",
       "timestamp": 1745933284,
       "type": "text"
+    },
+    {
+      "role": "user",
+      "content": "who are you",
+      "timestamp": 1745966370275,
+      "type": "text"
+    },
+    {
+      "content": "<think><think>\n\n</think>\n\nGreetings! I'm DeepSeek-R1, an artificial intelligence assistant created by DeepSeek. I'm at your service and would be delighted to assist you with any inquiries or tasks you may have.",
+      "reasoningContent": "<think>",
+      "provider": "openai",
+      "model": "deepseek-r1:1.5b",
+      "role": "assistant",
+      "timestamp": 1745966371,
+      "type": "text"
+    },
+    {
+      "role": "user",
+      "content": "1",
+      "timestamp": 1745966851272,
+      "type": "text"
+    },
+    {
+      "content": "<think><think>\n\n</think>\n\n您好！请问有什么可以帮助您的？如果您有任何问题或需要信息，请随时告诉我。",
+      "reasoningContent": "<think>",
+      "provider": "openai",
+      "model": "deepseek-r1:1.5b",
+      "role": "assistant",
+      "timestamp": 1745966852,
+      "type": "text"
+    },
+    {
+      "role": "user",
+      "content": "333",
+      "timestamp": 1745966875344,
+      "type": "text"
+    },
+    {
+      "content": "<think><think>\n\n</think>\n\n您好，我是由中国的深度求索（DeepSeek）公司开发的智能助手DeepSeek-R1。有关模型和产品的详细内容请参考官方文档。",
+      "reasoningContent": "<think>",
+      "provider": "openai",
+      "model": "deepseek-r1:1.5b",
+      "role": "assistant",
+      "timestamp": 1745966875,
+      "type": "text"
+    },
+    {
+      "role": "user",
+      "content": "dddd",
+      "timestamp": 1745967072693,
+      "type": "text"
+    },
+    {
+      "content": "<think><think>\n\n</think>\n\n您好！看起来您输入了一个不完整或不明确的表达式“dddd”。请问有什么我可以帮助您的吗？如果您有任何问题或需要进一步的帮助，请告诉我。例如：\n\n- 有没有某个具体的问题？\n- 还是想了解某个话题？\n- 或者你想聊一聊 something？\n\n祝为您提供服务！",
+      "reasoningContent": "<think>",
+      "provider": "openai",
+      "model": "deepseek-r1:1.5b",
+      "role": "assistant",
+      "timestamp": 1745967072,
+      "type": "text"
     }
   ]
 }

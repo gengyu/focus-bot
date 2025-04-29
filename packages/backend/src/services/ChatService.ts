@@ -28,6 +28,7 @@ export class ChatService {
 
 	// 单例 #todo
 	private async getLLmIntance(providerId: string): Promise<LLMProvider> {
+
 		if (this.providerCache.has(providerId)) {
 			return this.providerCache.get(providerId)!;
 		}
@@ -39,7 +40,8 @@ export class ChatService {
 			this.providerCache.set(providerId, instance);
 			return instance;
 		}
-		throw new Error(`Provider ${providerId} not supported`);
+		console.log(`Provider ${providerId} not supported`);
+		return;
 	}
 
 	async chat(

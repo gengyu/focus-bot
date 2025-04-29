@@ -224,9 +224,7 @@ const availableModels = computed(() => {
 
 // 发送文本消息
 const sendMessage = async () => {
-  chatAPI.sendMessage('who are you', props.model, props.chatId);
-  // 如果既没有文本消息也没有图片，则不发送
-  return ;
+
   if (!messageInput.value.trim() && !imageFile.value) return;
 
   try {
@@ -249,10 +247,22 @@ const sendMessage = async () => {
       scrollToBottom();
 
       // 使用选定的模型
-      const modelToUse = props.model
 
-      const response = await chatAPI.sendMessage(userMessage.content, modelToUse, props.chatId);
-      // messages.value.push(response);
+
+      updateEditableContent();
+      props.chatMessages.push(userMessage);
+
+      const readableStream =  chatAPI.sendMessage(userMessage.content, props.model, props.chatId);
+      console.log(readableStream,3333)
+      const read =  readableStream.getReader();
+      while (true){
+        const { done, value } = await read.read()
+        if (done) {
+          break;
+        }
+        console.log(value,3333)
+      }
+
       scrollToBottom();
     }
   } catch (error) {
@@ -293,8 +303,8 @@ const handleImageMessage = async () => {
   if (!imageFile.value) return;
 
   try {
-    const response = await chatApi.sendImage(imageFile.value);
-    messages.value.push(response);
+    // const response = await chatApi.sendImage(imageFile.value);
+    // messages.value.push(response);
     scrollToBottom();
     cancelImageUpload(); // 清除预览
   } catch (error) {
@@ -318,12 +328,12 @@ const handleImageMessage = async () => {
 // 更新输入框内容
   const updateEditableContent = () => {
     if (editableDiv.value) {
-      // editableDiv.value.innerText = messageInput.value;
+      editableDiv.value.innerText = messageInput.value;
     }
   };
 
 // 监听输入框内容变化
-  watch(messageInput, updateEditableContent);
+//   watch(messageInput, updateEditableContent);
 
 
 </script>
