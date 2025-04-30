@@ -40,8 +40,8 @@ export class ChatService {
 			this.providerCache.set(providerId, instance);
 			return instance;
 		}
-		console.log(`Provider ${providerId} not supported`);
-		return;
+		// return ;
+	  throw new Error(`Provider ${providerId} not supported`);
 	}
 
 	async chat(

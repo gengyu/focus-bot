@@ -9,87 +9,91 @@ import {type ChatMessage, ProviderConfig} from "../../../../share/type.ts";
 // const ollama = new Ollama();
 
 export class OpenAIProvider implements LLMProvider {
-  private openai: OpenAI;
-  private config: ProviderConfig;
+	private openai: OpenAI;
+	private config: ProviderConfig;
 
-  constructor(config: ProviderConfig) {
-    this.config = config;
+	constructor(config: ProviderConfig) {
+		this.config = config;
 
-    this.openai = new OpenAI({
-      apiKey: this.config.apiKey,
-      baseURL: this.config.apiUrl
-    });
-  }
+		this.openai = new OpenAI({
+			apiKey: this.config.apiKey,
+			baseURL: this.config.apiUrl
+		});
+	}
 
-  async chat(messages:ChatMessage[], modelId: string, signal?: AbortSignal) {
-    try {
-      const msgs = messages.map((msg) => {
-        return {
-          role: msg.role,
-          content: msg.content
-        }
-      })
-      const response = await this.openai.chat.completions.create({
-        model: modelId,
-        messages: msgs as ChatCompletionMessageParam[],
-        temperature: this.config.temperature,
-        max_tokens: this.config.maxTokens,
-        stream: false,
-        signal: signal
-      });
+	async chat(messages: ChatMessage[], modelId: string, signal?: AbortSignal) {
+		try {
+			const msgs = messages.map((msg) => {
+				return {
+					role: msg.role,
+					content: msg.content
+				}
+			})
+			// https://bailian.console.aliyun.com/?tab=api#/api/?type=model&url=https%3A%2F%2Fhelp.aliyun.com%2Fdocument_detail%2F2712576.html
+			const response = await this.openai.chat.completions.create({
+				model: modelId,
+				messages: msgs as ChatCompletionMessageParam[],
+				temperature: this.config.temperature,
+				max_tokens: this.config.maxTokens,
+				stream: false,
+			}, {
+				signal
+			});
 
-      console.log(response.choices)
-      return response.choices[0].message;
-    } catch (error) {
-      console.error('OpenAI API Error:', error);
-      throw new Error('Failed to get response from OpenAI');
-    }
-  }
+			return response.choices[0].message;
+		} catch (error) {
+			console.error('OpenAI API Error:', error);
+			throw new Error('Failed to get response from OpenAI');
+		}
+	}
 
-  async *streamChat(messages: ChatMessage[], modelId: string, signal?: AbortSignal) {
-    // as ChatCompletionMessageParam[]
-    const msgs: ChatCompletionMessageParam[] = messages.map((msg) => {
-      return {
-        role: msg.role,
-        content: msg.content,
-      }
-    })
-    try {
-      const stream = await this.openai.chat.completions.create({
-        model: modelId,
-        messages: msgs,
-        temperature: this.config.temperature,
-        max_tokens: this.config.maxTokens,
-        stream: true,
-        signal: signal
-      });
-      for await (const part of stream) {
-        yield {
-          content: part.choices[0].delta.content as string,
-          reasoningContent: part.choices[0].delta.content as string,
-          provider: 'openai',
-          model: modelId,
-          role: part.choices[0].delta.role,
-          timestamp: part.created,
-          type: 'text'
-        } as ProviderResponseChunk;
-      }
-    } catch (error) {
-      console.error('OpenAI API Stream Error:', error);
-      throw new Error('Failed to create stream from OpenAI');
-    }
-  }
+	async* streamChat(messages: ChatMessage[], modelId: string, signal?: AbortSignal) {
+		// as ChatCompletionMessageParam[]
+		const msgs: ChatCompletionMessageParam[] = messages.map((msg) => {
+			return {
+				role: msg.role,
+				content: msg.content,
+			}
+		})
+		try {
+			const stream = await this.openai.chat.completions.create({
+				model: modelId,
+				messages: msgs,
+				temperature: this.config.temperature,
+				max_tokens: this.config.maxTokens,
+				stream: true,
+			}, {
+				signal
+			});
+			for await (const part of stream) {
+				yield {
+					id: part.id,
+					content: part.choices[0].delta.content as string,
+					reasoningContent: part.choices[0].delta.content as string,
+					// provider: 'openai',
+					model: modelId,
+					role: part.choices[0].delta.role,
+					timestamp: part.created,
+					type: 'text'
+				} as ProviderResponseChunk;
+			}
+		} catch (error) {
+			console.error('OpenAI API Stream Error:', error);
+			throw new Error('Failed to create stream from OpenAI');
+		}
+	}
 
-  async getModels() {
-    try {
-      // const tags = await ollama.tags();
-      console.log('📦 Local model list:');
-      return [];
-    } catch (error) {
-      console.error('Ollama API Error:', error);
-      throw new Error('Failed to get models from Ollama');
-    }
-  }
+	async getModels() {
+		try {
+			// const tags = await ollama.tags();
+			console.log('📦 Local model list:');
+			// return [];
+			return this.openai.models.list()
+		} catch (error) {
+			console.error('Ollama API Error:', error);
+			throw new Error('Failed to get models from Ollama');
+		}
+	}
 }
 
 

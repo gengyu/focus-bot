@@ -3,8 +3,8 @@
     <!-- 消息列表区域 -->
     <div class="flex-1 px-6 py-4" ref="messageContainer">
 
-      <div v-for="message in chatMessages" :key="message.timestamp" class="mb-6">
-        <div class="flex" :class="message.role === 'user' ? 'justify-end' : 'justify-start'">
+      <div v-for="(message, index) in chatMessages" :key="index" class="mb-6">
+        <div v-if="message" class="flex" :class="message.role === 'user' ? 'justify-end' : 'justify-start'">
           <!-- 头像 -->
           <div v-if="message.role !== 'user'"
                class="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center mr-3">
@@ -24,7 +24,7 @@
               <img :src="message.imageUrl" alt="聊天图片" class="w-full">
             </div>
             <!-- 消息时间 -->
-            <div class="text-xs mt-1 opacity-60">
+            <div class="text-xs mt-1 opacity-60" v-if="message.timestamp ">
               {{ new Date(message.timestamp).toLocaleTimeString() }}
             </div>
           </div>

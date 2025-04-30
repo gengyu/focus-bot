@@ -194,6 +194,8 @@ const messages = ref<ChatMessage[]>([]);
 const loadChatHistory = async () => {
   try {
     messages.value = await chatAPI.getChatHistory(dialogState.activeDialogId);
+    await nextTick();
+    handlerScroll();
   } catch (error) {
     log.error("Failed to load chat history:", error);
   }

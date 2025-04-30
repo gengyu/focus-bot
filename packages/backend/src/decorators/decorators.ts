@@ -1,6 +1,7 @@
 import 'reflect-metadata';
 import Router from 'koa-router';
 import {ResultHelper} from "../routes/routeHelper.ts";
+import {type} from "node:os";
 
 export const router = new Router();
 
@@ -103,6 +104,7 @@ export function Param(key?: string): ParameterDecorator {
   };
 }
 
+// 单例模式
 const newMap = new Map();
 
 // 修改registerControllers以支持参数注入
@@ -180,7 +182,7 @@ export function registerControllers(controllers: any[]) {
                 // 将二进制数据转换为字符串
                 // const text = new TextDecoder().decode(value);
                 // 发送SSE格式的数据
-                ctx.res.write(`data: ${value}\n\n`);
+                ctx.res.write(typeof value === 'string' ? value : JSON.stringify(value));
               }
             } finally {
               reader.releaseLock();

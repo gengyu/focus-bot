@@ -74,6 +74,34 @@
       "role": "assistant",
       "timestamp": 1745967072,
       "type": "text"
-    }
+    },
+    {
+      "role": "user",
+      "content": "你是谁",
+      "timestamp": 1745980079684,
+      "type": "text"
+    },
+    null,
+    {
+      "role": "user",
+      "content": "<think> 标签返回要成对出现",
+      "timestamp": 1745980517859,
+      "type": "text"
+    },
+    null,
+    {
+      "role": "user",
+      "content": "<think> 标签返回要成对出现",
+      "timestamp": 1745980531782,
+      "type": "text"
+    },
+    null,
+    {
+      "role": "user",
+      "content": "<think> 标签返回要成对出现",
+      "timestamp": 1745980562302,
+      "type": "text"
+    },
+    null
   ]
 }

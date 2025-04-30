@@ -5,7 +5,7 @@ type Delta = ChatCompletionChunk.Choice.Delta;
 export interface ProviderResponseChunk extends Delta {
     content: string | null;
     reasoningContent: string | null;
-    provider: string;
+    // provider: string;
     model: string;
     role: 'developer' | 'system' | 'user' | 'assistant' | 'tool';
     timestamp?: number;
