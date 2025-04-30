@@ -67,14 +67,14 @@ export interface Dialog {
 // 会话
 
 export interface Conversation {
-  id: string,                     // 会话 ID（唯一）
+  // id: string,                     // 会话 ID（唯一）
   dialogs: Dialog[];
   activeDialogId: string;
 
-  createdAt: number,     // 会话创建时间
-  updatedAt: number,     // 最近更新时间（通常是最后一条消息时间）
-  title: string,      // 会话标题（可供用户查看、AI生成）
-  isArchived: false,                  // 是否归档（用于用户隐藏旧对话）
+  // createdAt: number,     // 会话创建时间
+  // updatedAt: number,     // 最近更新时间（通常是最后一条消息时间）
+  // title: string,      // 会话标题（可供用户查看、AI生成）
+  // isArchived: false,                  // 是否归档（用于用户隐藏旧对话）
   // tags: ['客服', '高优先级'],         // 标签分类（可用于搜索、筛选）
 }
 

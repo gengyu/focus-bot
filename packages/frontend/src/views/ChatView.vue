@@ -134,7 +134,7 @@ import {Listbox, ListboxButton, ListboxOption, ListboxOptions} from '@headlessui
 import {CheckIcon, ChevronUpDownIcon} from '@heroicons/vue/20/solid'
 import {useAppSettingStore} from "@/store/appSettingStore.js";
 import {type ChatMessage, Dialog, Model} from "../../../../share/type.ts";
-import {useDialogStore} from "@/store/dialogStore.ts";
+import {useDialogStore} from "@/store/conversationStore.js";
 import log from "loglevel";
 
 

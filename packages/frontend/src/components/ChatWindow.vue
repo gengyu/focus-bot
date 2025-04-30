@@ -162,7 +162,7 @@
 import {computed, defineProps, ref, watch} from 'vue';
 import type {ChatMessage, Model} from "../../../../share/type.ts";
 import log from "loglevel";
-import {useDialogStore} from "../store/dialogStore";
+import {useDialogStore} from "../store/conversationStore.ts";
 
 // 使用对话管理Store
 const dialogStore = useDialogStore();
