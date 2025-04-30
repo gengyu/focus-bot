@@ -1,6 +1,6 @@
 import {defineStore} from 'pinia';
-import {type Ref} from "vue";
-import type {ChatMessage, Dialog, DialogState, Model} from "../../../../share/type.ts";
+import {ref, type Ref} from "vue";
+import type {ChatMessage, Dialog, Conversation, Model} from "../../../../share/type.ts";
 import { ConversationStore, ContextManager, MessageHandler } from "./conversationManager";
 
 // 创建单例实例
@@ -9,7 +9,7 @@ const conversationStore = new ConversationStore();
 const messageHandler = new MessageHandler(contextManager);
 
 export const useDialogStore = defineStore<string, {
-  dialogState: Ref<DialogState>,
+  dialogState: Ref<Conversation>,
   updateModel: (model: Model) => Promise<void>,
   setActiveDialog: (id: string) => Promise<void>,
   createConversation: (title: string, model?: Model) => Promise<Dialog>,
@@ -19,7 +19,7 @@ export const useDialogStore = defineStore<string, {
 }>('dialog', () => {
 
   // 获取对话状态引用
-  const dialogState = conversationStore.getDialogState();
+  const dialogState = ref(conversationStore.getDialogState());
 
   /**
    * 更新模型

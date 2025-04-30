@@ -54,12 +54,27 @@ export interface Chat {
 export interface Dialog {
   id: string;
   title: string;
-  chatId: string,
+  conversationId: string,
   timestamp: number;
   model?: Model
 }
 
-export interface DialogState {
+
+// message 是最小单位（一条信息）；
+// 多条 message 可组成一轮 dialog；
+// 多个 dialog 构成一个完整 conversation；
+// chat 是一种非正式的 conversation，通常包含许多 dialog 和 message。
+// 会话
+
+export interface Conversation {
+  id: string,                     // 会话 ID（唯一）
   dialogs: Dialog[];
   activeDialogId: string;
+
+  createdAt: number,     // 会话创建时间
+  updatedAt: number,     // 最近更新时间（通常是最后一条消息时间）
+  title: string,      // 会话标题（可供用户查看、AI生成）
+  isArchived: false,                  // 是否归档（用于用户隐藏旧对话）
+  // tags: ['客服', '高优先级'],         // 标签分类（可用于搜索、筛选）
 }
+

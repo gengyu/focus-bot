@@ -1,5 +1,5 @@
 import { chatAPI } from "../services/chatApi";
-import type { ChatMessage, Dialog, DialogState, Model } from "../../../../share/type";
+import type { ChatMessage, Dialog, Conversation, Model } from "../../../../share/type";
 import { ref } from "vue";
 import { generateUUID } from "../utils/uuid";
 
@@ -103,7 +103,7 @@ export class MessageHandler {
 export class ConversationStore {
   private conversations: Map<string, Dialog>;
   private activeConversationId: string | null;
-  private dialogState = ref<DialogState>({
+  private dialogState = ref<Conversation>({
     dialogs: [],
     activeDialogId: '',
   });

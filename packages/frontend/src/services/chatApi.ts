@@ -1,6 +1,6 @@
 import {API_BASE_URL} from './api';
 import {TransportAdapter, type TransportRequest, TransportType} from "../transports";
-import {type ChatMessage, type DialogState, type Model} from "../../../../share/type.ts";
+import {type ChatMessage, type Conversation, type Model} from "../../../../share/type.ts";
 import log from "loglevel";
 
 
@@ -48,14 +48,14 @@ export class ChatAPI {
     return res.data;
   }
 
-  async saveDialogList(dialog: DialogState) {
+  async saveDialogList(dialog: Conversation) {
     const req = {method: 'saveDialogList', payload: dialog};
     const res = await this.transport.invokeDirect(req);
     if (!res.success) throw new Error(`保存对话列表失败: ${res.error}`);
     return res.data;
   }
 
-  async getDialogList(): Promise<DialogState> {
+  async getDialogList(): Promise<Conversation> {
     const req = {method: 'getDialogList', payload: {}};
     const res = await this.transport.invokeDirect(req);
     if (!res.success) throw new Error(`获取对话列表失败: ${res.error}`);

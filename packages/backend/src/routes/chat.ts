@@ -6,7 +6,7 @@ import {z} from 'zod';
 import {ReadableStream} from "node:stream/web";
 import {ResultHelper} from './routeHelper';
 
-import {ChatMessage, type DialogState, Model} from "../../../../share/type.ts";
+import {ChatMessage, type Conversation, Model} from "../../../../share/type.ts";
 import {ChatService} from "../services/ChatService.ts";
 import {ChatHistoryService} from "../services/ChatHistoryService.ts";
 import {DialogStateService} from "../services/DialogStateService.ts";
@@ -98,7 +98,7 @@ export class ChatController {
 	// }
 
 	@Post('/saveDialogList')
-	async saveDialogConfig(@Body() config: DialogState) {
+	async saveDialogConfig(@Body() config: Conversation) {
 		try {
 			await this.dialogService.saveDialogList(config);
 			return ResultHelper.success(null);

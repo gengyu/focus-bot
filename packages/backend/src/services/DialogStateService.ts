@@ -1,15 +1,15 @@
 import path from "path";
-import {DialogState} from "../../../../share/type";
+import {Conversation} from "../../../../share/type";
 import {PersistenceOptions, PersistenceService} from './PersistenceService.ts';
 import {Singleton} from "../decorators/Singleton.ts";
 
 
 @Singleton()
 export class DialogStateService {
-  private persistenceService: PersistenceService<DialogState>;
+  private persistenceService: PersistenceService<Conversation>;
 
   constructor(options?: PersistenceOptions) {
-    this.persistenceService = new PersistenceService<DialogState>({
+    this.persistenceService = new PersistenceService<Conversation>({
       dataDir: options?.dataDir || path.join(process.cwd(), 'data'),
       configFileName: 'dialog.json',
       backupInterval: options?.backupInterval ?? 3600000, // 默认1小时
@@ -17,7 +17,7 @@ export class DialogStateService {
     });
   }
 
-  async getDialogList(): Promise<DialogState> {
+  async getDialogList(): Promise<Conversation> {
     try {
       return await this.persistenceService.loadData();
     } catch (error) {
@@ -25,7 +25,7 @@ export class DialogStateService {
     }
   }
 
-  async saveDialogList(dialogState: DialogState): Promise<void> {
+  async saveDialogList(dialogState: Conversation): Promise<void> {
     try {
       await this.persistenceService.saveData(dialogState);
     } catch (error) {
