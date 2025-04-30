@@ -135,7 +135,6 @@ import {CheckIcon, ChevronUpDownIcon} from '@heroicons/vue/20/solid'
 import {useAppSettingStore} from "@/store/appSettingStore.js";
 import {type ChatMessage, Dialog, Model} from "../../../../share/type.ts";
 import {useDialogStore} from "@/store/dialogStore.ts";
-import {chatAPI} from "@/services/chatApi.ts";
 import log from "loglevel";
 
 
@@ -164,14 +163,12 @@ watch(() => models.value, (newModels) => {
 const {dialogState, updateModel, setActiveDialog} = useDialogStore();
 
 // 监听model变化，更新activeDialog.model
-const handlerSelectModel = () => {
-  nextTick(() => {
-    updateModel(selectedModel.value)
-  });
+const handlerSelectModel = async () => {
+  await updateModel(selectedModel.value);
 }
 
-const handlerSelectChat = (chatId: string)=> {
-  setActiveDialog(chatId)
+const handlerSelectChat = async (chatId: string)=> {
+  await setActiveDialog(chatId)
 }
 
 watch(() => dialogState.activeDialogId, () => {
@@ -192,9 +189,13 @@ const messages = ref<ChatMessage[]>([]);
 // 加载聊天历史
 const loadChatHistory = async () => {
   try {
-    messages.value = await chatAPI.getChatHistory(dialogState.activeDialogId);
-    await nextTick();
-    handlerScroll();
+    if (dialogState.activeDialogId) {
+      messages.value = await dialogStore.getChatHistory(dialogState.activeDialogId);
+      await nextTick();
+      handlerScroll();
+    } else {
+      messages.value = [];
+    }
   } catch (error) {
     log.error("Failed to load chat history:", error);
   }

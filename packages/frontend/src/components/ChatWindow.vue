@@ -161,8 +161,11 @@
 <script setup lang="ts">
 import {computed, defineProps, ref, watch} from 'vue';
 import type {ChatMessage, Model} from "../../../../share/type.ts";
-import {chatAPI} from "@/services/chatApi.ts";
 import log from "loglevel";
+import {useDialogStore} from "../store/dialogStore";
+
+// 使用对话管理Store
+const dialogStore = useDialogStore();
 
 const props = defineProps<{
   model?: Model
@@ -222,52 +225,92 @@ const availableModels = computed(() => {
   return p ? p.models : [];
 });
 
-// 发送文本消息
+// 发送消息
 const sendMessage = async () => {
-
   if (!messageInput.value.trim() && !imageFile.value) return;
 
-  try {
-    // 如果有图片，先发送图片
-    // if (imageFile.value) {
-    //   await handleImageMessage();
-    // }
+  // 清空输入框
+  if (editableDiv.value) {
+    editableDiv.value.innerText = '';
+  }
+  messageInput.value = '';
 
-    // 如果有文本消息，发送文本
-    if (messageInput.value.trim()) {
-      // 添加用户消息
-      const userMessage: ChatMessage = {
-        role: 'user',
-        content: messageInput.value as string,
-        type: 'text',
-        timestamp: Date.now(),
-      };
-      // messages.value.push(userMessage);
-      messageInput.value = '';
-      scrollToBottom();
+  // 如果有图片，先发送图片
+  if (imageFile.value) {
+    try {
+      const imageMessage = await dialogStore.sendImage(imageFile.value);
+      if (props.chatMessages) {
+        props.chatMessages.push(imageMessage);
+      }
+      // 清空图片预览
+      cancelImageUpload();
+    } catch (error) {
+      console.error('发送图片失败:', error);
+    }
+  }
 
-      // 使用选定的模型
+  // 如果有文本，发送文本消息
+  if (messageInput.value.trim()) {
+    // 创建用户消息
+    const userMessage: ChatMessage = {
+      role: 'user',
+      content: messageInput.value.trim(),
+      timestamp: Date.now(),
+      type: 'text',
+    };
 
-
-      updateEditableContent();
+    // 添加到消息列表
+    if (props.chatMessages) {
       props.chatMessages.push(userMessage);
+    }
 
-      const readableStream =  chatAPI.sendMessage(userMessage.content, props.model, props.chatId);
-      console.log(readableStream,3333)
-      const read =  readableStream.getReader();
-      while (true){
-        const { done, value } = await read.read()
-        if (done) {
-          break;
-        }
-        console.log(value,3333)
+    try {
+      // 发送消息到服务器
+      const model = props.model;
+      if (!model) {
+        console.error('未选择模型');
+        return;
+      }
+      const chatId = props.chatId || '';
+      
+      // 使用对话管理器发送消息
+      const stream = dialogStore.sendMessage(userMessage.content, model, chatId);
+
+      // 创建AI响应消息
+      const aiMessage: ChatMessage = {
+        role: 'assistant',
+        content: '',
+        timestamp: Date.now(),
+        type: 'text',
+      };
+
+      // 添加到消息列表
+      if (props.chatMessages) {
+        props.chatMessages.push(aiMessage);
       }
 
-      scrollToBottom();
+      // 处理流式响应
+      const reader = stream.getReader();
+      let done = false;
+
+      while (!done) {
+        const {value, done: doneReading} = await reader.read();
+        done = doneReading;
+
+        if (value) {
+          // 更新AI消息内容
+          aiMessage.content += value.content;
+          // 滚动到底部
+          scrollToBottom();
+        }
+      }
+    } catch (error) {
+      console.error('发送消息失败:', error);
     }
-  } catch (error) {
-    log.error("Failed to send message:", error);
   }
+
+  // 滚动到底部
+  scrollToBottom();
 };
 
 // 处理图片上传
