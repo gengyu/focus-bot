@@ -129,12 +129,11 @@
 
 <script setup lang="ts">
 import ChatWindow from '../components/ChatWindow.vue';
-import {onMounted, ref, computed, watch, nextTick} from 'vue';
-import {configAPI} from '../services/api';
+import {computed, nextTick, ref, watch} from 'vue';
 import {Listbox, ListboxButton, ListboxOption, ListboxOptions} from '@headlessui/vue'
 import {CheckIcon, ChevronUpDownIcon} from '@heroicons/vue/20/solid'
 import {useAppSettingStore} from "@/store/appSettingStore.js";
-import {type Chat, type ChatMessage, Dialog, Model} from "../../../../share/type.ts";
+import {type ChatMessage, Dialog, Model} from "../../../../share/type.ts";
 import {useDialogStore} from "@/store/dialogStore.ts";
 import {chatAPI} from "@/services/chatApi.ts";
 import log from "loglevel";

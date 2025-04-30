@@ -43,7 +43,7 @@ export interface ChatMessage {
 export interface Chat {
   id: string
   dialogId: string;
-  messages: ChatMessage[];
+  messages: Array<ChatMessage[]>;
   create_time: string;
   update_time: string;
   content_hash?: string;

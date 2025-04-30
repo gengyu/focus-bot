@@ -29,7 +29,7 @@ export class PersistenceService<T = any> {
 	async initialize(): Promise<void> {
 		try {
 			await fs.promises.mkdir(this.dataDir, {recursive: true});
-			this.startAutoBackup();
+			// this.startAutoBackup();
 		} catch (error) {
 			throw new Error(`Failed to initialize persistence service: ${error instanceof Error ? error.message : 'Unknown error'}`);
 		}
