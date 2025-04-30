@@ -1,7 +1,5 @@
-import { chatAPI } from "../services/chatApi";
-import type { ChatMessage, Dialog, Conversation, Model } from "../../../../share/type";
-import { ref } from "vue";
-import { generateUUID } from "../utils/uuid";
+import {chatAPI} from "../services/chatApi";
+import type {ChatMessage, DialogId, Model} from "../../../../share/type";
 
 /**
  * 上下文管理器
@@ -88,15 +86,14 @@ export class MessageHandler {
 
   /**
    * 获取聊天历史
-   * @param conversationId 会话ID
+   * @param dialogId 会话ID
    * @returns 消息数组
    */
-  async getChatHistory(conversationId: string): Promise<ChatMessage[]> {
-    return await chatAPI.getChatHistory(conversationId);
+  async getChatHistory(dialogId: DialogId): Promise<ChatMessage[]> {
+    return await chatAPI.getChatHistory(dialogId);
   }
 }
 
-2
 // /**
 //  * 生成UUID
 //  * @returns UUID字符串

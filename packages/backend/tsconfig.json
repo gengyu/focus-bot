@@ -14,6 +14,9 @@
     "noEmit": true,
     "esModuleInterop": true,
 
+
+
+    "declaration": true,
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
 
@@ -22,7 +25,7 @@
     "noUnusedLocals": false,
     "noUnusedParameters": false,
     "noFallthroughCasesInSwitch": true,
-    "noUncheckedSideEffectImports": true,
+    "noUncheckedSideEffectImports": true
 
 //    "forceConsistentCasingInFileNames": true,
 //    "declaration": true,
@@ -30,7 +33,7 @@
 //    "experimentalDecorators": true,
 //    "emitDecoratorMetadata": true
   },
-  "include": ["src/**/*", "../../share/**/*"],
+  "include": ["./src/**/*", "../../share/**/*"],
   "exclude": ["node_modules", "dist", "config.json", "**/*.test.ts"]
 }
 

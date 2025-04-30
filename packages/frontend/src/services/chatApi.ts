@@ -1,6 +1,6 @@
 import {API_BASE_URL} from './api';
 import {TransportAdapter, type TransportRequest, TransportType} from "../transports";
-import {type ChatMessage, type Conversation, type Model} from "../../../../share/type.ts";
+import {type ChatMessage, type Conversation, type DialogId, type Model} from "../../../../share/type.ts";
 import log from "loglevel";
 
 
@@ -12,7 +12,7 @@ export class ChatAPI {
   });
 
 
-  sendMessage(message: string, model: Model, chatId: string): ReadableStream<ChatMessage> {
+  sendMessage(message: ChatMessage, model: Model, chatId: string): ReadableStream<ChatMessage> {
     const req: TransportRequest = {method: 'sendMessage', payload: {message, model, chatId}};
     return this.transport.invokeStream(req);
 
@@ -40,7 +40,7 @@ export class ChatAPI {
     return await response.json();
   }
 
-  async getChatHistory(chatId: string): Promise<ChatMessage[]> {
+  async getChatHistory(chatId: DialogId): Promise<ChatMessage[]> {
     const req = {method: 'getChatHistory', payload: {chatId}};
     const res = await this.transport.invokeDirect(req);
     log.info(res);

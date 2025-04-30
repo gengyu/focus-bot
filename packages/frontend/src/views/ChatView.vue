@@ -18,8 +18,8 @@
                 :key="chat.id"
                 class="px-3 py-2.5 rounded-lg text-[#374151] cursor-pointer mb-1.5 transition-colors duration-200"
                 :class="{
-                'bg-[#e0e7ef] text-[#2563eb] font-semibold': dialogState.activeDialogId === chat.id,
-                'hover:bg-[#e0e7ef] hover:text-[#2563eb] hover:font-semibold': dialogState.activeDialogId !== chat.id
+                'bg-[#e0e7ef] text-[#2563eb] font-semibold': conversation.activeDialogId === chat.id,
+                'hover:bg-[#e0e7ef] hover:text-[#2563eb] hover:font-semibold': conversation.activeDialogId !== chat.id
               }"
             >
               {{ chat.title }}
@@ -118,7 +118,7 @@
         <ChatWindow
             :chat-messages="messages"
             :model="selectedModel"
-            :chatId="dialogState.activeDialogId"
+            :chatId="conversation.activeDialogId"
             @scroll="handlerScroll"
             class="max-w-260"
         />
@@ -134,8 +134,9 @@ import {Listbox, ListboxButton, ListboxOption, ListboxOptions} from '@headlessui
 import {CheckIcon, ChevronUpDownIcon} from '@heroicons/vue/20/solid'
 import {useAppSettingStore} from "@/store/appSettingStore.js";
 import {type ChatMessage, Dialog, Model} from "../../../../share/type.ts";
-import {useDialogStore} from "@/store/conversationStore.js";
+import {useConversationStore} from "@/store/conversationStore.js";
 import log from "loglevel";
+import {useMessageStore} from "@/store/messageStore.ts";
 
 
 const {providerConfig} = useAppSettingStore();
@@ -160,7 +161,8 @@ watch(() => models.value, (newModels) => {
 })
 
 
-const {dialogState, updateModel, setActiveDialog} = useDialogStore();
+const {conversation, updateModel, setActiveDialog} = useConversationStore();
+const {getChatHistory, sendMessage, sendImage} = useMessageStore();
 
 // 监听model变化，更新activeDialog.model
 const handlerSelectModel = async () => {
@@ -171,9 +173,9 @@ const handlerSelectChat = async (chatId: string)=> {
   await setActiveDialog(chatId)
 }
 
-watch(() => dialogState.activeDialogId, () => {
+watch(() => conversation.activeDialogId, () => {
 
-  const activeDialog = dialogState.dialogs.find(dialog => dialog.id === dialogState.activeDialogId);
+  const activeDialog = conversation.dialogs.find(dialog => dialog.id === conversation.activeDialogId);
   console.log(activeDialog,55555)
   if (activeDialog?.model) {
     selectedModel.value = activeDialog.model!;
@@ -189,8 +191,8 @@ const messages = ref<ChatMessage[]>([]);
 // 加载聊天历史
 const loadChatHistory = async () => {
   try {
-    if (dialogState.activeDialogId) {
-      messages.value = await dialogStore.getChatHistory(dialogState.activeDialogId);
+    if (conversation.activeDialogId) {
+      messages.value = await getChatHistory(conversation.activeDialogId);
       await nextTick();
       handlerScroll();
     } else {
@@ -200,7 +202,7 @@ const loadChatHistory = async () => {
     log.error("Failed to load chat history:", error);
   }
 };
-watch(() => dialogState.activeDialogId, (newDialogs) => {
+watch(() => conversation.activeDialogId, (newDialogs) => {
   loadChatHistory()
 });
 
@@ -238,7 +240,7 @@ const groupedChats = computed<Array<{ title: string; chats: Dialog[]}>>(() => {
     {title: '最近30天', chats: []},
   ];
 
-  dialogState.dialogs.forEach(chat => {
+  conversation.dialogs.forEach(chat => {
     const chatDate = new Date(chat.timestamp);
     if (chatDate >= today) {
       groups[0].chats.push(chat);

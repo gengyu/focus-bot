@@ -1,10 +1,10 @@
 import {OpenAIProvider} from "../provider/OpenAIProvider";
 import {LLMProvider, ProviderResponseChunk} from "../provider/LLMProvider";
-import {AppSettingService} from "./AppSettingService.ts";
-import {type ChatMessage, Model, ProviderConfig} from "../../../../share/type.ts";
-import {ChatHistoryService} from "./ChatHistoryService.ts";
+import {AppSettingService} from "./AppSettingService";
+import {type ChatMessage, Model, ProviderConfig} from "../../../../share/type";
+import {ChatHistoryService} from "./ChatHistoryService";
 import {ReadableStream} from "node:stream/web";
-import {Singleton} from "../decorators/Singleton.ts";
+import {Singleton} from "../decorators/Singleton";
 // import {Ollama} from "ollama";
 //
 // console.log(Ollama)
