@@ -131,12 +131,9 @@ import ChatWindow from '../components/ChatWindow.vue';
 import {computed, nextTick, ref, watch} from 'vue';
 import {Listbox, ListboxButton, ListboxOption, ListboxOptions} from '@headlessui/vue'
 import {CheckIcon, ChevronUpDownIcon} from '@heroicons/vue/20/solid'
-import {useAppSettingStore} from "@/store/appSettingStore.js";
+import {useAppSettingStore} from "../store/appSettingStore.js";
 import {type ChatMessage, Dialog, Model} from "../../../../share/type.ts";
-import {useConversationStore} from "@/store/conversationStore.js";
-import log from "loglevel";
-import {useMessageStore} from "@/store/messageStore.ts";
-
+import {useConversationStore} from "../store/conversationStore.ts";
 
 const {providerConfig} = useAppSettingStore();
 const models = computed<Model[]>(() => {
@@ -161,7 +158,6 @@ watch(() => models.value, (newModels) => {
 
 
 const {conversation, updateModel, setActiveDialog} = useConversationStore();
-const {getChatHistory, sendMessage, sendImage} = useMessageStore();
 
 // 监听model变化，更新activeDialog.model
 const handlerSelectModel = async () => {
@@ -169,13 +165,20 @@ const handlerSelectModel = async () => {
 }
 
 const handlerSelectChat = async (chatId: string)=> {
-  await setActiveDialog(chatId)
+  await setActiveDialog(chatId);
+  await nextTick();
+  handlerScroll();
 }
 
-watch(() => conversation.activeDialogId, () => {
 
+
+watch(() => conversation.activeDialogId, () => {
+  handlerSelectChat(conversation.activeDialogId)
+}, {
+  once: true
+});
+watch(() => conversation.activeDialogId, () => {
   const activeDialog = conversation.dialogs.find(dialog => dialog.id === conversation.activeDialogId);
-  console.log(activeDialog,55555)
   if (activeDialog?.model) {
     selectedModel.value = activeDialog.model!;
   }else {
@@ -183,27 +186,6 @@ watch(() => conversation.activeDialogId, () => {
   }
 });
 
-
-
-
-const messages = ref<ChatMessage[]>([]);
-// 加载聊天历史
-// const loadChatHistory = async () => {
-//   try {
-//     if (conversation.activeDialogId) {
-//       messages.value = await getChatHistory(conversation.activeDialogId);
-//       await nextTick();
-//       handlerScroll();
-//     } else {
-//       messages.value = [];
-//     }
-//   } catch (error) {
-//     log.error("Failed to load chat history:", error);
-//   }
-// };
-// watch(() => conversation.activeDialogId, (newDialogs) => {
-//   loadChatHistory()
-// });
 
 
 
@@ -264,29 +246,6 @@ const isAsideCollapsed = ref(false);
 const toggleAside = () => {
   isAsideCollapsed.value = !isAsideCollapsed.value;
 };
-
-// onMounted(async () => {
-//   try {
-//     // 从配置中加载可用模型
-//     const config = await configAPI.loadConfig();
-//     if (config.mcpServers) {
-//       // 合并所有服务器的模型列表
-//       const allModels = Object.values(config.mcpServers)
-//           .flatMap((server: any) => server.models || [])
-//           .filter((model: string) => model); // 过滤空值
-//
-//       if (allModels.length > 0) {
-//         availableModels.value = allModels;
-//         // 如果当前选择的模型不在列表中，则选择第一个
-//         if (!availableModels.value.includes(selectedModel.value)) {
-//           selectedModel.value = availableModels.value[0];
-//         }
-//       }
-//     }
-//   } catch (error) {
-//     log.error('Failed to load model list:', error);
-//   }
-// });
 </script>
 
 <style lang="less">

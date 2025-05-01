@@ -143,9 +143,18 @@
             </button>
             <button
                 @click="sendMessage"
-                class="px-6 py-2.5 bg-blue-500 text-white rounded-lg hover:bg-blue-600 focus:outline-none transition-colors self-end"
+                :disabled="isLoading"
+                class="px-6 py-2.5 rounded-lg focus:outline-none transition-colors self-end"
+                :class="[isLoading ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-500 hover:bg-blue-600 text-white']"
             >
-              发送
+                <span v-if="!isLoading">发送</span>
+                <span v-else class="flex items-center">
+                    <svg class="animate-spin -ml-1 mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    发送中...
+                </span>
             </button>
           </div>
 
@@ -186,6 +195,8 @@ const editableDiv = ref<HTMLElement>();
 const imagePreview = ref<string | null>(null);
 const imageFileName = ref<string>('');
 const imageFile = ref<File | null>(null);
+
+const isLoading = ref(false);
 
 // 功能开关状态
 const isSearchActive = ref(false);
@@ -234,9 +245,11 @@ const availableModels = computed(() => {
 // 发送消息
 const sendMessage = async () => {
   if (!messageInput.value.trim() && !imageFile.value) return;
+  if (isLoading.value) return; // 如果正在发送消息，则不允许再次发送
 
   // 如果有文本，发送文本消息
   if (messageInput.value.trim()) {
+    isLoading.value = true; // 设置loading状态
     // 创建用户消息
     const userMessage: ChatMessage = {
       role: 'user',
@@ -250,10 +263,10 @@ const sendMessage = async () => {
       const model = props.model;
       if (!model) {
         console.error('未选择模型');
+        isLoading.value = false; // 重置loading状态
         return;
       }
       const chatId = props.chatId || '';
-
 
       // 清空输入框
       if (editableDiv.value) {
@@ -270,13 +283,13 @@ const sendMessage = async () => {
           break;
         }
         scrollToBottom();
-        // console.log(value);
       }
       console.log('done')
 
-
     } catch (error) {
       console.error('发送消息失败:', error);
+    } finally {
+      isLoading.value = false; // 无论成功还是失败，都重置loading状态
     }
   }
 
