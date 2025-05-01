@@ -60,6 +60,7 @@ export class ChatService {
 		message: ChatMessage,
 		model: Model
 	) {
+
 		const llmProvider = await this.getLLmIntance(model.providerId);
 		await this.chatHistoryService.pushMessage(chatId, message);
 

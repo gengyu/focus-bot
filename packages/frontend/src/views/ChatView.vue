@@ -116,7 +116,6 @@
       </header>
       <main class="flex-1 flex justify-center rounded-b-xl mx-6 mb-6 min-h-0">
         <ChatWindow
-            :chat-messages="messages"
             :model="selectedModel"
             :chatId="conversation.activeDialogId"
             @scroll="handlerScroll"
@@ -189,22 +188,22 @@ watch(() => conversation.activeDialogId, () => {
 
 const messages = ref<ChatMessage[]>([]);
 // 加载聊天历史
-const loadChatHistory = async () => {
-  try {
-    if (conversation.activeDialogId) {
-      messages.value = await getChatHistory(conversation.activeDialogId);
-      await nextTick();
-      handlerScroll();
-    } else {
-      messages.value = [];
-    }
-  } catch (error) {
-    log.error("Failed to load chat history:", error);
-  }
-};
-watch(() => conversation.activeDialogId, (newDialogs) => {
-  loadChatHistory()
-});
+// const loadChatHistory = async () => {
+//   try {
+//     if (conversation.activeDialogId) {
+//       messages.value = await getChatHistory(conversation.activeDialogId);
+//       await nextTick();
+//       handlerScroll();
+//     } else {
+//       messages.value = [];
+//     }
+//   } catch (error) {
+//     log.error("Failed to load chat history:", error);
+//   }
+// };
+// watch(() => conversation.activeDialogId, (newDialogs) => {
+//   loadChatHistory()
+// });
 
 
 

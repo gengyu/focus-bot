@@ -24,12 +24,6 @@ export interface TransportResponse {
   error?: string;
 }
 
-export interface TransportStreamOptions {
-  onData?: (data: any) => void;
-  onError?: (error: Error) => void;
-  onComplete?: () => void;
-}
-
 /**
  * 支持的传输类型
  */

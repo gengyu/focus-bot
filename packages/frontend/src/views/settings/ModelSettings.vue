@@ -152,6 +152,7 @@ import {toast} from 'vue-sonner'
 import type {Model, ProviderConfig} from "../../../../../share/type.ts";
 import {useAppSettingStore} from '@/store/appSettingStore.ts';
 import {storeToRefs} from "pinia";
+import log from "loglevel";
 
 
 const showPassword = ref(false);

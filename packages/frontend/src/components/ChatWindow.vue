@@ -163,20 +163,26 @@ import {computed, defineProps, ref, watch} from 'vue';
 import type {ChatMessage, Model} from "../../../../share/type.ts";
 import log from "loglevel";
 import {useConversationStore} from "../store/conversationStore.ts";
+import {useMessageStore} from "../store/messageStore.ts";
 
 // 使用对话管理Store
 const dialogStore = useConversationStore();
+const messageStore = useMessageStore();
 
 const props = defineProps<{
   model?: Model
   chatId?: string
-  chatMessages?: ChatMessage[]
+  // chatMessages?: ChatMessage[]
 }>();
+
+const chatMessages = computed(()=> {
+  return messageStore.messages[props.chatId]
+})
 
 
 const messageInput = ref('');
 const messageContainer = ref<HTMLElement | null>(null);
-const editableDiv = ref<HTMLElement | null>(null);
+const editableDiv = ref<HTMLElement>();
 const imagePreview = ref<string | null>(null);
 const imageFileName = ref<string>('');
 const imageFile = ref<File | null>(null);
@@ -229,26 +235,6 @@ const availableModels = computed(() => {
 const sendMessage = async () => {
   if (!messageInput.value.trim() && !imageFile.value) return;
 
-  // 清空输入框
-  if (editableDiv.value) {
-    editableDiv.value.innerText = '';
-  }
-  messageInput.value = '';
-
-  // 如果有图片，先发送图片
-  if (imageFile.value) {
-    try {
-      const imageMessage = await dialogStore.sendImage(imageFile.value);
-      if (props.chatMessages) {
-        props.chatMessages.push(imageMessage);
-      }
-      // 清空图片预览
-      cancelImageUpload();
-    } catch (error) {
-      console.error('发送图片失败:', error);
-    }
-  }
-
   // 如果有文本，发送文本消息
   if (messageInput.value.trim()) {
     // 创建用户消息
@@ -259,11 +245,6 @@ const sendMessage = async () => {
       type: 'text',
     };
 
-    // 添加到消息列表
-    if (props.chatMessages) {
-      props.chatMessages.push(userMessage);
-    }
-
     try {
       // 发送消息到服务器
       const model = props.model;
@@ -272,38 +253,28 @@ const sendMessage = async () => {
         return;
       }
       const chatId = props.chatId || '';
-      
+
+
+      // 清空输入框
+      if (editableDiv.value) {
+        editableDiv.value.innerText = '';
+      }
+      messageInput.value = '';
       // 使用对话管理器发送消息
-      const stream = dialogStore.sendMessage(userMessage.content, model, chatId);
+      const readableStream  = await messageStore.sendMessage(userMessage.content, model, chatId);
 
-      // 创建AI响应消息
-      const aiMessage: ChatMessage = {
-        role: 'assistant',
-        content: '',
-        timestamp: Date.now(),
-        type: 'text',
-      };
-
-      // 添加到消息列表
-      if (props.chatMessages) {
-        props.chatMessages.push(aiMessage);
-      }
-
-      // 处理流式响应
-      const reader = stream.getReader();
-      let done = false;
-
-      while (!done) {
-        const {value, done: doneReading} = await reader.read();
-        done = doneReading;
-
-        if (value) {
-          // 更新AI消息内容
-          aiMessage.content += value.content;
-          // 滚动到底部
-          scrollToBottom();
+      const reader =  readableStream.getReader();
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) {
+          break;
         }
+        scrollToBottom();
+        // console.log(value);
       }
+      console.log('done')
+
+
     } catch (error) {
       console.error('发送消息失败:', error);
     }
@@ -314,32 +285,32 @@ const sendMessage = async () => {
 };
 
 // 处理图片上传
-  const handleImageUpload = async (event: Event) => {
-    const input = event.target as HTMLInputElement;
-    if (!input.files?.length) return;
+const handleImageUpload = async (event: Event) => {
+  const input = event.target as HTMLInputElement;
+  if (!input.files?.length) return;
 
-    const file = input.files[0];
-    imageFile.value = file;
-    imageFileName.value = file.name;
-    isImageUploadActive.value = true;
+  const file = input.files[0];
+  imageFile.value = file;
+  imageFileName.value = file.name;
+  isImageUploadActive.value = true;
 
-    // 创建本地预览URL
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      imagePreview.value = e.target?.result as string;
-    };
-    reader.readAsDataURL(file);
-
-    // 清除input的value，允许上传相同的文件
-    input.value = '';
+  // 创建本地预览URL
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    imagePreview.value = e.target?.result as string;
   };
+  reader.readAsDataURL(file);
 
-  const cancelImageUpload = () => {
-    imagePreview.value = null;
-    imageFileName.value = '';
-    imageFile.value = null;
-    isImageUploadActive.value = false;
-  };
+  // 清除input的value，允许上传相同的文件
+  input.value = '';
+};
+
+const cancelImageUpload = () => {
+  imagePreview.value = null;
+  imageFileName.value = '';
+  imageFile.value = null;
+  isImageUploadActive.value = false;
+};
 
 // 发送消息时处理图片上传
 const handleImageMessage = async () => {
@@ -356,24 +327,24 @@ const handleImageMessage = async () => {
 };
 
 // 定义emit事件
-  const emit = defineEmits<{
-    (e: 'scroll'): void
-  }>();
+const emit = defineEmits<{
+  (e: 'scroll'): void
+}>();
 
 // 滚动到底部
-  const scrollToBottom = () => {
+const scrollToBottom = () => {
 
-    // 发送滚动事件给父组件
-    emit('scroll');
+  // 发送滚动事件给父组件
+  emit('scroll');
 
-  };
+};
 
 // 更新输入框内容
-  const updateEditableContent = () => {
-    if (editableDiv.value) {
-      editableDiv.value.innerText = messageInput.value;
-    }
-  };
+const updateEditableContent = () => {
+  if (editableDiv.value) {
+    editableDiv.value.innerText = messageInput.value;
+  }
+};
 
 // 监听输入框内容变化
 //   watch(messageInput, updateEditableContent);

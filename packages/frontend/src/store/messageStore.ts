@@ -1,5 +1,5 @@
 import {defineStore} from 'pinia';
-import {ref} from "vue";
+import {reactive, type Ref, ref} from "vue";
 import {type ChatMessage, type DialogId, type Model} from "../../../../share/type.ts";
 import {chatAPI} from "../services/chatApi.ts";
 
@@ -15,14 +15,43 @@ export const useMessageStore = defineStore<string, {
   // updateModel: (model: Model) => Promise<void>,
   // setActiveDialog: (dailogId: string) => Promise<void>,
   // createConversation: (title: string, model?: Model) => Promise<Conversation>,
-  sendMessage: (content: string, model: Model, dialogId: DialogId) => Promise<void>,
+  messages: Ref<Record<DialogId, ChatMessage[]>>,
+  sendMessage: (content: string, model: Model, dialogId: DialogId) => Promise<ReadableStream<ChatMessage>>,
   sendImage: (imageFile: File) => Promise<ChatMessage>,
-  getChatHistory: (dialogId: DialogId) => Promise<ChatMessage[]>
+  refreshChatHistory: (dialogId: DialogId) => Promise<void>
 }>('message', () => {
 
 
   const messages = ref<Record<DialogId, ChatMessage[]>>({});
 
+  const updateMessage = async (readableStream: ReadableStream, dialogId: DialogId) => {
+    const reader = readableStream.getReader();
+    try {
+      let assistantMessage = reactive<ChatMessage>({
+        content: '',
+        role: 'assistant',
+        timestamp: Date.now(),
+        type: 'text'
+      });
+      messages.value[dialogId] = messages.value[dialogId] || []
+      messages.value[dialogId].push(assistantMessage);
+      while (true) {
+        const {done, value} = await reader.read();
+        if (done) {
+          break;
+        }
+        if (value) {
+          const result = JSON.parse(value);
+          assistantMessage.content += result?.content ?? '';
+        }
+      }
+    } catch (error) {
+      console.error('读取消息流失败:', error);
+      // 可在此添加用户提示或重试机制
+    } finally {
+      reader.releaseLock();
+    }
+  }
 
   /**
    * 发送消息
@@ -39,35 +68,14 @@ export const useMessageStore = defineStore<string, {
       timestamp: Date.now(),
       type: 'text'
     };
-    const chatMessages: ChatMessage[] = messages.value[dialogId] || [];
-    chatMessages.push(userMessage);
-    messages.value[dialogId] = chatMessages;
+    messages.value[dialogId] = messages.value[dialogId] || [];
+    messages.value[dialogId].push(userMessage);
 
     // 调用API发送消息
     const readableStream: ReadableStream = chatAPI.sendMessage(userMessage, model, dialogId);
-    const reader = readableStream.getReader();
-    try {
-      let assistantMessage: ChatMessage = {
-        content: '',
-        role: 'assistant',
-        timestamp: Date.now(),
-        type: 'text'
-      };
-      chatMessages.push(assistantMessage);
-      while (true) {
-        const {done, value} = await reader.read();
-         assistantMessage.content = value.content;
-        if (done) {
-          break;
-        }
-      }
-    } catch (error) {
-      console.error('读取消息流失败:', error);
-      // 可在此添加用户提示或重试机制
-
-    } finally {
-      reader.releaseLock();
-    }
+    const [assistantStream1, assistantStream2] = readableStream.tee();
+    updateMessage(assistantStream1, dialogId);
+    return assistantStream2
   }
 
   /**
@@ -84,16 +92,15 @@ export const useMessageStore = defineStore<string, {
    * @param dialogId 对话ID
    * @returns 消息数组
    */
-  const getChatHistory = async (dialogId: DialogId) => {
-    const res = await chatAPI.getChatHistory(dialogId);
-    messages.value[dialogId] = res;
-    return res;
+  const refreshChatHistory = async (dialogId: DialogId) => {
+    if (messages.value[dialogId]) return;
+    messages.value[dialogId] = await chatAPI.getChatHistory(dialogId);
   }
 
   return {
     messages,
     sendMessage,
     sendImage,
-    getChatHistory
+    refreshChatHistory
   }
 });

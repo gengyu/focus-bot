@@ -178,13 +178,15 @@ export function registerControllers(controllers: any[]) {
               while (true) {
                 const { done, value } = await reader.read();
                 if (done) break;
-
                 // 将二进制数据转换为字符串
                 // const text = new TextDecoder().decode(value);
                 // 发送SSE格式的数据
-                ctx.res.write(typeof value === 'string' ? value : JSON.stringify(value));
+                console.log("SSE ",value)
+                ctx.res.write(`data: ${typeof value === 'string' ? value : JSON.stringify(value)}\n\n`);
               }
-            } finally {
+            } catch (error){
+              ctx.res.end();
+            }finally {
               reader.releaseLock();
             }
           } catch (error) {

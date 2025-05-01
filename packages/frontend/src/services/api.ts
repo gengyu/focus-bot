@@ -1,6 +1,6 @@
 import type {MCPConfig} from '../types/config';
 import {TransportAdapter, TransportType} from "../transports";
-import type {AppSetting, AppSetting} from "../../../../share/type.ts";
+import type {AppSetting} from "../../../../share/type.ts";
 
 export const API_BASE_URL = 'http://localhost:3000';
 

@@ -2,6 +2,7 @@ import {defineStore} from 'pinia';
 import {ref, type Ref} from "vue";
 import type {Conversation, Model} from "../../../../share/type.ts";
 import {chatAPI} from "../services/chatApi.ts";
+import {useMessageStore} from "./messageStore.ts";
 
 // 创建单例实例
 
@@ -20,11 +21,13 @@ export const useConversationStore = defineStore<string, {
     dialogs: [],
     activeDialogId: '',
   });
+  const messaageStore = useMessageStore();
 
   const initialize = async () => {
-    const dialogs = await chatAPI.getDialogList()
-    conversation.value.dialogs = dialogs.dialogs
-    conversation.value.activeDialogId = dialogs.activeDialogId
+    const dialogState = await chatAPI.getDialogList()
+    conversation.value.dialogs = dialogState.dialogs
+    conversation.value.activeDialogId = dialogState.activeDialogId;
+    await messaageStore.refreshChatHistory(dialogState.activeDialogId);
   }
   initialize();
 
@@ -39,6 +42,7 @@ export const useConversationStore = defineStore<string, {
     dialog.model = model;
     // 保存到存储
     await chatAPI.saveDialogList(conversation.value);
+
   }
 
 
@@ -49,6 +53,7 @@ export const useConversationStore = defineStore<string, {
   const setActiveDialog = async (dailogId: string) => {
     conversation.value.activeDialogId = dailogId;
     await chatAPI.saveDialogList(conversation.value);
+    await messaageStore.refreshChatHistory( conversation.value.activeDialogId);
   }
 
 

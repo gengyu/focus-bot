@@ -4,7 +4,6 @@ import type {
   Transport,
   TransportRequest,
   TransportResponse,
-  TransportStreamOptions
 } from "./types.ts";
 
 
