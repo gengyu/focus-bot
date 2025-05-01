@@ -178,6 +178,7 @@ import {useMessageStore} from "../store/messageStore.ts";
 import MarkdownIt from 'markdown-it';
 import hljs from 'highlight.js'// https://highlightjs.org/
 import 'highlight.js/styles/atom-one-light.css';
+import markdownItKatex from "markdown-it-katex"
 
 // 导入常用编程语言支持
 import javascript from 'highlight.js/lib/languages/javascript';
@@ -201,6 +202,8 @@ const md = new MarkdownIt({
     return ''; // 使用额外的默认转义
   }
 });
+md.use(markdownItKatex);
+
 // 使用对话管理Store
 const dialogStore = useConversationStore();
 const messageStore = useMessageStore();
