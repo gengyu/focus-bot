@@ -11,14 +11,16 @@
             <span class="text-green-600 text-sm">AI</span>
           </div>
           <!-- 消息气泡 -->
-          <div :class="[
-            'max-w-[70%] rounded-2xl px-4 py-3',
-            message.role === 'user' ? 'bg-blue-500 text-white rounded-tr-sm' : 'bg-gray-100 text-gray-800 rounded-tl-sm'
-          ]">
+<!--          prose-gray (default)	Gray-->
+          <!--          prose-slate	Slate-->
+          <!--          prose-zinc	Zinc-->
+          <!--          prose-neutral	Neutral-->
+          <!--          prose-stone	Stone-->
+          <div class="max-w-[80%] rounded-2xl px-4 py-3 "
+              :class="message.role === 'user' ? 'bg-blue-500 text-white rounded-tr-sm' : 'bg-gray-100 rounded-tl-sm' ">
             <!-- 文本消息 -->
-            <div v-if="message.type === 'text'" class="break-words text-[15px] leading-relaxed">
-              {{ message.content }}
-            </div>
+            <div v-if="message.type === 'text'  && message.role !== 'user'" class="break-words text-[15px] leading-relaxed prose prose-zinc" v-html="render(message.content)"></div>
+            <div v-else-if="message.type === 'text'" class="break-words text-[15px] leading-relaxed">{{message.content}}</div>
             <!-- 图片消息 -->
             <div v-else-if="message.type === 'image'" class="max-w-sm rounded-lg overflow-hidden">
               <img :src="message.imageUrl" alt="聊天图片" class="w-full">
@@ -77,7 +79,7 @@
              class="min-h-[72px] max-h-[200px] w-full px-4 py-2.5  focus:outline-none"
              :class="{'empty-content': !messageInput}"
              @input="handleInput"
-             @keydown.enter.ctrl.prevent="sendMessage"
+             @keydown.enter.prevent="handleEnterKey"
              @paste.prevent="handlePaste"
         ></div>
         <div class="flex justify-between">
@@ -173,7 +175,32 @@ import type {ChatMessage, Model} from "../../../../share/type.ts";
 import log from "loglevel";
 import {useConversationStore} from "../store/conversationStore.ts";
 import {useMessageStore} from "../store/messageStore.ts";
+import MarkdownIt from 'markdown-it';
+import hljs from 'highlight.js'// https://highlightjs.org/
+import 'highlight.js/styles/atom-one-light.css';
 
+// 导入常用编程语言支持
+import javascript from 'highlight.js/lib/languages/javascript';
+import python from 'highlight.js/lib/languages/python';
+import cpp from 'highlight.js/lib/languages/cpp';
+import go from 'highlight.js/lib/languages/go';
+
+// 注册语言
+hljs.registerLanguage('javascript', javascript);
+hljs.registerLanguage('python', python);
+hljs.registerLanguage('cpp', cpp);
+hljs.registerLanguage('go', go);
+
+const md = new MarkdownIt({
+  highlight: function (str, lang) {
+    if (lang && hljs.getLanguage(lang)) {
+      try {
+        return hljs.highlight(str, { language: lang }).value;
+      } catch (__) {}
+    }
+    return ''; // 使用额外的默认转义
+  }
+});
 // 使用对话管理Store
 const dialogStore = useConversationStore();
 const messageStore = useMessageStore();
@@ -184,8 +211,18 @@ const props = defineProps<{
   // chatMessages?: ChatMessage[]
 }>();
 
+const render = (content:string)=> content && md.render(content)
+
 const chatMessages = computed(()=> {
-  return messageStore.messages[props.chatId]
+  return messageStore.messages[props.chatId]?.map((message)=>{
+    return {
+      role: message.role,
+      content: message.content,
+      timestamp: message.timestamp,
+      type: message.type,
+      imageUrl: message.imageUrl,
+    }
+  })
 })
 
 
@@ -208,6 +245,17 @@ const isImageUploadActive = ref(false);
 const handleInput = (event: Event) => {
   const target = event.target as HTMLElement;
   messageInput.value = target.innerText.trim();
+};
+
+// 处理Enter键事件
+const handleEnterKey = (event: KeyboardEvent) => {
+  if (event.ctrlKey) {
+    // 普通Enter键换行
+    document.execCommand('insertLineBreak');
+  } else {
+    sendMessage();
+
+  }
 };
 
 // 处理粘贴事件
