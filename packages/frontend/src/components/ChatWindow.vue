@@ -16,11 +16,14 @@
           <!--          prose-zinc	Zinc-->
           <!--          prose-neutral	Neutral-->
           <!--          prose-stone	Stone-->
-          <div class="max-w-[80%] rounded-2xl px-4 py-3 "
-              :class="message.role === 'user' ? 'bg-blue-500 text-white rounded-tr-sm' : 'bg-gray-100 rounded-tl-sm' ">
+          <div class="max-w-[85%] rounded-2xl px-4 py-3 "
+              :class="message.role === 'user' ? 'bg-blue-500 text-white rounded-tr-sm' : 'bg-white rounded-tl-sm' "
+          >
             <!-- 文本消息 -->
-            <div v-if="message.type === 'text'  && message.role !== 'user'" class="break-words text-[15px] leading-relaxed prose prose-zinc" v-html="render(message.content)"></div>
-            <div v-else-if="message.type === 'text'" class="break-words text-[15px] leading-relaxed">{{message.content}}</div>
+
+<!--            break-words text-[15px] leading-relaxed-->
+            <div v-if="message.type === 'text'  && message.role !== 'user'" class="markdown-body" v-html="render(message.content)"></div>
+            <div v-else-if="message.type === 'text'" class="  break-words text-[15px] leading-relaxed">{{message.content}}</div>
             <!-- 图片消息 -->
             <div v-else-if="message.type === 'image'" class="max-w-sm rounded-lg overflow-hidden">
               <img :src="message.imageUrl" alt="聊天图片" class="w-full">
@@ -177,21 +180,14 @@ import {useConversationStore} from "../store/conversationStore.ts";
 import {useMessageStore} from "../store/messageStore.ts";
 import MarkdownIt from 'markdown-it';
 import hljs from 'highlight.js'// https://highlightjs.org/
-import 'highlight.js/styles/atom-one-light.css';
+
 import markdownItKatex from "markdown-it-katex"
+import "github-markdown-css";
+import 'highlight.js/styles/github.css';
+// 导入highlight.js及其语言包
+import 'highlight.js/lib/common';
 
-// 导入常用编程语言支持
-import javascript from 'highlight.js/lib/languages/javascript';
-import python from 'highlight.js/lib/languages/python';
-import cpp from 'highlight.js/lib/languages/cpp';
-import go from 'highlight.js/lib/languages/go';
-
-// 注册语言
-hljs.registerLanguage('javascript', javascript);
-hljs.registerLanguage('python', python);
-hljs.registerLanguage('cpp', cpp);
-hljs.registerLanguage('go', go);
-
+// 配置MarkdownIt实例
 const md = new MarkdownIt({
   highlight: function (str, lang) {
     if (lang && hljs.getLanguage(lang)) {
@@ -202,7 +198,7 @@ const md = new MarkdownIt({
     return ''; // 使用额外的默认转义
   }
 });
-md.use(markdownItKatex);
+// md.use(markdownItKatex);
 
 // 使用对话管理Store
 const dialogStore = useConversationStore();
@@ -417,6 +413,27 @@ const updateEditableContent = () => {
 </script>
 
 <style scoped>
+@import 'highlight.js/styles/github.css';
+
+.markdown-body {
+  background-color: transparent;
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.markdown-body pre {
+  background-color: #f6f8fa;
+  border-radius: 6px;
+  padding: 16px;
+}
+
+.markdown-body code {
+  background-color: rgba(175,184,193,0.2);
+  border-radius: 6px;
+  padding: 0.2em 0.4em;
+  font-size: 85%;
+}
+
 .empty-content:empty:before {
   content: '输入消息...';
   color: #9CA3AF;

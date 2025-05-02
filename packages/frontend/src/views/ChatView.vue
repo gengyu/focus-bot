@@ -30,7 +30,13 @@
     </aside>
     <div
         ref="messageContainer"
-        class="flex-1 relative flex flex-col min-w-0 h-screen scroll-smooth overflow-y-auto scrollbar-thin scrollbar-track-transparent scrollbar-thumb-gray-300 hover:scrollbar-thumb-gray-400"
+        class="flex-1 relative flex flex-col
+        bg-amber-50
+         min-w-0
+         h-screen
+          scroll-smooth
+         overflow-y-auto scrollbar-thin scrollbar-track-transparent scrollbar-thumb-gray-300
+         hover:scrollbar-thumb-gray-400"
     >
       <header class="h-14 flex items-center px-8 text-left sticky top-0 z-10">
         <div class="flex items-center">
