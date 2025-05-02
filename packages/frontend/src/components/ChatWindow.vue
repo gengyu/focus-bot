@@ -16,15 +16,26 @@
           <!--          prose-zinc	Zinc-->
           <!--          prose-neutral	Neutral-->
           <!--          prose-stone	Stone-->
-          <div class="max-w-[85%] rounded-2xl px-4 py-3 "
+          <div class="max-w-[75%] rounded-2xl px-4 py-3 "
                :class="message.role === 'user' ? 'bg-blue-500 text-white rounded-tr-sm' : 'bg-white rounded-tl-sm' "
           >
             <!-- 文本消息 -->
 
             <!--            break-words text-[15px] leading-relaxed-->
-            <div v-if="message.type === 'text'  && message.role !== 'user'" class="markdown-body"
+            <!-- AI思考过程 -->
+            <div v-if="message.type === 'text' && message.role !== 'user' && message.thinking" class="markdown-body think-process  break-words ">
+              <div class="flex items-center mb-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-400 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+                <span class="text-gray-400 text-sm">思考过程</span>
+              </div>
+              <div class="text-gray-600 bg-gray-50 rounded-lg p-3" v-html="render(message.thinking)"></div>
+            </div>
+            <!-- 普通消息 -->
+            <div v-if="message.type === 'text' && message.role !== 'user'" class="markdown-body  break-words "
                  v-html="render(message.content)"></div>
-            <div v-else-if="message.type === 'text'" class="  break-words text-[15px] leading-relaxed">
+            <div v-else-if="message.type === 'text'" class="break-words text-[15px] leading-relaxed">
               {{ message.content }}
             </div>
             <!-- 图片消息 -->
@@ -191,11 +202,13 @@ import DOMPurify from 'dompurify';
 import markdownItKatex from "markdown-it-katex"
 import "github-markdown-css";
 import 'highlight.js/styles/github.css';
+import 'katex/dist/katex.min.css';
 // 导入highlight.js及其语言包
 import 'highlight.js/lib/common';
 
 // 配置MarkdownIt实例
 const md = new MarkdownIt({
+  typographer: true,
   highlight: function (str, lang) {
     if (lang && hljs.getLanguage(lang)) {
       try {
@@ -206,7 +219,7 @@ const md = new MarkdownIt({
     return ''; // 使用额外的默认转义
   }
 });
-// md.use(markdownItKatex);
+md.use(markdownItKatex);
 
 // 使用对话管理Store
 const dialogStore = useConversationStore();
@@ -218,17 +231,37 @@ const props = defineProps<{
   // chatMessages?: ChatMessage[]
 }>();
 
-const render = (content: string) => content && DOMPurify.sanitize(md.render(content))
+const render = (content?: string) => content && DOMPurify.sanitize(md.render(content))
+
+
+//  解析 <think>开始 <think/> 结束 方法
+// const parseThink = (content: string) => {
+//   const think = content.match(/<think>(.*?)<\/think>/s);
+//   if (think) {
+//     return content.replace(think[0], `<span class="text-blue-500">${think[1]}</span>`);
+//   }
+//   return content;
+// }
 
 const chatMessages = computed(() => {
   return messageStore.messages[props.chatId] ?.filter(Boolean)
       ?.map((message) => {
+        let content = message.content?.trim()
+        const think = content?.match(/<think>(.*?)<\/think>/s);
+
+        console.log(think,333)
+        if (think) {
+          // <span class="text-blue-500">${think[1]}</span>
+          content = content.replace(think[0], ``);
+        }
+
         return {
           role: message.role,
-          content: message.content,
+          content: content,
           timestamp: message.timestamp,
           type: message.type,
           imageUrl: message.imageUrl,
+          thinking:  think?.[1],
         }
       })
 })
@@ -441,6 +474,15 @@ const updateEditableContent = () => {
   border-radius: 6px;
   padding: 0.2em 0.4em;
   font-size: 85%;
+}
+
+.think-process {
+  opacity: 0.85;
+  font-size: 14px;
+}
+
+.think-process .text-gray-600 {
+  line-height: 1.5;
 }
 
 .empty-content:empty:before {

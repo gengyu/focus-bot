@@ -371,6 +371,78 @@
       "role": "assistant",
       "timestamp": 1746214247,
       "type": "text"
+    },
+    {
+      "role": "user",
+      "content": "写一串数学公式",
+      "timestamp": 1746215818609,
+      "type": "text"
+    },
+    {
+      "id": "chatcmpl-632",
+      "content": "<think>\n\n</think>\n\n当然！以下是一串数学公式的例子，供你参考：\n\n1. **二次方程求根公式**：\n   \\[\n   x = \\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}\n   \\]\n\n2. **欧拉公式**（用于复数表示）：\n   \\[\n   e^{i\\theta} = \\cos\\theta + i\\sin\\theta\n   \\]\n\n3. **算术-几何平均不等式（AM ≥ GM）**：\n   \\[\n   \\frac{a + b}{2} \\geq \\sqrt{ab}\n   \\]\n   \n4. **基本勾股定理**：\n   \\[\n   a^2 + b^2 = c^2\n   \\]\n\n5. **二项式定理**（展开任一幂）：\n   \\[\n   (a + b)^n = \\sum_{k=0}^{n} \\binom{n}{k} a^{n-k}b^k\n   \\]\n\n6. **抛物线的标准方程**：\n   \\[\n   y = ax^2 + bx + c\n   \\]\n   \n7. **指数函数的导数**：\n   \\[\n   \\frac{d}{dx} e^x = e^x\n   \\]\n\n8. **自然对数和指数的关系**：\n   \\[\n   e^{u(x)} = y \\\\\n   u(x) = \\ln(y)\n   \\]\n\n9. **三角函数的加法公式**：\n   \\[\n   \\sin(a \\pm b) = \\sin a \\cos b \\pm \\cos a \\sin b\n   \\]\n   \n10. **积分的分部积分法则**：\n    \\[\n    \\int u \\, dv = uv - \\int v \\, du\n    \\]\n\n如果你需要我来更进一步地解释或延伸这些公式，随时告诉我！",
+      "provider": "openai",
+      "model": "deepseek-r1:1.5b",
+      "role": "assistant",
+      "timestamp": 1746215820,
+      "type": "text"
+    },
+    {
+      "role": "user",
+      "content": "写一串数学公式",
+      "timestamp": 1746217535441,
+      "type": "text"
+    },
+    {
+      "id": "chatcmpl-766",
+      "content": "<think>\n\n</think>\n\n当然！以下是一串有趣的数学公式：\n\n1. $$ \\sum_{n=0}^{\\infty} \\frac{x^n}{n!} = e^{x} $$\n2. $$ \\int_{-\\infty}^{\\infty} e^{-x^2} dx = \\sqrt{\\pi} $$\n3. $$ \\sigma(n) = \\sum_{d|n} d $$\n4. $$ \\gcd(a, b) = \\sum_{d | a,\\ d | b} d $$\n5. $$ \\dim V = \\sum_{i=1}^{n} \\dim V_i - \\sum_{i < j} \\dim V_{i,j} + \\sum_{i < j < k} \\dim V_{i,j,k}} - \\cdots + (-1)^{n-1} \\dim V_{1,2,\\ldots,n}}} $$\n（包括多线性对偶）\n6. $$ T(n) = \\sum_{d|n} \\phi(d) $$\n7. 欧拉常数：\n8. $$ \\gamma = \\frac{1}{2\\pi} \\int_0^{2\\pi} (\\cos x + \\ln 2)^{-1} dx $$\n9. 分式展开：\n10. $$ \\sqrt{i} = \\frac{\\sqrt{2}}{2}(1+i) $$\n（因为根号i）\n11.\\ $$ \\arctan z = \\sum_{n=0}^{\\infty} (-1)^n \\frac{z^{2n+1}}{2n+1}, | z | \\leq 1 $$\n12. 权重函数：\n13. 在图论中，权值函数定义为：$$ w(G) = \\min_{S \\subseteq V, |S| > n/2} (w(S) + w(V - S)) $$\n14.\\ $$ P^n(x) = P^{n-1}(P^{-1}(x)) + P^n(P^{-1}(x)) $$\n（迭代函数的分形应用）\n15. 分形生成公式：\n16. $$ \\text{Complexity of Collatz conjecture proof via induction} $$\n（不完全，但展示了应用数学）\n\n希望这些公式对您有帮助！",
+      "provider": "openai",
+      "model": "deepseek-r1:1.5b",
+      "role": "assistant",
+      "timestamp": 1746217537,
+      "type": "text"
+    },
+    {
+      "role": "user",
+      "content": "写一串数学公式",
+      "timestamp": 1746217669351,
+      "type": "text"
+    },
+    {
+      "id": "chatcmpl-289",
+      "content": "<think>\n\n</think>\n\n当然！以下是一串精心设计的数学公式：\n\n1. \\(e^{i\\pi} + 1 = 0\\)  \n2. \\( \\int_{-\\infty}^\\infty e^{-x^2} dx = \\sqrt{\\pi} \\)   \n3. 费马 Last Theorem：\\( a^n + b^n = c^n \\) 当 \\( n > 0 \\) 时无正整数解。\n4. 等比数列求和公式：\\( S_n = a_1 \\times \\frac{r^n - 1}{r - 1} \\)\n5. 复数的欧拉公式：\\( e^{i\\theta} = \\cos\\theta + i\\sin\\theta \\)\n6. 不等式：\\( \\sqrt{ab} \\leq \\frac{a + b}{2} \\) （算术-几何均值不等式）\n7. 面积公式：\\( S = \\frac{1}{2} \\times 底 \\times 高 \\)\n8. 矩形面积公式：\\( S = L \\times W \\)\n9. 圆的面积公式：\\( S = \\pi r^2 \\)\n10. 组合数公式：\\( C(n, k) = \\frac{n!}{k!(n - k)!} \\)\n\n希望这对你有帮助！如果你有任何问题，欢迎随时告诉我。",
+      "provider": "openai",
+      "model": "deepseek-r1:1.5b",
+      "role": "assistant",
+      "timestamp": 1746217669,
+      "type": "text"
+    },
+    {
+      "role": "user",
+      "content": "写一串数学公式",
+      "timestamp": 1746217717919,
+      "type": "text"
+    },
+    {
+      "role": "user",
+      "content": "写一串数学公式",
+      "timestamp": 1746217739030,
+      "type": "text"
+    },
+    {
+      "role": "user",
+      "content": "写一串数学公式， 数学公式$$包裹 sui'ji",
+      "timestamp": 1746217984023,
+      "type": "text"
+    },
+    {
+      "id": "chatcmpl-248",
+      "content": "<think>\n\n</think>\n\n要书写一串数学公式，并将它们包裹在$\\mathfrak{ji}$符号中，可以按照以下方式完成：\n\n首先，写出一系列有意义的数学公式：\n- 平方差：$a^2 - b^2$\n- 完全平方：$(a + b)^2$\n- 三角函数恒等式：$\\sin^2 \\theta + \\cos^2 \\theta = 1$\n\n然后，将这些表达式依次排列，使它们构成一首优美的“诗”：\n$$a^2 - b^2, \\quad (a + b)^2, \\quad \\sin^2 \\theta + \\cos^2 \\theta = 1$$\n\n最后，在每行末尾添加$\\mathfrak{ji}$符号以装饰性地标出公式的整洁和成功：\n\n$$\na^2 - b^2, \\quad (a + b)^2, \\quad \\sin^2 \\theta + \\cos^2 \\theta = 1\n\\mathfrak{ji}\n$$\n\n这样，你不仅完成了数学公式的书写，还为它们.added一个优雅的装饰元。",
+      "provider": "openai",
+      "model": "deepseek-r1:1.5b",
+      "role": "assistant",
+      "timestamp": 1746217984,
+      "type": "text"
     }
   ]
 }
