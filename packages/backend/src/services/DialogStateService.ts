@@ -19,7 +19,10 @@ export class DialogStateService {
 
   async getDialogList(): Promise<Conversation> {
     try {
-      return await this.persistenceService.loadData();
+        return await this.persistenceService.loadData() ?? {
+          dialogs: [],
+          activeDialogId: ''
+        };
     } catch (error) {
       throw new Error(`获取对话列表失败: ${error instanceof Error ? error.message : '未知错误'}`);
     }

@@ -55,6 +55,7 @@ export class OpenAIProvider implements LLMProvider {
 			}
 		})
 		try {
+			console.log('📦 OpenAI Stream:', msgs);
 			const stream = await this.openai.chat.completions.create({
 				model: modelId,
 				messages: msgs,
@@ -65,11 +66,11 @@ export class OpenAIProvider implements LLMProvider {
 				signal
 			});
 			for await (const part of stream) {
+				let content = part.choices[0]?.delta?.content;
 				yield {
 					id: part.id,
-					content: part.choices[0].delta.content as string,
-					reasoningContent: part.choices[0].delta.content as string,
-					// provider: 'openai',
+					content: content,
+					provider: 'openai',
 					model: modelId,
 					role: part.choices[0].delta.role,
 					timestamp: part.created,

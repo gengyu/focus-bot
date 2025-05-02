@@ -79,10 +79,7 @@ export class ChatService {
 			async pull(controller) {
 				try {
 					for await (const chunk of stream) {
-						const content = chunk.content || '';
-						if (content) {
-							controller.enqueue(chunk);
-						}
+						controller.enqueue(chunk);
 					}
 				} catch (err) {
 					console.error('Stream error:', err);

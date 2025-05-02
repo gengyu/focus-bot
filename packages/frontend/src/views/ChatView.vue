@@ -31,7 +31,7 @@
     <div
         ref="messageContainer"
         class="flex-1 relative flex flex-col
-        bg-amber-50
+
          min-w-0
          h-screen
           scroll-smooth

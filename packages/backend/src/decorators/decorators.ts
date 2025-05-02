@@ -181,7 +181,7 @@ export function registerControllers(controllers: any[]) {
                 // 将二进制数据转换为字符串
                 // const text = new TextDecoder().decode(value);
                 // 发送SSE格式的数据
-                console.log("SSE ",value)
+                // console.log("SSE ",value)
                 ctx.res.write(`data: ${typeof value === 'string' ? value : JSON.stringify(value)}\n\n`);
               }
             } catch (error){

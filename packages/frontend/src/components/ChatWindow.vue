@@ -11,19 +11,22 @@
             <span class="text-green-600 text-sm">AI</span>
           </div>
           <!-- 消息气泡 -->
-<!--          prose-gray (default)	Gray-->
+          <!--          prose-gray (default)	Gray-->
           <!--          prose-slate	Slate-->
           <!--          prose-zinc	Zinc-->
           <!--          prose-neutral	Neutral-->
           <!--          prose-stone	Stone-->
           <div class="max-w-[85%] rounded-2xl px-4 py-3 "
-              :class="message.role === 'user' ? 'bg-blue-500 text-white rounded-tr-sm' : 'bg-white rounded-tl-sm' "
+               :class="message.role === 'user' ? 'bg-blue-500 text-white rounded-tr-sm' : 'bg-white rounded-tl-sm' "
           >
             <!-- 文本消息 -->
 
-<!--            break-words text-[15px] leading-relaxed-->
-            <div v-if="message.type === 'text'  && message.role !== 'user'" class="markdown-body" v-html="render(message.content)"></div>
-            <div v-else-if="message.type === 'text'" class="  break-words text-[15px] leading-relaxed">{{message.content}}</div>
+            <!--            break-words text-[15px] leading-relaxed-->
+            <div v-if="message.type === 'text'  && message.role !== 'user'" class="markdown-body"
+                 v-html="render(message.content)"></div>
+            <div v-else-if="message.type === 'text'" class="  break-words text-[15px] leading-relaxed">
+              {{ message.content }}
+            </div>
             <!-- 图片消息 -->
             <div v-else-if="message.type === 'image'" class="max-w-sm rounded-lg overflow-hidden">
               <img :src="message.imageUrl" alt="聊天图片" class="w-full">
@@ -152,11 +155,14 @@
                 class="px-6 py-2.5 rounded-lg focus:outline-none transition-colors self-end"
                 :class="[isLoading ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-500 hover:bg-blue-600 text-white']"
             >
-                <span v-if="!isLoading">发送</span>
-                <span v-else class="flex items-center">
-                    <svg class="animate-spin -ml-1 mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              <span v-if="!isLoading">发送</span>
+              <span v-else class="flex items-center">
+                    <svg class="animate-spin -ml-1 mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none"
+                         viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
+                                stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor"
+                              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
                     发送中...
                 </span>
@@ -180,6 +186,7 @@ import {useConversationStore} from "../store/conversationStore.ts";
 import {useMessageStore} from "../store/messageStore.ts";
 import MarkdownIt from 'markdown-it';
 import hljs from 'highlight.js'// https://highlightjs.org/
+import DOMPurify from 'dompurify';
 
 import markdownItKatex from "markdown-it-katex"
 import "github-markdown-css";
@@ -192,8 +199,9 @@ const md = new MarkdownIt({
   highlight: function (str, lang) {
     if (lang && hljs.getLanguage(lang)) {
       try {
-        return hljs.highlight(str, { language: lang }).value;
-      } catch (__) {}
+        return hljs.highlight(str, {language: lang}).value;
+      } catch (__) {
+      }
     }
     return ''; // 使用额外的默认转义
   }
@@ -210,18 +218,19 @@ const props = defineProps<{
   // chatMessages?: ChatMessage[]
 }>();
 
-const render = (content:string)=> content && md.render(content)
+const render = (content: string) => content && DOMPurify.sanitize(md.render(content))
 
-const chatMessages = computed(()=> {
-  return messageStore.messages[props.chatId]?.map((message)=>{
-    return {
-      role: message.role,
-      content: message.content,
-      timestamp: message.timestamp,
-      type: message.type,
-      imageUrl: message.imageUrl,
-    }
-  })
+const chatMessages = computed(() => {
+  return messageStore.messages[props.chatId] ?.filter(Boolean)
+      ?.map((message) => {
+        return {
+          role: message.role,
+          content: message.content,
+          timestamp: message.timestamp,
+          type: message.type,
+          imageUrl: message.imageUrl,
+        }
+      })
 })
 
 
@@ -321,11 +330,11 @@ const sendMessage = async () => {
       }
       messageInput.value = '';
       // 使用对话管理器发送消息
-      const readableStream  = await messageStore.sendMessage(userMessage.content, model, chatId);
+      const readableStream = await messageStore.sendMessage(userMessage.content, model, chatId);
 
-      const reader =  readableStream.getReader();
+      const reader = readableStream.getReader();
       while (true) {
-        const { done, value } = await reader.read();
+        const {done, value} = await reader.read();
         if (done) {
           break;
         }
@@ -428,7 +437,7 @@ const updateEditableContent = () => {
 }
 
 .markdown-body code {
-  background-color: rgba(175,184,193,0.2);
+  background-color: rgba(175, 184, 193, 0.2);
   border-radius: 6px;
   padding: 0.2em 0.4em;
   font-size: 85%;

@@ -32,6 +32,8 @@
   },
   "dependencies": {
     "@radix-ui/colors": "^3.0.0",
+    "@types/dompurify": "^3.2.0",
+    "dompurify": "^3.2.5",
     "radix-vue": "^1.9.17"
   }
 }
