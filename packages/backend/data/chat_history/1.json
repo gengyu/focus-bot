@@ -563,6 +563,21 @@
       "role": "assistant",
       "timestamp": 1746232112,
       "type": "text"
+    },
+    {
+      "role": "user",
+      "content": "如何做rag",
+      "timestamp": 1746240271476,
+      "type": "text"
+    },
+    {
+      "id": "chatcmpl-31",
+      "content": "<think>\n\n</think>\n\nRAG（Retrieval-Augmented Generation）是一种结合了基于知识的检索方法和生成式语言模型的框架。它通过整合知识库和语言模型来提高文本生成的有效性。学习如何在RAG框架下进行优化是必要的，以提升任务效果。\n\n### 1. **理解RAG的基本概念**\n   - **知识库（Retrieval库）**：包含大量相关性高的上下文文本，通常使用外部数据（如书籍、互联网资料）或自身生成的数据。\n   - **语言模型（Generative model）**：负责从当前输入中生成合理的输出，结合了深度学习方法。\n\n### 2. **优化RAG的几个关键点**\n   - **知识库的设计与更新**：确保知识库中的数据准确且相关性强。可以使用文档夹、API访问等方式获取和更新内容。\n   - **检索算法选择**：\n     - **TF-IDF（Term Frequency-Inverse Document Frequency）**：用于计算关键词的相关性。\n     - **Doc2vec/Transformer**：对知识库进行向量化处理，提升检索效果。\n   - **学习型检索器优化（LRA）**\n     - 将检索规则嵌入到注意力机制中，结合输入生成。\n     - 带有监督学习，可以在训练集中根据高质量的输出调整检索参数。\n     - 非监督学习方法：通过正负样本增强学习性能。\n   - **语言模型融合**：\n     - 使用自 attending 加快推理。\n     - 结合监督调整权重等优化策略。\n\n### 3. **选择合适的RAG框架**\n   - **DeepSage + GPT/flow**：利用深度神经网络处理用户输入并生成上下文，结合生成式模型进行条件生成。适用于自然语言描述的任务。\n   - **Knowledge Graph+GPT**：将知识库与生成式模型结合使用，适合需要全面背景的信息查询和生成任务。\n\n### 4. **提升RAG表现的其他建议**\n   - 使用先进的大型中文语言模型（如BPE、VPE等）以增强生成效果。\n   - 在训练时应用优化器（如Adam、LAMB），采用早停策略防止过拟合。\n   - 鼓励团队合作，分享知识库和不同的检索方法。\n\n### 5. **示例论文** [Example Paper References]\n   以下是一些涉及RAG的优化论文的例子：\n   - **\"Retrieval-Augmented Sequence-to-Sequence Models for Sentiment Analysis\"** by X. Li et al.\n   - **\"Knowledge-Aware Sentence-Pair Generation with Recurrent Transformer Networks\"** by Z. Zhang et al.\n   - **\"Complementary Learning on Similarity Search and Querying: A Review\"** by Y. Yang et al.\n\n通过以上步骤，你可以更好地理解和应用RAG框架，提升文本生成任务的性能。",
+      "provider": "openai",
+      "model": "deepseek-r1:1.5b",
+      "role": "assistant",
+      "timestamp": 1746240275,
+      "type": "text"
     }
   ]
 }

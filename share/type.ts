@@ -70,7 +70,7 @@ export interface Dialog {
 // 会话
 
 export interface Conversation {
-  // id: string,                     // 会话 ID（唯一）
+  id: string,                     // 会话 ID（唯一）
   dialogs: Dialog[];
   activeDialogId: DialogId;
 

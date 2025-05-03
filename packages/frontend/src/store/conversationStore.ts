@@ -1,8 +1,10 @@
 import {defineStore} from 'pinia';
 import {ref, type Ref} from "vue";
-import type {Conversation, Model} from "../../../../share/type.ts";
+import type {Conversation, Dialog, DialogId, Model} from "../../../../share/type.ts";
 import {chatAPI} from "../services/chatApi.ts";
 import {useMessageStore} from "./messageStore.ts";
+import {generateUUID} from "../utils/uuid.ts";
+import {useAppSettingStore} from "./appSettingStore.ts";
 
 // 创建单例实例
 
@@ -14,14 +16,17 @@ export const useConversationStore = defineStore<string, {
   conversation: Ref<Conversation>,
   updateModel: (model: Model) => Promise<void>,
   setActiveDialog: (dailogId: string) => Promise<void>,
-  createConversation: (title: string, model?: Model) => Promise<Conversation>,
-
+  createDialog: () => Promise<void>,
+  deleteDialog: (dialogId: DialogId) => Promise<void>,
+  updateDialog: (dialogId: DialogId, dialog: Partial<Dialog>) => Promise<void>,
 }>('conversation', () => {
   const conversation = ref<Conversation>({
     dialogs: [],
     activeDialogId: '',
+    id:  '',
   });
   const messaageStore = useMessageStore();
+  const appSettingStore = useAppSettingStore();
 
   const initialize = async () => {
     const dialogState = await chatAPI.getDialogList()
@@ -59,23 +64,66 @@ export const useConversationStore = defineStore<string, {
 
   /**
    * 创建新对话
-   * @param title 对话标题
-   * @param model 模型信息
    * @returns 新对话对象
    */
-    // @ts-ignore
-  const createConversation = async (title: string, model?: Model):Promise<Conversation> => {
-    console.log(title, model)
-    // return await conversationStore.createConversation(title, model);
 
+  const createDialog = async () => {
+    const dialogId = generateUUID();
+    const model = appSettingStore.providerConfig?.providers?.[0]?.models?.[0];
+    conversation.value.dialogs.unshift({
+      id: dialogId,
+      title: '新会话',
+      timestamp: Date.now(),
+      conversationId: conversation.value.id,
+      model,
+    })
+    conversation.value.activeDialogId = dialogId;
+    await chatAPI.saveDialogList(conversation.value);
   }
 
+  /**
+   * 删除对话
+   * @param dialogId
+   */
+  const deleteDialog = async (dialogId:DialogId)=> {
+    if(!dialogId) return;
+
+    conversation.value.dialogs = conversation.value.dialogs.filter(dialog => dialog.id !== dialogId);
+    if(dialogId === conversation.value.activeDialogId){
+      conversation.value.activeDialogId = conversation.value.dialogs[0]?.id;
+    }
+    if(!conversation.value.activeDialogId){
+      await createDialog();
+    }else {
+      await chatAPI.saveDialogList(conversation.value);
+    }
+  }
+
+  /**
+   * 更新对话
+   * @param dialogId
+   * @param dialog
+   */
+  const updateDialog = async (dialogId:DialogId, dialog: Partial<Dialog>)=> {
+    if(!dialogId) return;
+    conversation.value.dialogs = conversation.value.dialogs.map(item => {
+      if (dialog.id === dialogId) {
+        return  { ...item, ...dialog}
+      }
+      return item;
+    });
+    await chatAPI.saveDialogList(conversation.value);
+  }
+
+  // createDialog, deleteDialog, updateDialog
 
   return {
     conversation,
     updateModel,
     setActiveDialog,
-    createConversation,
+    createDialog,
+    deleteDialog,
+    updateDialog
     // sendMessage,
     // sendImage,
     // getChatHistory

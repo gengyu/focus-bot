@@ -1,6 +1,54 @@
 {
   "dialogs": [
     {
+      "id": "52b9c76c-ca61-4c2e-9a25-f05184ca6357",
+      "title": "新会话",
+      "timestamp": 1746237220701,
+      "conversationId": "",
+      "model": {
+        "id": "gemma3:latest",
+        "name": "gemma3:latest",
+        "description": "Ollama 本地模型",
+        "size": 3338801804,
+        "enabled": true,
+        "providerId": "ollama"
+      },
+      "isEditing": true,
+      "editTitle": "新会话对对对"
+    },
+    {
+      "id": "338adfe7-e6b9-4329-b837-62f2f28c277b",
+      "title": "新会话",
+      "timestamp": 1746237220519,
+      "conversationId": "",
+      "model": {
+        "id": "gemma3:latest",
+        "name": "gemma3:latest",
+        "description": "Ollama 本地模型",
+        "size": 3338801804,
+        "enabled": true,
+        "providerId": "ollama"
+      },
+      "isEditing": true,
+      "editTitle": "新会话"
+    },
+    {
+      "id": "1c51c98d-f57c-4f96-84d0-f673fd815b4c",
+      "title": "新会话",
+      "timestamp": 1746237220339,
+      "conversationId": "",
+      "model": {
+        "id": "gemma3:latest",
+        "name": "gemma3:latest",
+        "description": "Ollama 本地模型",
+        "size": 3338801804,
+        "enabled": true,
+        "providerId": "ollama"
+      },
+      "isEditing": true,
+      "editTitle": "新会话"
+    },
+    {
       "id": "1",
       "chatId": "1",
       "title": "默认助手1",
@@ -12,7 +60,9 @@
         "size": 1117322599,
         "enabled": true,
         "providerId": "ollama"
-      }
+      },
+      "isEditing": true,
+      "editTitle": "默认助手1"
     },
     {
       "id": "2",
@@ -49,5 +99,6 @@
       "timestamp": 1744195793951
     }
   ],
-  "activeDialogId": "1"
+  "activeDialogId": "52b9c76c-ca61-4c2e-9a25-f05184ca6357",
+  "id": ""
 }

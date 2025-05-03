@@ -5,24 +5,61 @@
         :class="[isAsideCollapsed ? 'w-10 overflow-hidden' : 'w-60']"
     >
       <div class="flex items-center h-14 px-3 border-b border-[#f0f0f0]">
-        <span class="text-base mr-2.5">🧠</span>
-        <span class="text-xl font-bold text-[#1f2937]">智AI助手</span>
+        <svg class="w-6 h-6 mr-2.5 text-blue-600" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 4L14.5 9.5L20 12L14.5 14.5L12 20L9.5 14.5L4 12L9.5 9.5L12 4Z" fill="currentColor"/>
+          <circle cx="12" cy="12" r="3" fill="white"/>
+        </svg>
+        <span class="text-xl font-bold text-[#1f2937]">Focus Bot</span>
       </div>
-      <nav class="flex-1 pt-6">
+      <div class="px-3 py-4 border-b border-[#f0f0f0]">
+        <button @click="createNewChat"
+                class="w-full flex items-center justify-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors duration-200">
+          <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+          </svg>
+          新建对话
+        </button>
+      </div>
+      <nav class="flex-1 pt-4">
         <div v-for="group in groupedChats" :key="group.title" class="mb-4">
           <div class="pl-6 text-sm text-gray-500 mb-2">{{ group.title }}</div>
           <ul class="pl-6 m-0">
             <li
-                @click="handlerSelectChat(chat.id)"
                 v-for="chat in group.chats"
                 :key="chat.id"
-                class="px-3 py-2.5 rounded-lg text-[#374151] cursor-pointer mb-1.5 transition-colors duration-200"
+                class="group relative flex items-center px-3 py-2 mr-2.5 rounded-sm text-[#374151] cursor-pointer mb-1.5 transition-colors duration-200"
                 :class="{
-                'bg-[#e0e7ef] text-[#2563eb] font-semibold': conversation.activeDialogId === chat.id,
+                'bg-[#e0e7ef] text-[#2563eb] font-semibold ': conversation.activeDialogId === chat.id,
                 'hover:bg-[#e0e7ef] hover:text-[#2563eb] hover:font-semibold': conversation.activeDialogId !== chat.id
               }"
             >
-              {{ chat.title }}
+              <div class="flex-1 flex items-center" @click="handlerSelectChat(chat.id)">
+                <input v-if="isEditing && chat.id == editDialog.id"
+                       v-model="editDialog.title"
+                       @blur="saveTitle()"
+                       @keyup.enter="saveTitle()"
+                       class="w-full bg-transparent border-none focus:ring-0 px-0 "
+                       type="text"
+                />
+                <span v-else class="truncate">{{ chat.title }}</span>
+              </div>
+              <div class="hidden group-hover:flex items-center gap-1">
+                <button @click="startEditTitle(chat)" class="p-1 hover:text-blue-600 rounded">
+                  <svg v-if="isEditing && chat.id === editDialog.id" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                  </svg>
+                  <svg v-else class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                  </svg>
+                </button>
+                <button @click="deleteChat(chat.id)" class="p-1 hover:text-red-600 rounded">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                  </svg>
+                </button>
+              </div>
             </li>
           </ul>
         </div>
@@ -141,6 +178,9 @@ import {useAppSettingStore} from "../store/appSettingStore.js";
 import {type ChatMessage, Dialog, Model} from "../../../../share/type.ts";
 import {useConversationStore} from "../store/conversationStore.ts";
 
+import {toast} from "vue-sonner";
+
+
 const {providerConfig} = useAppSettingStore();
 const models = computed<Model[]>(() => {
   const models = providerConfig?.providers?.filter(provider => provider.enabled) || []
@@ -157,25 +197,24 @@ const selectedModel = ref<Model>({
 });
 
 watch(() => models.value, (newModels) => {
-  if(!selectedModel.value.id){
+  if (!selectedModel.value.id) {
     selectedModel.value = newModels[0];
   }
 })
 
 
-const {conversation, updateModel, setActiveDialog} = useConversationStore();
+const {conversation, updateModel, setActiveDialog, createDialog, deleteDialog, updateDialog} = useConversationStore();
 
 // 监听model变化，更新activeDialog.model
 const handlerSelectModel = async () => {
   await updateModel(selectedModel.value);
 }
 
-const handlerSelectChat = async (chatId: string)=> {
+const handlerSelectChat = async (chatId: string) => {
   await setActiveDialog(chatId);
   await nextTick();
   handlerScroll();
 }
-
 
 
 watch(() => conversation.activeDialogId, () => {
@@ -187,12 +226,10 @@ watch(() => conversation.activeDialogId, () => {
   const activeDialog = conversation.dialogs.find(dialog => dialog.id === conversation.activeDialogId);
   if (activeDialog?.model) {
     selectedModel.value = activeDialog.model!;
-  }else {
-   if(models.value.length> 0) selectedModel.value = models.value[0];
+  } else {
+    if (models.value.length > 0) selectedModel.value = models.value[0];
   }
 });
-
-
 
 
 const messageContainer = ref<HTMLElement | undefined>(undefined);
@@ -210,7 +247,7 @@ const handlerScroll = () => {
 };
 
 // 计算分组的聊天列表
-const groupedChats = computed<Array<{ title: string; chats: Dialog[]}>>(() => {
+const groupedChats = computed<Array<{ title: string; chats: Dialog[] }>>(() => {
   const now = new Date();
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const yesterday = new Date(today);
@@ -251,6 +288,48 @@ const isAsideCollapsed = ref(false);
 
 const toggleAside = () => {
   isAsideCollapsed.value = !isAsideCollapsed.value;
+};
+
+const createNewChat = async () => {
+  await createDialog();
+};
+
+const deleteChat = async (chatId: string) => {
+  if (confirm('确定要删除这个对话吗？')) {
+    toast.promise(
+        () => deleteDialog(chatId),
+        {
+          loading: '正在删除对话...',
+          success: '对话已删除',
+          error: '删除失败',
+        }
+    );
+  }
+};
+
+
+const isEditing = ref(false);
+const editDialog = ref<Partial<Dialog>>({
+  id: '',
+  title: '',
+});
+const startEditTitle = (chat: Dialog) => {
+  editDialog.value = {...chat,}
+  isEditing.value = true;
+  nextTick(() => {
+    const input = document.querySelector(`input[type="text"]`) as HTMLInputElement;
+    if (input) {
+      input.focus();
+      input.select();
+    }
+  });
+};
+
+const saveTitle = async () => {
+  if (editDialog.value.title && editDialog.value.title.trim() !== '') {
+    await updateDialog(editDialog.value.id, {title: editDialog.value.title});
+  }
+  isEditing.value = false;
 };
 </script>
 

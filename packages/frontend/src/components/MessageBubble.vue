@@ -67,7 +67,7 @@ const props = defineProps<{
 }>();
 
 const message = computed(() => {
-  console.log(props.index);
+  // console.log(props.index);
   const chatMessage = props.chatMessage;
   let content = chatMessage?.content?.trim() ?? ''
 
