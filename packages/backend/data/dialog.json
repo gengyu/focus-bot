@@ -18,13 +18,29 @@
       "id": "2",
       "chatId": "2",
       "title": "demo1",
-      "timestamp": 1745405393951
+      "timestamp": 1745405393951,
+      "model": {
+        "id": "deepseek-r1:1.5b",
+        "name": "deepseek-r1:1.5b",
+        "description": "Ollama 本地模型",
+        "size": 1117322599,
+        "enabled": true,
+        "providerId": "ollama"
+      }
     },
     {
       "id": "3",
       "chatId": "3",
       "title": "网页生成",
-      "timestamp": 1745232593951
+      "timestamp": 1745232593951,
+      "model": {
+        "id": "deepseek-r1:1.5b",
+        "name": "deepseek-r1:1.5b",
+        "description": "Ollama 本地模型",
+        "size": 1117322599,
+        "enabled": true,
+        "providerId": "ollama"
+      }
     },
     {
       "id": "4",

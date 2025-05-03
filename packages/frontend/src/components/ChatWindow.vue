@@ -4,55 +4,7 @@
     <div class="flex-1 px-6 py-4" ref="messageContainer">
 
       <div v-for="(message, index) in chatMessages" :key="index" class="mb-6">
-        <div v-if="message" class="flex" :class="message.role === 'user' ? 'justify-end' : 'justify-start'">
-          <!-- 头像 -->
-          <div v-if="message.role !== 'user'"
-               class="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center mr-3">
-            <span class="text-green-600 text-sm">AI</span>
-          </div>
-          <!-- 消息气泡 -->
-          <!--          prose-gray (default)	Gray-->
-          <!--          prose-slate	Slate-->
-          <!--          prose-zinc	Zinc-->
-          <!--          prose-neutral	Neutral-->
-          <!--          prose-stone	Stone-->
-          <div class="max-w-[75%] rounded-2xl px-4 py-3 "
-               :class="message.role === 'user' ? 'bg-blue-500 text-white rounded-tr-sm' : 'bg-white rounded-tl-sm' "
-          >
-            <!-- 文本消息 -->
-
-            <!--            break-words text-[15px] leading-relaxed-->
-            <!-- AI思考过程 -->
-            <div v-if="message.type === 'text' && message.role !== 'user' && message.thinking" class="markdown-body think-process  break-words ">
-              <div class="flex items-center mb-2">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-400 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
-                </svg>
-                <span class="text-gray-400 text-sm">思考过程</span>
-              </div>
-              <div class="text-gray-600 bg-gray-50 rounded-lg p-3" v-html="render(message.thinking)"></div>
-            </div>
-            <!-- 普通消息 -->
-            <div v-if="message.type === 'text' && message.role !== 'user'" class="markdown-body  break-words "
-                 v-html="render(message.content)"></div>
-            <div v-else-if="message.type === 'text'" class="break-words text-[15px] leading-relaxed">
-              {{ message.content }}
-            </div>
-            <!-- 图片消息 -->
-            <div v-else-if="message.type === 'image'" class="max-w-sm rounded-lg overflow-hidden">
-              <img :src="message.imageUrl" alt="聊天图片" class="w-full">
-            </div>
-            <!-- 消息时间 -->
-            <div class="text-xs mt-1 opacity-60" v-if="message.timestamp ">
-              {{ new Date(message.timestamp).toLocaleTimeString() }}
-            </div>
-          </div>
-          <!-- 用户头像 -->
-          <div v-if="message.role === 'user'"
-               class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center ml-3">
-            <span class="text-blue-600 text-sm">我</span>
-          </div>
-        </div>
+        <MessageBubble v-if="message" :chatMessage="message" :index="index" />
       </div>
     </div>
 
@@ -98,6 +50,8 @@
              @input="handleInput"
              @keydown.enter.prevent="handleEnterKey"
              @paste.prevent="handlePaste"
+             @compositionstart="isComposing = true"
+             @compositionend="isComposing = false"
         ></div>
         <div class="flex justify-between">
           <!-- 功能按钮区 -->
@@ -143,7 +97,7 @@
             </label>
 
           </div>
-          <!--          <div class="text-xs text-gray-400 mt-1 text-right">按 Ctrl + Enter 发送</div>-->
+          <!--          <div class="text-xs text-gray-400 mt-1 text-right">按   Enter 发送</div>-->
 
           <!-- 发送按钮 -->
           <div class="flex items-center gap-2">
@@ -195,31 +149,23 @@ import type {ChatMessage, Model} from "../../../../share/type.ts";
 import log from "loglevel";
 import {useConversationStore} from "../store/conversationStore.ts";
 import {useMessageStore} from "../store/messageStore.ts";
-import MarkdownIt from 'markdown-it';
-import hljs from 'highlight.js'// https://highlightjs.org/
-import DOMPurify from 'dompurify';
+import MessageBubble from './MessageBubble.vue';
 
-import markdownItKatex from "markdown-it-katex"
-import "github-markdown-css";
-import 'highlight.js/styles/github.css';
-import 'katex/dist/katex.min.css';
-// 导入highlight.js及其语言包
-import 'highlight.js/lib/common';
 
-// 配置MarkdownIt实例
-const md = new MarkdownIt({
-  typographer: true,
-  highlight: function (str, lang) {
-    if (lang && hljs.getLanguage(lang)) {
-      try {
-        return hljs.highlight(str, {language: lang}).value;
-      } catch (__) {
-      }
-    }
-    return ''; // 使用额外的默认转义
-  }
-});
-md.use(markdownItKatex);
+// // 配置MarkdownIt实例
+// const md = new MarkdownIt({
+//   typographer: true,
+//   highlight: function (str, lang) {
+//     if (lang && hljs.getLanguage(lang)) {
+//       try {
+//         return hljs.highlight(str, {language: lang}).value;
+//       } catch (__) {
+//       }
+//     }
+//     return ''; // 使用额外的默认转义
+//   }
+// });
+// md.use(markdownItKatex);
 
 // 使用对话管理Store
 const dialogStore = useConversationStore();
@@ -230,9 +176,6 @@ const props = defineProps<{
   chatId?: string
   // chatMessages?: ChatMessage[]
 }>();
-
-const render = (content?: string) => content && DOMPurify.sanitize(md.render(content))
-
 
 //  解析 <think>开始 <think/> 结束 方法
 // const parseThink = (content: string) => {
@@ -245,25 +188,29 @@ const render = (content?: string) => content && DOMPurify.sanitize(md.render(con
 
 const chatMessages = computed(() => {
   return messageStore.messages[props.chatId] ?.filter(Boolean)
-      ?.map((message) => {
-        let content = message.content?.trim()
-        const think = content?.match(/<think>(.*?)<\/think>/s);
-
-        console.log(think,333)
-        if (think) {
-          // <span class="text-blue-500">${think[1]}</span>
-          content = content.replace(think[0], ``);
-        }
-
-        return {
-          role: message.role,
-          content: content,
-          timestamp: message.timestamp,
-          type: message.type,
-          imageUrl: message.imageUrl,
-          thinking:  think?.[1],
-        }
-      })
+      // ?.map((message) => {
+      //   let content = message.content?.trim()
+      //   // const think = content?.match(/<think>(.*?)(\/think)?/s);
+      //   // const startWithThink = content?.startsWith('<think>')
+      //   // if (startWithThink) {
+      //   //   content = content.replace('<think>', '')
+      //   // }
+      //   //
+      //   //
+      //   // if (think) {
+      //   //   // <span class="text-blue-500">${think[1]}</span>
+      //   //   content = content.replace(think[0], ``);
+      //   // }
+      //
+      //   return {
+      //     role: message.role,
+      //     content: content,
+      //     timestamp: message.timestamp,
+      //     type: message.type,
+      //     imageUrl: message.imageUrl,
+      //     // thinking:  think?.[1],
+      //   }
+      // })
 })
 
 
@@ -275,6 +222,7 @@ const imageFileName = ref<string>('');
 const imageFile = ref<File | null>(null);
 
 const isLoading = ref(false);
+const isComposing = ref(false); // 是否正在输入法编辑状态
 
 // 功能开关状态
 const isSearchActive = ref(false);
@@ -290,13 +238,15 @@ const handleInput = (event: Event) => {
 
 // 处理Enter键事件
 const handleEnterKey = (event: KeyboardEvent) => {
+  console.log('enter')
+  if( event.altKey || event.shiftKey || event.metaKey || isComposing.value) return
+  // 如果是组合键或正在输入法编辑状态，则插入换行
   if (event.ctrlKey) {
-    // 普通Enter键换行
     document.execCommand('insertLineBreak');
-  } else {
-    sendMessage();
-
+    return;
   }
+  // 单独按下Enter键且不在输入法编辑状态时，发送消息
+  sendMessage();
 };
 
 // 处理粘贴事件
