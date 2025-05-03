@@ -22,10 +22,10 @@
       "timestamp": 1746237220519,
       "conversationId": "",
       "model": {
-        "id": "gemma3:latest",
-        "name": "gemma3:latest",
+        "id": "deepseek-r1:1.5b",
+        "name": "deepseek-r1:1.5b",
         "description": "Ollama 本地模型",
-        "size": 3338801804,
+        "size": 1117322599,
         "enabled": true,
         "providerId": "ollama"
       },
@@ -38,10 +38,10 @@
       "timestamp": 1746237220339,
       "conversationId": "",
       "model": {
-        "id": "gemma3:latest",
-        "name": "gemma3:latest",
+        "id": "qwq:32b",
+        "name": "qwq:32b",
         "description": "Ollama 本地模型",
-        "size": 3338801804,
+        "size": 19851349390,
         "enabled": true,
         "providerId": "ollama"
       },
@@ -99,6 +99,6 @@
       "timestamp": 1744195793951
     }
   ],
-  "activeDialogId": "52b9c76c-ca61-4c2e-9a25-f05184ca6357",
+  "activeDialogId": "1",
   "id": ""
 }

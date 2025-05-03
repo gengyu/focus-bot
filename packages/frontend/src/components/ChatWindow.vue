@@ -4,7 +4,7 @@
     <div class="flex-1 px-6 py-4" ref="messageContainer">
 
       <div v-for="(message, index) in chatMessages" :key="index" class="mb-6">
-        <MessageBubble v-if="message" :chatMessage="message" :index="index" />
+        <MessageBubble v-if="message" :chatMessage="message" :index="index"/>
       </div>
     </div>
 
@@ -150,6 +150,7 @@ import log from "loglevel";
 import {useConversationStore} from "../store/conversationStore.ts";
 import {useMessageStore} from "../store/messageStore.ts";
 import MessageBubble from './MessageBubble.vue';
+import {toast} from "vue-sonner";
 
 
 // // 配置MarkdownIt实例
@@ -177,41 +178,10 @@ const props = defineProps<{
   // chatMessages?: ChatMessage[]
 }>();
 
-//  解析 <think>开始 <think/> 结束 方法
-// const parseThink = (content: string) => {
-//   const think = content.match(/<think>(.*?)<\/think>/s);
-//   if (think) {
-//     return content.replace(think[0], `<span class="text-blue-500">${think[1]}</span>`);
-//   }
-//   return content;
-// }
 
 const chatMessages = computed(() => {
-  return messageStore.messages[props.chatId] ?.filter(Boolean)
-      // ?.map((message) => {
-      //   let content = message.content?.trim()
-      //   // const think = content?.match(/<think>(.*?)(\/think)?/s);
-      //   // const startWithThink = content?.startsWith('<think>')
-      //   // if (startWithThink) {
-      //   //   content = content.replace('<think>', '')
-      //   // }
-      //   //
-      //   //
-      //   // if (think) {
-      //   //   // <span class="text-blue-500">${think[1]}</span>
-      //   //   content = content.replace(think[0], ``);
-      //   // }
-      //
-      //   return {
-      //     role: message.role,
-      //     content: content,
-      //     timestamp: message.timestamp,
-      //     type: message.type,
-      //     imageUrl: message.imageUrl,
-      //     // thinking:  think?.[1],
-      //   }
-      // })
-})
+  return messageStore.messages[props.chatId]?.filter(Boolean)
+});
 
 
 const messageInput = ref('');
@@ -239,7 +209,7 @@ const handleInput = (event: Event) => {
 // 处理Enter键事件
 const handleEnterKey = (event: KeyboardEvent) => {
   console.log('enter')
-  if( event.altKey || event.shiftKey || event.metaKey || isComposing.value) return
+  if (event.altKey || event.shiftKey || event.metaKey || isComposing.value) return
   // 如果是组合键或正在输入法编辑状态，则插入换行
   if (event.ctrlKey) {
     document.execCommand('insertLineBreak');
@@ -287,50 +257,51 @@ const sendMessage = async () => {
   if (isLoading.value) return; // 如果正在发送消息，则不允许再次发送
 
   // 如果有文本，发送文本消息
-  if (messageInput.value.trim()) {
-    isLoading.value = true; // 设置loading状态
-    // 创建用户消息
-    const userMessage: ChatMessage = {
-      role: 'user',
-      content: messageInput.value.trim(),
-      timestamp: Date.now(),
-      type: 'text',
-    };
+  // if (messageInput.value.trim()) {}
+  isLoading.value = true; // 设置loading状态
+  // 创建用户消息
+  const userMessage: ChatMessage = {
+    role: 'user',
+    content: messageInput.value.trim(),
+    timestamp: Date.now(),
+    type: 'text',
+  };
 
-    try {
-      // 发送消息到服务器
-      const model = props.model;
-      if (!model) {
-        console.error('未选择模型');
-        isLoading.value = false; // 重置loading状态
-        return;
-      }
-      const chatId = props.chatId || '';
-
-      // 清空输入框
-      if (editableDiv.value) {
-        editableDiv.value.innerText = '';
-      }
-      messageInput.value = '';
-      // 使用对话管理器发送消息
-      const readableStream = await messageStore.sendMessage(userMessage.content, model, chatId);
-
-      const reader = readableStream.getReader();
-      while (true) {
-        const {done, value} = await reader.read();
-        if (done) {
-          break;
-        }
-        scrollToBottom();
-      }
-      console.log('done')
-
-    } catch (error) {
-      console.error('发送消息失败:', error);
-    } finally {
-      isLoading.value = false; // 无论成功还是失败，都重置loading状态
+  try {
+    // 发送消息到服务器
+    const model = props.model;
+    if (!model) {
+      console.error('未选择模型');
+      toast.warning('未选择模型');
+      isLoading.value = false; // 重置loading状态
+      return;
     }
+    const chatId = props.chatId || '';
+
+    // 清空输入框
+    if (editableDiv.value) {
+      editableDiv.value.innerText = '';
+    }
+    messageInput.value = '';
+    // 使用对话管理器发送消息
+    const readableStream = await messageStore.sendMessage(userMessage.content, model, chatId);
+
+    const reader = readableStream.getReader();
+    while (true) {
+      const {done, value} = await reader.read();
+      if (done) {
+        break;
+      }
+      scrollToBottom();
+    }
+    console.log('done')
+
+  } catch (error) {
+    console.error('发送消息失败:', error);
+  } finally {
+    isLoading.value = false; // 无论成功还是失败，都重置loading状态
   }
+
 
   // 滚动到底部
   scrollToBottom();

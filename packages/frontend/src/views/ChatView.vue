@@ -1,5 +1,5 @@
 <template>
-  <div class="flex min-h-screen bg-[#f5f6fa]">
+  <div class="flex h-screen bg-[#f5f6fa]">
     <aside
         class="transition-all duration-300 bg-white border-r border-[#e5e7eb] flex flex-col pb-5 shadow-[2px_0_8px_rgba(0,0,0,0.04)]"
         :class="[isAsideCollapsed ? 'w-10 overflow-hidden' : 'w-60']"

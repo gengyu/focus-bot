@@ -1,0 +1,39 @@
+/* Reset CSS */
+* {
+    /*margin: 0;*/
+    /*padding: 0;*/
+    box-sizing: border-box;
+}
+
+html, body {
+    overflow: overlay;
+    scrollbar-gutter: stable;
+    /* 兼容Firefox */
+    scrollbar-width: thin;
+    /* 兼容Webkit浏览器 */
+    &::-webkit-scrollbar {
+        width: 8px;
+    }
+    &::-webkit-scrollbar-track {
+        background: transparent;
+    }
+    &::-webkit-scrollbar-thumb {
+        background-color: rgba(0, 0, 0, 0.2);
+        border-radius: 4px;
+    }
+}
+
+ul, ol {
+    list-style: none;
+}
+
+table {
+    border-collapse: collapse;
+    border-spacing: 0;
+}
+
+img {
+    max-width: 100%;
+    height: auto;
+    display: block;
+}
