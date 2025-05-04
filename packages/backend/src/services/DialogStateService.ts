@@ -21,7 +21,8 @@ export class DialogStateService {
     try {
         return await this.persistenceService.loadData() ?? {
           dialogs: [],
-          activeDialogId: ''
+          activeDialogId: '',
+          id: '',
         };
     } catch (error) {
       throw new Error(`获取对话列表失败: ${error instanceof Error ? error.message : '未知错误'}`);
