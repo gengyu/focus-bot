@@ -1,4 +1,7 @@
 import {createRouter, createWebHistory, type RouteRecordRaw} from 'vue-router'
+import {useAppSettingStore} from "../store/appSettingStore.ts";
+import {useConversationStore} from "../store/conversationStore.ts";
+import log from "loglevel";
 
 const routes: RouteRecordRaw[] = [
     {
@@ -45,7 +48,7 @@ const routes: RouteRecordRaw[] = [
         children: [
             {
                 path: '',
-                redirect: '/settings/general'
+                redirect: '/settings/model'
             },
             {
                 path: 'general',
@@ -110,5 +113,23 @@ const router = createRouter({
     history: createWebHistory(import.meta.env.BASE_URL),
     routes
 })
+
+// beforeEach  beforeResolve
+let removeOnceGuard: null |(() => void) = router.beforeEach(async (to, from) => {
+    // console.log(to, from)
+    try {
+        const appSettingStore = useAppSettingStore();
+        const conversationStore = useConversationStore()
+        await appSettingStore.initialize();
+        await conversationStore.initialize();
+    }catch (error) {
+        log.error(error);
+    }finally {
+        removeOnceGuard && removeOnceGuard();
+        removeOnceGuard = null
+    }
+    return true;
+});
+
 
 export default router

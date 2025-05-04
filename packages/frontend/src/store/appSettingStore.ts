@@ -79,18 +79,18 @@ const getDefaultProviders = (): ProviderConfig[] => {
 };
 
 export const useAppSettingStore = defineStore<string, {
-  providerConfig: Ref<AppSetting>,
+  appSetting: Ref<AppSetting>,
   resetSettings(): Promise<void>,
   updateProvider(providerId: string, newProvider: Partial<ProviderConfig>): Promise<void>
   // providerConfig: Ref<ProviderConfig>,
   // setProviders: (newProviders: Provider[]) => void,
-  // resetProviders: () => void
+  initialize: () => Promise<void>
 }>('provider', () => {
   const appSettingConfig = ref<AppSetting>({
     providers: []
   });
 
-  const loadSettings = async () => {
+  const initialize = async () => {
     try {
       // 初始化供应商列表
       const defaultProviders = getDefaultProviders();
@@ -121,7 +121,6 @@ export const useAppSettingStore = defineStore<string, {
     }
   }
 
-  loadSettings();
 
   const resetSettings = async () => {
     if (confirm('确定要重置所有设置吗？')) {
@@ -165,8 +164,9 @@ export const useAppSettingStore = defineStore<string, {
   };
 
   return {
-    providerConfig: appSettingConfig,
+    appSetting: appSettingConfig,
     resetSettings,
     updateProvider,
+    initialize,
   };
 });

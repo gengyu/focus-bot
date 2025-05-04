@@ -16,25 +16,44 @@ export const useConversationStore = defineStore<string, {
   conversation: Ref<Conversation>,
   updateModel: (model: Model) => Promise<void>,
   setActiveDialog: (dailogId: string) => Promise<void>,
+
   createDialog: () => Promise<void>,
   deleteDialog: (dialogId: DialogId) => Promise<void>,
   updateDialog: (dialogId: DialogId, dialog: Partial<Dialog>) => Promise<void>,
+
+  initialize: () => Promise<void>,
 }>('conversation', () => {
   const conversation = ref<Conversation>({
-    dialogs: [],
+    dialogs: [
+      //     id: DialogId;
+      //     title: string;
+      //     conversationId: string,
+      //     timestamp: number;
+      //     model?: Model
+    ],
     activeDialogId: '',
-    id:  '',
+    id: '',
   });
+
   const messaageStore = useMessageStore();
   const appSettingStore = useAppSettingStore();
 
   const initialize = async () => {
     const dialogState = await chatAPI.getDialogList()
-    conversation.value.dialogs = dialogState.dialogs
-    conversation.value.activeDialogId = dialogState.activeDialogId;
+    conversation.value.dialogs = dialogState.dialogs || []
+    conversation.value.activeDialogId = dialogState.activeDialogId ?? '';
+    if (conversation.value.activeDialogId) {
+      const dialog = conversation.value.dialogs.find(
+        (dialog) => dialog.id == conversation.value.activeDialogId
+      );
+      if (dialog && !dialog.model) {
+        const defaultModel = appSettingStore.appSetting?.providers?.[0].models?.[0];
+        defaultModel && updateModel(defaultModel);
+      }
+    }
     await messaageStore.refreshChatHistory(dialogState.activeDialogId);
   }
-  initialize();
+
 
   /**
    * 更新模型
@@ -58,7 +77,7 @@ export const useConversationStore = defineStore<string, {
   const setActiveDialog = async (dailogId: string) => {
     conversation.value.activeDialogId = dailogId;
     await chatAPI.saveDialogList(conversation.value);
-    await messaageStore.refreshChatHistory( conversation.value.activeDialogId);
+    await messaageStore.refreshChatHistory(conversation.value.activeDialogId);
   }
 
 
@@ -69,7 +88,7 @@ export const useConversationStore = defineStore<string, {
 
   const createDialog = async () => {
     const dialogId = generateUUID();
-    const model = appSettingStore.providerConfig?.providers?.[0]?.models?.[0];
+    const model = appSettingStore.appSetting?.providers?.[0]?.models?.[0];
     conversation.value.dialogs.unshift({
       id: dialogId,
       title: '新会话',
@@ -85,16 +104,16 @@ export const useConversationStore = defineStore<string, {
    * 删除对话
    * @param dialogId
    */
-  const deleteDialog = async (dialogId:DialogId)=> {
-    if(!dialogId) return;
+  const deleteDialog = async (dialogId: DialogId) => {
+    if (!dialogId) return;
 
     conversation.value.dialogs = conversation.value.dialogs.filter(dialog => dialog.id !== dialogId);
-    if(dialogId === conversation.value.activeDialogId){
+    if (dialogId === conversation.value.activeDialogId) {
       conversation.value.activeDialogId = conversation.value.dialogs[0]?.id;
     }
-    if(!conversation.value.activeDialogId){
+    if (!conversation.value.activeDialogId) {
       await createDialog();
-    }else {
+    } else {
       await chatAPI.saveDialogList(conversation.value);
     }
   }
@@ -104,11 +123,11 @@ export const useConversationStore = defineStore<string, {
    * @param dialogId
    * @param dialog
    */
-  const updateDialog = async (dialogId:DialogId, dialog: Partial<Dialog>)=> {
-    if(!dialogId) return;
+  const updateDialog = async (dialogId: DialogId, dialog: Partial<Dialog>) => {
+    if (!dialogId) return;
     conversation.value.dialogs = conversation.value.dialogs.map(item => {
       if (dialog.id === dialogId) {
-        return  { ...item, ...dialog}
+        return {...item, ...dialog}
       }
       return item;
     });
@@ -123,7 +142,8 @@ export const useConversationStore = defineStore<string, {
     setActiveDialog,
     createDialog,
     deleteDialog,
-    updateDialog
+    updateDialog,
+    initialize,
     // sendMessage,
     // sendImage,
     // getChatHistory

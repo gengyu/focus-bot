@@ -3,15 +3,15 @@
     <!-- 左侧服务商抽屉导航 -->
     <div class="w-56 border-r pr-4 overflow-y-auto">
       <!-- 启用按钮 -->
-      <div v-for="(provider, idx) in  providerConfig.providers" :key="provider.id"
+      <div v-for="(provider, idx) in  appSetting.providers" :key="provider.id"
            @click="handlerSelectProvider(idx)"
            :class="['cursor-pointer flex items-center px-4 py-2 rounded-lg mb-2 transition-all duration-200 ease-in-out',
-          selectedProviderIdx === idx ? 'bg-primary shadow-sm transform scale-102' :
-          'hover:bg-base-200 hover:shadow-sm']">
+          selectedProviderIdx === idx ? 'bg-primary shadow-md transform scale-102' :
+          'hover:bg-base-200 hover:shadow-md']">
         <span class="font-medium text-[15px]">{{ provider.name }}</span>
         <span class="ml-auto " @click.stop>
           <Switch v-model="provider.enabled"
-                  @update:modelValue="hanlderProviderEnabled"
+                  @update:modelValue="hanlderProviderEnabled(provider.id, $event)"
                   as="template" v-slot="{ checked }">
             <button
                 class="relative inline-flex h-6 w-11 items-center rounded-full"
@@ -143,15 +143,13 @@
 </template>
 
 <script setup lang="ts">
-import {ref, computed, onMounted, watch} from 'vue';
-import {Combobox, ComboboxInput, ComboboxButton, ComboboxOptions, ComboboxOption, Switch} from '@headlessui/vue';
-import {ChevronUpDownIcon, ArrowPathIcon} from '@heroicons/vue/20/solid';
+import {ref} from 'vue';
+import {Combobox, ComboboxButton, ComboboxInput, ComboboxOption, ComboboxOptions, Switch} from '@headlessui/vue';
+import {ArrowPathIcon, ChevronUpDownIcon} from '@heroicons/vue/20/solid';
 // import { useToast } from 'vue-toastification';
-import {configAPI} from '@/services/api';
 import {toast} from 'vue-sonner'
-import type {Model, ProviderConfig} from "../../../../../share/type.ts";
+import type {Model, ProviderConfig, ProviderId} from "../../../../../share/type.ts";
 import {useAppSettingStore} from '@/store/appSettingStore.ts';
-import {storeToRefs} from "pinia";
 import log from "loglevel";
 
 
@@ -181,31 +179,23 @@ const getDefaultApiUrl = (providerId: string): string => {
   }
 };
 
-const {providerConfig, resetSettings, updateProvider} = useAppSettingStore();
+const { appSetting, resetSettings, updateProvider} = useAppSettingStore();
 
 
 const selectedProviderIdx = ref(0);
 
-const currentProvider = ref<ProviderConfig>()
-if (providerConfig.providers.length > 0) {
-  currentProvider.value = providerConfig.providers[selectedProviderIdx.value];
-} else {
-  watch(() => providerConfig.providers, () => {
-    currentProvider.value = providerConfig.providers[selectedProviderIdx.value];
-  }, {once: true})
-}
+const currentProvider = ref<ProviderConfig>(appSetting.providers[selectedProviderIdx.value])
 
 
 const handlerSelectProvider = (idx) => {
   selectedProviderIdx.value = idx;
-  currentProvider.value = providerConfig.providers[selectedProviderIdx.value];
+  currentProvider.value = appSetting.providers[selectedProviderIdx.value];
 }
 
 // 关闭启用服务商方法
-const hanlderProviderEnabled = (value) => {
-  updateProvider(currentProvider.value.id, {
+const hanlderProviderEnabled = (providerId: ProviderId, value: boolean) => {
+  updateProvider(providerId, {
     enabled: value,
-    // models: currentProvider.value.models
   });
 }
 
@@ -234,7 +224,7 @@ const fetchModels = async (providerId: string, provider?: ProviderConfig) => {
     switch (providerId) {
       case 'ollama': {
         // Ollama 本地API: /api/tags
-        const resp = await fetch(apiUrl.replace(/\/$/, '') + '/api/tags');
+        const resp = await fetch(apiUrl.replace(/\/v1(\/)*?/, '') + '/api/tags');
         if (!resp.ok) throw new Error('Ollama 获取模型失败');
         const data = await resp.json();
         models = (data.models || data.tags || []).map((item: any) => ({
@@ -342,7 +332,7 @@ const refreshModels = async () => {
   const providerId = currentProvider.value?.id;
 
   if (!providerId) return;
-  const models = await fetchModels(providerId, currentProvider.value);
+  const models: Model[] = await fetchModels(providerId, currentProvider.value);
   if (models.length > 0) {
     currentProvider.value.models = models.map(model => ({
       ...model,

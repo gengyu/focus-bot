@@ -5,6 +5,7 @@ import {type ChatMessage, Model, ProviderConfig} from "../../../../share/type";
 import {ChatHistoryService} from "./ChatHistoryService";
 import {ReadableStream} from "node:stream/web";
 import {Singleton} from "../decorators/Singleton";
+import {OllamaAIProvider} from "../provider/OllamaAIProvider.ts";
 // import {Ollama} from "ollama";
 //
 // console.log(Ollama)
@@ -13,8 +14,8 @@ import {Singleton} from "../decorators/Singleton";
 export class ChatService {
 	private providerCache: Map<string, LLMProvider> = new Map();
 	private providerFactory: Record<string, (config: ProviderConfig) => LLMProvider> = {
-		// @ts-ignore
-		ollama: (config: ProviderConfig) => new OpenAIProvider(config),
+		openai: (config: ProviderConfig) => new OpenAIProvider(config),
+		ollama: (config: ProviderConfig) => new OllamaAIProvider(config),
 		// 如需支持 GeminiProvider，请实现对应 Provider 并在 providerFactory 注册
 		// gemini: (config: ProviderConfig) => new GeminiProvider(config), // 需要实现 GeminiProvider
 	};
@@ -28,7 +29,7 @@ export class ChatService {
 
 	// 单例 #todo
 	private async getLLmIntance(providerId: string): Promise<LLMProvider> {
-
+		console.log("getLLmIntance", providerId);
 		if (this.providerCache.has(providerId)) {
 			return this.providerCache.get(providerId)!;
 		}

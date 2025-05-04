@@ -45,7 +45,8 @@
               </div>
               <div class="hidden group-hover:flex items-center gap-1">
                 <button @click="startEditTitle(chat)" class="p-1 hover:text-blue-600 rounded">
-                  <svg v-if="isEditing && chat.id === editDialog.id" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg v-if="isEditing && chat.id === editDialog.id" class="w-4 h-4" fill="none" stroke="currentColor"
+                       viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
                   </svg>
                   <svg v-else class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -171,23 +172,28 @@
 
 <script setup lang="ts">
 import ChatWindow from '../components/ChatWindow.vue';
-import {computed, nextTick, ref, watch} from 'vue';
+import {computed, nextTick, onMounted, ref, watch} from 'vue';
 import {Listbox, ListboxButton, ListboxOption, ListboxOptions} from '@headlessui/vue'
 import {CheckIcon, ChevronUpDownIcon} from '@heroicons/vue/20/solid'
 import {useAppSettingStore} from "../store/appSettingStore.js";
-import {type ChatMessage, Dialog, Model} from "../../../../share/type.ts";
+import {type Dialog, type DialogId, type Model} from "../../../../share/type.ts";
 import {useConversationStore} from "../store/conversationStore.ts";
 
 import {toast} from "vue-sonner";
 
 
-const {providerConfig} = useAppSettingStore();
+const {appSetting} = useAppSettingStore();
+
 const models = computed<Model[]>(() => {
-  const models = providerConfig?.providers?.filter(provider => provider.enabled) || []
+  const models = appSetting?.providers?.filter(provider => provider.enabled) || []
   return models.flatMap(provider => provider.models) || [];
 });
 
-const selectedModel = ref<Model>({
+const {conversation, updateModel, setActiveDialog, createDialog, deleteDialog, updateDialog} = useConversationStore();
+
+
+// 设置 model
+const selectedModel = ref<Model>(models.value[0] ? models.value[0] : {
   providerId: '',
   id: '',
   name: '',
@@ -196,40 +202,35 @@ const selectedModel = ref<Model>({
   enabled: false,
 });
 
-watch(() => models.value, (newModels) => {
-  if (!selectedModel.value.id) {
-    selectedModel.value = newModels[0];
-  }
-})
 
 
-const {conversation, updateModel, setActiveDialog, createDialog, deleteDialog, updateDialog} = useConversationStore();
+// watch(() => conversation.activeDialogId, () => {
+//   const activeDialog = conversation.dialogs.find(dialog => dialog.id === conversation.activeDialogId);
+//   if (activeDialog?.model) {
+//     selectedModel.value = activeDialog.model!;
+//   } else {
+//     if (models.value.length > 0) selectedModel.value = models.value[0];
+//   }
+// });
+
 
 // 监听model变化，更新activeDialog.model
 const handlerSelectModel = async () => {
   await updateModel(selectedModel.value);
 }
 
-const handlerSelectChat = async (chatId: string) => {
-  await setActiveDialog(chatId);
-  await nextTick();
-  handlerScroll();
-}
-
-
-watch(() => conversation.activeDialogId, () => {
-  handlerSelectChat(conversation.activeDialogId)
-}, {
-  once: true
-});
-watch(() => conversation.activeDialogId, () => {
+const handlerSelectChat = async (dailogId: DialogId) => {
+  await setActiveDialog(dailogId);
   const activeDialog = conversation.dialogs.find(dialog => dialog.id === conversation.activeDialogId);
-  if (activeDialog?.model) {
+    if (activeDialog?.model) {
     selectedModel.value = activeDialog.model!;
   } else {
     if (models.value.length > 0) selectedModel.value = models.value[0];
   }
-});
+
+  await nextTick();
+  handlerScroll();
+}
 
 
 const messageContainer = ref<HTMLElement | undefined>(undefined);
@@ -246,6 +247,9 @@ const handlerScroll = () => {
   }
 };
 
+
+onMounted(handlerScroll);
+
 // 计算分组的聊天列表
 const groupedChats = computed<Array<{ title: string; chats: Dialog[] }>>(() => {
   const now = new Date();
@@ -257,7 +261,7 @@ const groupedChats = computed<Array<{ title: string; chats: Dialog[] }>>(() => {
   const thirtyDaysAgo = new Date(today);
   thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-  const groups = [
+  const groups: Array<{ title: string; chats: Dialog[] }> = [
     {title: '今天', chats: []},
     {title: '昨天', chats: []},
     {title: '最近7天', chats: []},

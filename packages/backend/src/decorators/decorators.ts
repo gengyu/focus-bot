@@ -2,6 +2,8 @@ import 'reflect-metadata';
 import Router from 'koa-router';
 import {ResultHelper} from "../routes/routeHelper.ts";
 import {type} from "node:os";
+import {URL} from "node:url";
+
 
 export const router = new Router();
 
@@ -104,7 +106,7 @@ export function Param(key?: string): ParameterDecorator {
   };
 }
 
-// 单例模式
+// todo  修改缓存位置
 const newMap = new Map();
 
 // 修改registerControllers以支持参数注入
@@ -150,9 +152,8 @@ export function registerControllers(controllers: any[]) {
 
           // 使用缓存，设置请求参数  #todo
           newMap.set(token, { args})
-          ctx.body = ResultHelper.success({
-            url: `${ctx.request.origin}${fullPath}?token=${token}`,
-          });
+          const requrl = `${ctx.protocol}://${ctx.host}${ctx.url}?token=${token}`;
+          ctx.body = ResultHelper.success({url: requrl});
         });
 
         router.get(fullPath, async (ctx, next: any) => {

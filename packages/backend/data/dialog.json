@@ -1,15 +1,29 @@
 {
   "dialogs": [
     {
+      "id": "697af097-e1a6-4f0f-8208-3ad858dc3b63",
+      "title": "新会话",
+      "timestamp": 1746364521224,
+      "conversationId": "",
+      "model": {
+        "id": "gemma3:12b",
+        "name": "gemma3:12b",
+        "description": "Ollama 本地模型",
+        "size": 8149190199,
+        "enabled": true,
+        "providerId": "ollama"
+      }
+    },
+    {
       "id": "52b9c76c-ca61-4c2e-9a25-f05184ca6357",
       "title": "新会话",
       "timestamp": 1746237220701,
       "conversationId": "",
       "model": {
-        "id": "gemma3:latest",
-        "name": "gemma3:latest",
+        "id": "qwen3:0.6b",
+        "name": "qwen3:0.6b",
         "description": "Ollama 本地模型",
-        "size": 3338801804,
+        "size": 522653526,
         "enabled": true,
         "providerId": "ollama"
       },
@@ -54,12 +68,12 @@
       "title": "默认助手1",
       "timestamp": 1745491793951,
       "model": {
-        "id": "deepseek-r1:1.5b",
-        "name": "deepseek-r1:1.5b",
-        "description": "Ollama 本地模型",
-        "size": 1117322599,
+        "id": "gpt-4",
+        "name": "GPT-4",
+        "description": "最强大的 GPT 模型",
+        "size": "1.76T",
         "enabled": true,
-        "providerId": "ollama"
+        "providerId": "openai"
       },
       "isEditing": true,
       "editTitle": "默认助手1"
@@ -99,6 +113,6 @@
       "timestamp": 1744195793951
     }
   ],
-  "activeDialogId": "1",
+  "activeDialogId": "52b9c76c-ca61-4c2e-9a25-f05184ca6357",
   "id": ""
 }
