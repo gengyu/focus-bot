@@ -1,7 +1,7 @@
 <template>
   <div class="flex flex-1 flex-col rounded-xl ">
     <!-- 消息列表区域 -->
-    <div class="flex-1 px-6 py-4" ref="messageContainer">
+    <div class="flex-1 px-6 pt-4 pb-30" ref="messageContainer">
 
       <div v-for="(message, index) in chatMessages" :key="index" class="mb-6">
         <MessageBubble v-if="message" :chatMessage="message" :index="index"/>

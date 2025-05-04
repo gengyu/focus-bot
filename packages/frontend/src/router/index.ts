@@ -115,7 +115,7 @@ const router = createRouter({
 })
 
 // beforeEach  beforeResolve
-let removeOnceGuard: null |(() => void) = router.beforeEach(async (to, from) => {
+let removeOnceGuard: null |(() => void) = router.beforeEach(async () => {
     // console.log(to, from)
     try {
         const appSettingStore = useAppSettingStore();

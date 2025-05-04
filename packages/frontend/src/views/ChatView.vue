@@ -236,16 +236,44 @@ const handlerSelectChat = async (dailogId: DialogId) => {
 const messageContainer = ref<HTMLElement | undefined>(undefined);
 
 
+// const isUserScrolling = ref(false);
+
+// const isAutoScrolling = ref(false);
+
 const handlerScroll = () => {
-  if (messageContainer.value) {
+  if (messageContainer.value ) {
     const container: HTMLElement = messageContainer.value;
-    const scrollOptions = {
-      top: container.scrollHeight,
-      behavior: 'smooth' as ScrollBehavior
-    };
-    container.scrollTo(scrollOptions);
+    const documentHeight = container.scrollHeight;   // 获取页面总高度
+    const scrollTop = container.scrollTop;  // 获取当前滚动距离
+    const windowHeight = container.clientHeight;   // 获取视口高度
+    const distanceFromBottom = documentHeight - scrollTop - windowHeight;
+    // 只有当距离底部超过110px时才自动滚动
+    if (distanceFromBottom > 110) {
+      // isAutoScrolling.value = true;
+      container.scrollTo({
+        top: container.scrollHeight,
+        behavior: 'smooth'
+      });
+    }
   }
 };
+
+// onMounted(() => {
+//   if (messageContainer.value) {
+//     messageContainer.value.addEventListener('scroll', (event) => {
+//
+//       if (!isAutoScrolling.value) {
+//         isUserScrolling.value = true;
+//         // 用户停止滚动1秒后恢复自动滚动
+//         setTimeout(() => {
+//           isUserScrolling.value = false;
+//         }, 1000);
+//       } else {
+//         isAutoScrolling.value = false;
+//       }
+//     });
+//   }
+// });
 
 
 onMounted(handlerScroll);
