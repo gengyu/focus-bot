@@ -126,7 +126,7 @@ export const useConversationStore = defineStore<string, {
   const updateDialog = async (dialogId: DialogId, dialog: Partial<Dialog>) => {
     if (!dialogId) return;
     conversation.value.dialogs = conversation.value.dialogs.map(item => {
-      if (dialog.id === dialogId) {
+      if (item.id === dialogId) {
         return {...item, ...dialog}
       }
       return item;

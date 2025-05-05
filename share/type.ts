@@ -33,13 +33,22 @@ export interface AppSetting {
 }
 
 
+type MessageType = string;
+type RoleType = 'user' | 'developer' | 'system' |'assistant' | 'tool' | 'function';
+
+interface ChartMessageText {
+  text: string;
+  type: 'text';
+}
+
 export interface ChatMessage {
-  role: 'user' | 'assistant';
+  role: RoleType;
   provider?: string
-  content: string;
+  content: string;jhhgkiju8hygbmkomU几六级哦哦可鱼irty87tft🦢6如果客户火锅V姐一股让他都是粗人感觉大概要过节费大概风格的方法的风格非会员
   timestamp: number;
   type: 'text' | 'image';
-  imageUrl?: string;
+  images?: Uint8Array[] | string[];
+  tool_calls?: any[];
 }
 
 // export interface Chat {

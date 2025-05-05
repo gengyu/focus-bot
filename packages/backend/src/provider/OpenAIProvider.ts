@@ -22,7 +22,7 @@ export class OpenAIProvider implements LLMProvider {
 
 	async chat(messages: ChatMessage[], modelId: string, signal?: AbortSignal) {
 		try {
-			const msgs = messages.map((msg) => {
+			const msgs: ChatCompletionMessageParam[] = messages.map((msg) => {
 				return {
 					role: msg.role,
 					content: msg.content
@@ -31,9 +31,9 @@ export class OpenAIProvider implements LLMProvider {
 			// https://bailian.console.aliyun.com/?tab=api#/api/?type=model&url=https%3A%2F%2Fhelp.aliyun.com%2Fdocument_detail%2F2712576.html
 			const response = await this.openai.chat.completions.create({
 				model: modelId,
-				messages: msgs as ChatCompletionMessageParam[],
+				messages: msgs,
 				temperature: this.config.temperature,
-				max_tokens: this.config.maxTokens,
+				max_completion_tokens: this.config.maxTokens,
 				stream: false,
 			}, {
 				signal
