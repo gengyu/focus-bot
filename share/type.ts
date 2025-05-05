@@ -33,21 +33,30 @@ export interface AppSetting {
 }
 
 
-type MessageType = string;
+type MessageContentType =  'text' | 'image_url' | 'input_audio' | 'file' | 'application' | 'unknown';
 type RoleType = 'user' | 'developer' | 'system' |'assistant' | 'tool' | 'function';
 
-interface ChartMessageText {
+interface ChatMessageContent{
+  type: MessageContentType
   text: string;
-  type: 'text';
+  // ChatCompletionContentPartImage.ImageURL;
+  image_url: string
+  // ChatCompletionContentPartInputAudio.InputAudio;
+  input_audio: {
+    data: string;
+    format: 'wav' | 'mp3';
+  }
+  file: File;
 }
 
 export interface ChatMessage {
-  role: RoleType;
   provider?: string
-  content: string;jhhgkiju8hygbmkomU几六级哦哦可鱼irty87tft🦢6如果客户火锅V姐一股让他都是粗人感觉大概要过节费大概风格的方法的风格非会员
   timestamp: number;
   type: 'text' | 'image';
-  images?: Uint8Array[] | string[];
+
+  role: RoleType;
+  content: string | ChatMessageContent[];
+  images?: Uint8Array[] | string[] | File[];
   tool_calls?: any[];
 }
 

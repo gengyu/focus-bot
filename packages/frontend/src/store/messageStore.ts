@@ -60,13 +60,14 @@ export const useMessageStore = defineStore<string, {
    * @param dialogId 对话ID
    * @returns 消息流
    */
-  const sendMessage = async (content: string, model: Model, dialogId: DialogId) => {
+  const sendMessage = async (content: string, model: Model, dialogId: DialogId, images?: File[]) => {
     // 创建用户消息
     const userMessage: ChatMessage = {
       role: 'user',
       content,
       timestamp: Date.now(),
-      type: 'text'
+      type: images && images.length > 0 ? 'image' : 'text',
+      images
     };
     messages.value[dialogId] = messages.value[dialogId] || [];
     messages.value[dialogId].push(userMessage);

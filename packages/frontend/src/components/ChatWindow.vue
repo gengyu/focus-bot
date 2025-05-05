@@ -15,10 +15,10 @@
 
 
       <!-- 图片预览区域 -->
-      <div v-if="imagePreview" class="mb-3 flex items-center gap-2">
-        <div class="relative w-20 h-20 rounded-lg overflow-hidden border border-gray-200">
-          <img :src="imagePreview" alt="图片预览" class="w-full h-full object-cover">
-          <button @click="cancelImageUpload"
+      <div v-if="previewImages.length > 0" class="mb-3 flex flex-wrap items-center gap-2">
+        <div v-for="(preview, index) in previewImages" :key="index" class="relative w-20 h-20 rounded-lg overflow-hidden border border-gray-200">
+          <img :src="preview" alt="图片预览" class="w-full h-full object-cover cursor-pointer" @click="showImg(index)">
+          <button @click="removeImage(index)"
                   class="absolute top-1 right-1 bg-black/50 rounded-full p-1 hover:bg-black/70">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24"
                  stroke="currentColor">
@@ -26,8 +26,15 @@
             </svg>
           </button>
         </div>
-        <span class="text-sm text-gray-500">{{ imageFileName }}</span>
       </div>
+      
+      <!-- 图片预览弹窗 -->
+      <vue-easy-lightbox
+        :visible="showLightbox"
+        :imgs="previewImages"
+        :index="currentImgIndex"
+        @hide="showLightbox = false"
+      ></vue-easy-lightbox>
 
       <!-- 输入框区域 -->
       <div>
@@ -151,6 +158,7 @@ import {useConversationStore} from "../store/conversationStore.ts";
 import {useMessageStore} from "../store/messageStore.ts";
 import MessageBubble from './MessageBubble.vue';
 import {toast} from "vue-sonner";
+import VueEasyLightbox from 'vue-easy-lightbox';
 
 
 // // 配置MarkdownIt实例
@@ -189,7 +197,10 @@ const messageContainer = ref<HTMLElement | null>(null);
 const editableDiv = ref<HTMLElement>();
 const imagePreview = ref<string | null>(null);
 const imageFileName = ref<string>('');
-const imageFile = ref<File | null>(null);
+const imageFiles = ref<File[]>([]);
+const previewImages = ref<string[]>([]);
+const showLightbox = ref(false);
+const currentImgIndex = ref(0);
 
 const isLoading = ref(false);
 const isComposing = ref(false); // 是否正在输入法编辑状态
@@ -253,18 +264,18 @@ const availableModels = computed(() => {
 
 // 发送消息
 const sendMessage = async () => {
-  if (!messageInput.value.trim() && !imageFile.value) return;
+  if (!messageInput.value.trim() && !imageFiles.value.length) return;
   if (isLoading.value) return; // 如果正在发送消息，则不允许再次发送
 
-  // 如果有文本，发送文本消息
-  // if (messageInput.value.trim()) {}
   isLoading.value = true; // 设置loading状态
+  
   // 创建用户消息
   const userMessage: ChatMessage = {
     role: 'user',
     content: messageInput.value.trim(),
     timestamp: Date.now(),
-    type: 'text',
+    type: imageFiles.value.length > 0 ? 'image' : 'text',
+    images: imageFiles.value.length > 0 ? imageFiles.value : undefined
   };
 
   try {
@@ -278,13 +289,17 @@ const sendMessage = async () => {
     }
     const chatId = props.chatId || '';
 
-    // 清空输入框
+    // 清空输入框和图片
     if (editableDiv.value) {
       editableDiv.value.innerText = '';
     }
     messageInput.value = '';
+    imageFiles.value = [];
+    previewImages.value = [];
+    isImageUploadActive.value = false;
+    console.log(imageFiles.value)
     // 使用对话管理器发送消息
-    const readableStream = await messageStore.sendMessage(userMessage.content, model, chatId);
+    const readableStream = await messageStore.sendMessage(userMessage.content, model, chatId, );
 
     const reader = readableStream.getReader();
     while (true) {
@@ -312,27 +327,31 @@ const handleImageUpload = async (event: Event) => {
   const input = event.target as HTMLInputElement;
   if (!input.files?.length) return;
 
-  const file = input.files[0];
-  imageFile.value = file;
-  imageFileName.value = file.name;
+  Array.from(input.files).forEach(file => {
+    imageFiles.value.push(file);
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      previewImages.value.push(e.target?.result as string);
+    };
+    reader.readAsDataURL(file);
+  });
+
   isImageUploadActive.value = true;
-
-  // 创建本地预览URL
-  const reader = new FileReader();
-  reader.onload = (e) => {
-    imagePreview.value = e.target?.result as string;
-  };
-  reader.readAsDataURL(file);
-
   // 清除input的value，允许上传相同的文件
   input.value = '';
 };
 
-const cancelImageUpload = () => {
-  imagePreview.value = null;
-  imageFileName.value = '';
-  imageFile.value = null;
-  isImageUploadActive.value = false;
+const removeImage = (index: number) => {
+  imageFiles.value.splice(index, 1);
+  previewImages.value.splice(index, 1);
+  if (previewImages.value.length === 0) {
+    isImageUploadActive.value = false;
+  }
+};
+
+const showImg = (index: number) => {
+  currentImgIndex.value = index;
+  showLightbox.value = true;
 };
 
 // 发送消息时处理图片上传
