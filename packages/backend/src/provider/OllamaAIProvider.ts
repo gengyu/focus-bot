@@ -2,6 +2,7 @@ import {LLMProvider, ProviderResponseChunk} from "./LLMProvider";
 import {type ChatMessage, ProviderConfig} from "../../../../share/type";
 
 import {type Message, Ollama} from "ollama";
+import {undefined} from "zod";
 
 export class OllamaAIProvider implements LLMProvider {
   private ollama: Ollama;
@@ -20,10 +21,16 @@ export class OllamaAIProvider implements LLMProvider {
     try {
       const msgs: Message[] = messages.map((msg) => {
         return {
-          role: msg.role,
-          content: msg.content
+          role: msg.role as string,
+          content: msg.content as string
         }
       })
+      // signal?.addEventListener('abort', () => {
+      //   this.ollama.abort();
+      // });
+      if (signal?.aborted) {
+        return;
+      }
       // https://bailian.console.aliyun.com/?tab=api#/api/?type=model&url=https%3A%2F%2Fhelp.aliyun.com%2Fdocument_detail%2F2712576.html
       const response = await this.ollama.chat({
         model: modelId,
@@ -46,12 +53,17 @@ export class OllamaAIProvider implements LLMProvider {
     // as ChatCompletionMessageParam[]
     const msgs: Message[] = messages.map((msg) => {
       return {
-        role: msg.role,
-        content: msg.content,
+        role: msg.role as string,
+        content: msg.content as string,
       }
     })
+
+    let abortHandler: ()=>void;
     try {
       console.log('📦 OpenAI Stream:', msgs);
+      if (signal?.aborted) {
+        return;
+      }
       const stream = await this.ollama.chat({
         model: modelId,
         messages: msgs,
@@ -62,6 +74,14 @@ export class OllamaAIProvider implements LLMProvider {
         // max_tokens: this.config.maxTokens,
         stream: true,
       });
+      abortHandler = () => {
+        stream?.abort();
+      }
+      signal?.addEventListener('abort', abortHandler);
+      if (signal?.aborted) {
+        return;
+      }
+
       // const response = await ollama.chat({ model: 'llama3.1', messages: [message], stream: true })
       // for await (const part of response) {
       // 	process.stdout.write(part.message.content)
@@ -81,6 +101,9 @@ export class OllamaAIProvider implements LLMProvider {
     } catch (error) {
       console.error('OpenAI API Stream Error:', error);
       throw new Error('Failed to create stream from OpenAI');
+    } finally {
+      // @ts-ignore
+      abortHandler && signal?.removeEventListener('abort', abortHandler);
     }
   }
 

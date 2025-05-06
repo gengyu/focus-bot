@@ -42,7 +42,7 @@ export function Controller(prefix = ''): ClassDecorator {
 // }
 
 function createMethodDecorator(method: 'get' | 'post' | 'put' | 'delete' | 'sse') {
-  return function(path: string): MethodDecorator {
+  return function (path: string): MethodDecorator {
     return (target, propertyKey: string | symbol) => {
       const controllerClass = target.constructor;
       if (!Reflect.hasMetadata('routes', controllerClass)) {
@@ -75,12 +75,11 @@ export function Query(key?: string): ParameterDecorator {
   return (target, propertyKey, parameterIndex) => {
     //@ts-ignore
     const existingParams = Reflect.getOwnMetadata('query_params', target, propertyKey) || [];
-    existingParams.push({ index: parameterIndex, key });
+    existingParams.push({index: parameterIndex, key});
     //@ts-ignore
     Reflect.defineMetadata('query_params', existingParams, target, propertyKey);
   };
 }
-
 
 
 export function Body(key?: string): ParameterDecorator {
@@ -90,9 +89,9 @@ export function Body(key?: string): ParameterDecorator {
   return (target, propertyKey, parameterIndex) => {
     //@ts-ignore
     const existingParams = Reflect.getOwnMetadata('body_params', target, propertyKey) || [];
-    existingParams.push({ index: parameterIndex, key });
+    existingParams.push({index: parameterIndex, key});
     //@ts-ignore
-    Reflect.defineMetadata('body_params', existingParams,  target, propertyKey);
+    Reflect.defineMetadata('body_params', existingParams, target, propertyKey);
   };
 }
 
@@ -100,7 +99,7 @@ export function Param(key?: string): ParameterDecorator {
   return (target, propertyKey, parameterIndex) => {
     //@ts-ignore
     const existingParams = Reflect.getOwnMetadata('route_params', target, propertyKey) || [];
-    existingParams.push({ index: parameterIndex, key });
+    existingParams.push({index: parameterIndex, key});
     //@ts-ignore
     Reflect.defineMetadata('route_params', existingParams, target, propertyKey);
   };
@@ -121,7 +120,7 @@ export function registerControllers(controllers: any[]) {
       // @ts-ignore
       if (route.method === 'sse') {
 
-        router.post(fullPath, async (ctx:any, next: any) => {
+        router.post(fullPath, async (ctx: any, next: any) => {
           const token = new Date().getTime().toString() + Math.random().toString(36).substring(2);
 
 
@@ -151,7 +150,7 @@ export function registerControllers(controllers: any[]) {
           }
 
           // 使用缓存，设置请求参数  #todo
-          newMap.set(token, { args})
+          newMap.set(token, {args})
           const requrl = `${ctx.protocol}://${ctx.host}${ctx.url}?token=${token}`;
           ctx.body = ResultHelper.success({url: requrl});
         });
@@ -169,30 +168,31 @@ export function registerControllers(controllers: any[]) {
           newMap.delete(ctx.query.token);
 
           try {
-            const result: ReadableStream = await handler.apply(instance, parsm.args);
-            // if (result.locked) {
-            //   throw new Error('Stream is already locked');
-            // }
+            const [abort, result]: [() => void, ReadableStream] = await handler.apply(instance, parsm.args);
             const reader = result.getReader();
-            
+
+            // 监听客户端关闭连接事件
+            // 因为当ctx.res.end()被调用后，连接关闭，Node.js会自动清理相关的事件监听器。此外，由于这是一次性的事件监听，当连接关闭时，监听器会自然失效，不会造成内存泄漏。所以当前的实现方式是合适的。
+            ctx.req.on('close', () => {
+              abort(); // 调用cancel函数清理资源
+              reader.releaseLock();
+              ctx.res.end();
+            });
+
             try {
               while (true) {
-                const { done, value } = await reader.read();
+                const {done, value} = await reader.read();
                 if (done) break;
-                // 将二进制数据转换为字符串
-                // const text = new TextDecoder().decode(value);
-                // 发送SSE格式的数据
-                // console.log("SSE ",value)
                 ctx.res.write(`data: ${typeof value === 'string' ? value : JSON.stringify(value)}\n\n`);
               }
-            } catch (error){
+            } catch (error) {
               ctx.res.end();
-            }finally {
+            } finally {
               reader.releaseLock();
             }
           } catch (error) {
             console.error('SSE处理错误:', error);
-            ctx.res.write(`event: error\ndata: ${JSON.stringify({ error: '处理流数据时发生错误' })}\n\n`);
+            ctx.res.write(`event: error\ndata: ${JSON.stringify({error: '处理流数据时发生错误'})}\n\n`);
             ctx.res.end();
           } finally {
             ctx.res.write('event: end\ndata: Stream ended\n\n');

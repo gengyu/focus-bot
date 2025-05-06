@@ -12,9 +12,13 @@ export class ChatAPI {
   });
 
 
-  sendMessage(message: ChatMessage, model: Model, chatId: string): ReadableStream<ChatMessage> {
+  sendMessage(message: ChatMessage, model: Model, chatId: string): [abort: (reason?: any) => void, ReadableStream<ChatMessage>] {
     const req: TransportRequest = {method: 'sendMessage', payload: {message, model, chatId}};
-    return this.transport.invokeStream(req);
+    const controller = new AbortController();
+    return [
+      (reason?: any) => controller.abort(reason),
+      this.transport.invokeStream(req, controller.signal)
+    ];
 
     // const res = await transport.invokeStream(req);
     // if (!res.success) throw new Error(`发送消息失败: ${res.error}`);

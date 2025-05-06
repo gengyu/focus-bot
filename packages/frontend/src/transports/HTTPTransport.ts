@@ -66,16 +66,28 @@ export class HTTPTransport implements Transport {
   /**
    * 流式调用，通过回调处理响应
    */
-  invokeStream(request: TransportRequest) {
+  invokeStream(request: TransportRequest, signal: AbortSignal) {
     return new ReadableStream({
       start: async (controller) => {
+        if(signal.aborted){
+          controller.close();
+          return;
+        }
         try {
           const response = await this.invokeDirect(request);
-
+          if(signal.aborted){
+            controller.close();
+            return;
+          }
           // 使用EventSource API处理SSE流
           const eventSource = new EventSource(new URL(response.data.url as string, window.location.origin).href, {
             withCredentials: true,
           });
+          const abortHandler = () => {
+            controller.close();
+            eventSource.close();
+          };
+          signal.addEventListener('abort', abortHandler);
           /*
            * 这将仅监听类似下面的事件
            *
@@ -106,12 +118,14 @@ export class HTTPTransport implements Transport {
 
           eventSource.addEventListener("error", (error) => {
             // console.log(' eventSource.onerror', error, error.timeStamp)
+            signal.removeEventListener('abort', abortHandler);
             eventSource.close();
             controller.error(error ?? new Error('SSE connection error'));
           });
 
           eventSource.addEventListener('end', (event) => {
             console.log('eventSource.onend', event)
+            signal.removeEventListener('abort', abortHandler);
             eventSource.close();
             controller.close();
           });

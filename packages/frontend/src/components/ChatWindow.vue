@@ -262,10 +262,16 @@ const availableModels = computed(() => {
   return p ? p.models : [];
 });
 
+
+
+
 // 发送消息
 const sendMessage = async () => {
   if (!messageInput.value.trim() && !imageFiles.value.length) return;
-  if (isLoading.value) return; // 如果正在发送消息，则不允许再次发送
+  if (isLoading.value) {// 如果正在发送消息，则不允许再次发送
+    messageStore.stopMessage(props.chatId || '')
+    return
+  };
 
   isLoading.value = true; // 设置loading状态
   
@@ -299,11 +305,11 @@ const sendMessage = async () => {
     isImageUploadActive.value = false;
     console.log(imageFiles.value)
     // 使用对话管理器发送消息
-    const readableStream = await messageStore.sendMessage(userMessage.content, model, chatId, );
+    const  readableStream = await messageStore.sendMessage(userMessage.content as string, model, chatId );
 
     const reader = readableStream.getReader();
     while (true) {
-      const {done, value} = await reader.read();
+      const {done,} = await reader.read();
       if (done) {
         break;
       }

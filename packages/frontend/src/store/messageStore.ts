@@ -16,7 +16,8 @@ export const useMessageStore = defineStore<string, {
   // setActiveDialog: (dailogId: string) => Promise<void>,
   // createConversation: (title: string, model?: Model) => Promise<Conversation>,
   messages: Ref<Record<DialogId, ChatMessage[]>>,
-  sendMessage: (content: string, model: Model, dialogId: DialogId) => Promise<ReadableStream<ChatMessage>>,
+  sendMessage(content: string, model: Model, dialogId: DialogId): Promise<ReadableStream<ChatMessage>>,
+  stopMessage(dialogId: DialogId): void,
   sendImage: (imageFile: File) => Promise<ChatMessage>,
   refreshChatHistory: (dialogId: DialogId) => Promise<void>
 }>('message', () => {
@@ -53,6 +54,22 @@ export const useMessageStore = defineStore<string, {
     }
   }
 
+  const messageReaders = new Map<DialogId, (reson?: any) => void>();
+
+  /**
+   * 停止指定对话的消息流
+   * @param dialogId 对话ID
+   */
+  const stopMessage = async (dialogId: DialogId) => {
+    if(!dialogId) return;
+    const abort = messageReaders.get(dialogId);
+    if (abort) {
+      abort();
+      messageReaders.delete(dialogId);
+    }
+  }
+
+
   /**
    * 发送消息
    * @param content 消息内容
@@ -60,20 +77,21 @@ export const useMessageStore = defineStore<string, {
    * @param dialogId 对话ID
    * @returns 消息流
    */
-  const sendMessage = async (content: string, model: Model, dialogId: DialogId, images?: File[]) => {
+  const sendMessage = async (content: string, model: Model, dialogId: DialogId) => {
     // 创建用户消息
     const userMessage: ChatMessage = {
       role: 'user',
       content,
       timestamp: Date.now(),
-      type: images && images.length > 0 ? 'image' : 'text',
-      images
+      type: 'text',
+      // images
     };
     messages.value[dialogId] = messages.value[dialogId] || [];
     messages.value[dialogId].push(userMessage);
 
     // 调用API发送消息
-    const readableStream: ReadableStream = chatAPI.sendMessage(userMessage, model, dialogId);
+    const [abort, readableStream] = chatAPI.sendMessage(userMessage, model, dialogId);
+    messageReaders.set(dialogId, abort);
     const [assistantStream1, assistantStream2] = readableStream.tee();
     updateMessage(assistantStream1, dialogId);
     return assistantStream2
@@ -99,6 +117,7 @@ export const useMessageStore = defineStore<string, {
   }
 
   return {
+    stopMessage,
     messages,
     sendMessage,
     sendImage,

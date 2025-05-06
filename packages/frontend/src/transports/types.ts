@@ -1,6 +1,4 @@
-
-import { EventEmitter } from 'eventemitter3';
-
+import {EventEmitter} from 'eventemitter3';
 
 
 export interface TransportAdapterOptions {
@@ -13,6 +11,7 @@ export interface TransportAdapterOptions {
    */
   config: TransportConfig;
 }
+
 export interface TransportRequest {
   method: string
   payload: any;
@@ -41,15 +40,15 @@ export interface TransportConfig {
   serverUrl?: string;
   apiKey?: string;
   prefix?: string;
-  
+
   // 命令行传输配置
   commandPath?: string;
   commandArgs?: string[];
-  
+
   // 事件传输配置
   eventNamespace?: string;
   eventEmitter?: EventEmitter;
-  
+
   // 通用配置
   debug?: boolean;
 }
@@ -66,7 +65,7 @@ export interface Transport {
   /**
    * 流式调用，通过回调处理响应
    */
-  invokeStream(request: TransportRequest): ReadableStream;
+  invokeStream(request: TransportRequest, signal?: AbortSignal): ReadableStream;
 }
 
 /**

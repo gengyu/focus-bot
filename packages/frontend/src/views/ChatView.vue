@@ -19,6 +19,8 @@
           </svg>
           新建对话
         </button>
+        <span>{{editDialog.id}}_{{editDialog.title}}</span>
+
       </div>
       <nav class="flex-1 pt-4">
         <div v-for="group in groupedChats" :key="group.title" class="mb-4">
@@ -358,9 +360,9 @@ const startEditTitle = (chat: Dialog) => {
 };
 
 const saveTitle = async () => {
-  const title =  editDialog.value.title?.trim()
-  if (editDialog.value.id && title !== '') {
-    await updateDialog(editDialog.value.id, {title});
+  const title =  editDialog.value.title.trim()
+  if (editDialog.value.id && editDialog.value.title && editDialog.value.title.trim() !== '') {
+    await updateDialog(editDialog.value.id, {title: editDialog.value.title});
   }
   isEditing.value = false;
 };
