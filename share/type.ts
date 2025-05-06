@@ -1,5 +1,6 @@
 export type ModelId = string;
 export type ProviderId = string;
+
 export interface Model {
   id: ModelId;
   providerId: ProviderId;
@@ -8,6 +9,7 @@ export interface Model {
   size: string;
   enabled: boolean;
 }
+
 export interface ProviderConfig {
   id: ProviderId;
   name: string;
@@ -33,26 +35,26 @@ export interface AppSetting {
 }
 
 
-type MessageContentType =  'text' | 'image_url' | 'input_audio' | 'file' | 'application' | 'unknown';
-type RoleType = 'user' | 'developer' | 'system' |'assistant' | 'tool' | 'function';
+type MessageContentType = 'text' | 'image_url' | 'input_audio' | 'file' | 'application' | 'unknown';
+type RoleType = 'user' | 'developer' | 'system' | 'assistant' | 'tool' | 'function';
 
-interface ChatMessageContent{
+interface ChatMessageContent {
   type: MessageContentType
   text: string;
   // ChatCompletionContentPartImage.ImageURL;
-  image_url: string
+  images: string | Uint8Array[] | string[] | File[]
   // ChatCompletionContentPartInputAudio.InputAudio;
-  input_audio: {
+  input_audio: Array<{
     data: string;
     format: 'wav' | 'mp3';
-  }
-  file: File;
+  }>
+  file: File | File[];
 }
 
 export interface ChatMessage {
   provider?: string
   timestamp: number;
-  type: 'text' | 'image';
+  type: 'text';
 
   role: RoleType;
   content: string | ChatMessageContent[];
@@ -71,6 +73,7 @@ export interface ChatMessage {
 // }
 
 export type DialogId = string
+
 // export type ConversationId = string
 
 export interface Dialog {
