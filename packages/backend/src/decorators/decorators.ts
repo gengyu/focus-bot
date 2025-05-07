@@ -198,7 +198,7 @@ export function registerControllers(controllers: any[]) {
 
         router.post(fullPath, async (ctx: any, next: any) => {
           const token = new Date().getTime().toString() + Math.random().toString(36).substring(2);
-
+          const handler = instance[route.handler];
 
           const paramTypes = Reflect.getMetadata('design:paramtypes', instance, route.handler) || [];
           const queryParams = Reflect.getMetadata('query_params', instance, route.handler) || [];
@@ -206,7 +206,7 @@ export function registerControllers(controllers: any[]) {
           const routeParams = Reflect.getMetadata('route_params', instance, route.handler) || [];
           const args = [];
 
-          for (let i = 0; i < paramTypes.length; i++) {
+          for (let i = 0; i < handler.length; i++) {
             const routeParam = routeParams.find((p: any) => p.index === i);
             if (routeParam) {
               args[i] = routeParam.key ? ctx.params?.[routeParam.key] : ctx.params;
@@ -346,7 +346,7 @@ export function registerControllers(controllers: any[]) {
             const routeParams = Reflect.getMetadata('route_params', instance, route.handler) || [];
 
             const args = [];
-            for (let i = 0; i < paramTypes.length; i++) {
+            for (let i = 0; i < handler.length; i++) {
               // 优先级：路由参数 > Query > Body > ctx
               const routeParam = routeParams.find((p: any) => p.index === i);
               if (routeParam) {
@@ -391,7 +391,7 @@ export function registerControllers(controllers: any[]) {
             const routeParams = Reflect.getMetadata('route_params', instance, route.handler) || [];
 
             const args = [];
-            for (let i = 0; i < paramTypes.length; i++) {
+            for (let i = 0; i < handler.length; i++) {
               // 优先级：路由参数 > Query > Body > ctx
               const routeParam = routeParams.find((p: any) => p.index === i);
               if (routeParam) {
