@@ -30,7 +30,6 @@
     "image-size": "^2.0.2",
     "koa": "^3.0.0",
     "koa-bodyparser": "^4.4.1",
-    "koa-multer": "^1.0.2",
     "koa-router": "^13.0.1",
     "langchain": "^0.3.24",
     "mammoth": "^1.9.0",
@@ -45,7 +44,6 @@
     "zod": "^3.24.4"
   },
   "devDependencies": {
-    "@types/cheerio": "^1.0.0",
     "@types/jest": "^29.5.14",
     "@types/koa": "^2.15.0",
     "@types/koa-bodyparser": "^4.3.12",
