@@ -19,8 +19,6 @@
           </svg>
           新建对话
         </button>
-        <span>{{editDialog.id}}_{{editDialog.title}}</span>
-
       </div>
       <nav class="flex-1 pt-4">
         <div v-for="group in groupedChats" :key="group.title" class="mb-4">
@@ -174,7 +172,7 @@
 
 <script setup lang="ts">
 import ChatWindow from '../components/ChatWindow.vue';
-import {computed, nextTick, onMounted, ref, watch} from 'vue';
+import {computed, nextTick, onMounted, ref} from 'vue';
 import {Listbox, ListboxButton, ListboxOption, ListboxOptions} from '@headlessui/vue'
 import {CheckIcon, ChevronUpDownIcon} from '@heroicons/vue/20/solid'
 import {useAppSettingStore} from "../store/appSettingStore.js";
@@ -203,6 +201,12 @@ const selectedModel = ref<Model>(models.value[0] ? models.value[0] : {
   size: '',
   enabled: false,
 });
+onMounted(() => {
+  const activeDialog = conversation.dialogs.find(dialog => dialog.id === conversation.activeDialogId);
+  if(activeDialog?.model){
+    selectedModel.value = activeDialog?.model;
+  }
+})
 
 
 

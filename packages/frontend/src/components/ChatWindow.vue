@@ -15,19 +15,36 @@
 
 
       <!-- 图片预览区域 -->
-      <div v-if="previewImages.length > 0" class="mb-3 flex flex-wrap items-center gap-2">
-        <div v-for="(preview, index) in previewImages" :key="index" class="relative w-20 h-20 rounded-lg overflow-hidden border border-gray-200">
+      <div v-if="previewImages.length > 0 || uploadedFiles.length > 0" class="mb-3 flex flex-wrap items-center gap-2">
+        <!-- 图片预览 -->
+        <div v-for="(preview, index) in previewImages" :key="'img-'+index" class="relative w-20 h-20 rounded-lg overflow-hidden border border-gray-200">
           <img :src="preview" alt="图片预览" class="w-full h-full object-cover cursor-pointer" @click="showImg(index)">
-          <button @click="removeImage(index)"
-                  class="absolute top-1 right-1 bg-black/50 rounded-full p-1 hover:bg-black/70">
+          <button @click="removeImage(index)" class="absolute top-1 right-1 bg-black/50 rounded-full p-1 hover:bg-black/70">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24"
                  stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
             </svg>
           </button>
         </div>
+        <!-- 文件预览 -->
+        <div v-for="(file, index) in uploadedFiles" :key="'file-'+index" class="relative flex items-center p-2 rounded-lg border border-gray-200 bg-gray-50">
+          <div class="flex items-center gap-2">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-500" fill="none" viewBox="0 0 24 24"
+                 stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+            </svg>
+            <span class="text-sm text-gray-700">{{ file.name }}</span>
+            <span class="text-xs text-gray-500">({{ formatFileSize(file.size) }})</span>
+          </div>
+          <button @click="removeFile(index)" class="ml-2 p-1 rounded-full hover:bg-gray-200">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-500" fill="none" viewBox="0 0 24 24"
+                 stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+          </button>
+        </div>
       </div>
-      
+
       <!-- 图片预览弹窗 -->
       <vue-easy-lightbox
         :visible="showLightbox"
@@ -52,7 +69,7 @@
         <!--          bg-gray-50 rounded-lg border border-gray-200 focus:outline-none focus:border-blue-500 focus:bg-white transition-colors overflow-y-auto-->
         <div ref="editableDiv"
              contenteditable="true"
-             class="min-h-[72px] max-h-[200px] w-full px-4 py-2.5  focus:outline-none"
+             class="editableDiv min-h-[72px] max-h-[200px] w-full px-4 py-2.5  focus:outline-none"
              :class="{'empty-content': !messageInput}"
              @input="handleInput"
              @keydown.enter.prevent="handleEnterKey"
@@ -94,7 +111,7 @@
                 class="p-1.5 rounded-lg transition-colors cursor-pointer"
                 :class="[isImageUploadActive ? 'bg-blue-100' : 'hover:bg-gray-200']"
             >
-              <input type="file" accept="image/*" class="hidden" @change="handleImageUpload">
+              <input type="file" accept="*" multiple class="hidden" @change="handleImageUpload">
               <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5"
                    :class="[isImageUploadActive ? 'text-blue-500' : 'text-gray-500']" fill="none" viewBox="0 0 24 24"
                    stroke="currentColor">
@@ -121,14 +138,12 @@
                       d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"/>
               </svg>
             </button>
-            <button
-                @click="sendMessage"
-                :disabled="isLoading"
+            <button @click="isLoading ? stopMessage() : sendMessage()"
                 class="px-6 py-2.5 rounded-lg focus:outline-none transition-colors self-end"
-                :class="[isLoading ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-500 hover:bg-blue-600 text-white']"
+                :class="[isLoading ? 'bg-gray-400' : 'bg-blue-500 hover:bg-blue-600 text-white']"
             >
-              <span v-if="!isLoading">发送</span>
-              <span v-else class="flex items-center">
+                <span v-if="!isLoading">发送</span>
+                <span v-else class="flex items-center">
                     <svg class="animate-spin -ml-1 mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none"
                          viewBox="0 0 24 24">
                         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
@@ -136,7 +151,7 @@
                         <path class="opacity-75" fill="currentColor"
                               d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
-                    发送中...
+                    停止
                 </span>
             </button>
           </div>
@@ -159,6 +174,7 @@ import {useMessageStore} from "../store/messageStore.ts";
 import MessageBubble from './MessageBubble.vue';
 import {toast} from "vue-sonner";
 import VueEasyLightbox from 'vue-easy-lightbox';
+import {chatAPI} from "../services/chatApi.ts";
 
 
 // // 配置MarkdownIt实例
@@ -201,6 +217,7 @@ const imageFiles = ref<File[]>([]);
 const previewImages = ref<string[]>([]);
 const showLightbox = ref(false);
 const currentImgIndex = ref(0);
+const uploadedFiles = ref<File[]>([]);
 
 const isLoading = ref(false);
 const isComposing = ref(false); // 是否正在输入法编辑状态
@@ -264,17 +281,22 @@ const availableModels = computed(() => {
 
 
 
+const stopMessage = ()=> {
+  if (isLoading.value) {// 如果正在发送消息，则不允许再次发送
+    messageStore.stopMessage(props.chatId || '')
+  }
+}
 
 // 发送消息
 const sendMessage = async () => {
+
   if (!messageInput.value.trim() && !imageFiles.value.length) return;
   if (isLoading.value) {// 如果正在发送消息，则不允许再次发送
-    messageStore.stopMessage(props.chatId || '')
     return
-  };
+  }
 
   isLoading.value = true; // 设置loading状态
-  
+
   // 创建用户消息
   const userMessage: ChatMessage = {
     role: 'user',
@@ -328,23 +350,62 @@ const sendMessage = async () => {
   scrollToBottom();
 };
 
+const maxFileSize = 10 * 1024 * 1024; // 10MB限制
+
 // 处理图片上传
 const handleImageUpload = async (event: Event) => {
   const input = event.target as HTMLInputElement;
   if (!input.files?.length) return;
 
-  Array.from(input.files).forEach(file => {
-    imageFiles.value.push(file);
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      previewImages.value.push(e.target?.result as string);
-    };
-    reader.readAsDataURL(file);
+  Array.from(input.files).forEach(async file => {
+    // 检查文件大小
+    if (file.size > maxFileSize) {
+      toast.error(`文件 ${file.name} 超过10MB限制`);
+      return;
+    }
+
+    if (file.type.startsWith('image/')) {
+      imageFiles.value.push(file);
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        previewImages.value.push(e.target?.result as string);
+      };
+      reader.readAsDataURL(file);
+    } else {
+      uploadedFiles.value.push(file);
+      try {
+        // 调用fileParser解析文件
+        const content = await chatAPI.parseFile(file.path);
+        // 将解析结果添加到消息输入框
+        if (editableDiv.value) {
+          editableDiv.value.innerText = content;
+          messageInput.value = content;
+        }
+      } catch (error) {
+        toast.error(`解析文件失败: ${error.message}`);
+      }
+    }
   });
 
   isImageUploadActive.value = true;
-  // 清除input的value，允许上传相同的文件
   input.value = '';
+};
+
+// 移除文件
+const removeFile = (index: number) => {
+  uploadedFiles.value.splice(index, 1);
+  if (uploadedFiles.value.length === 0 && previewImages.value.length === 0) {
+    isImageUploadActive.value = false;
+  }
+};
+
+// 格式化文件大小
+const formatFileSize = (bytes: number): string => {
+  if (bytes === 0) return '0 B';
+  const k = 1024;
+  const sizes = ['B', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2))} ${sizes[i]}`;
 };
 
 const removeImage = (index: number) => {
@@ -362,7 +423,7 @@ const showImg = (index: number) => {
 
 // 发送消息时处理图片上传
 const handleImageMessage = async () => {
-  if (!imageFile.value) return;
+  if (!imageFiles.value) return;
 
   try {
     // const response = await chatApi.sendImage(imageFile.value);
@@ -387,40 +448,10 @@ const scrollToBottom = () => {
 
 };
 
-// 更新输入框内容
-const updateEditableContent = () => {
-  if (editableDiv.value) {
-    editableDiv.value.innerText = messageInput.value;
-  }
-};
-
-// 监听输入框内容变化
-//   watch(messageInput, updateEditableContent);
-
 
 </script>
 
 <style scoped>
-@import 'highlight.js/styles/github.css';
-
-.markdown-body {
-  background-color: transparent;
-  font-size: 15px;
-  line-height: 1.6;
-}
-
-.markdown-body pre {
-  background-color: #f6f8fa;
-  border-radius: 6px;
-  padding: 16px;
-}
-
-.markdown-body code {
-  background-color: rgba(175, 184, 193, 0.2);
-  border-radius: 6px;
-  padding: 0.2em 0.4em;
-  font-size: 85%;
-}
 
 .think-process {
   opacity: 0.85;
@@ -439,12 +470,12 @@ const updateEditableContent = () => {
 }
 
 /* 添加文本选中样式 */
-#editableDiv::selection {
+.editableDiv::selection {
   background-color: #3b82f6;
   color: white;
 }
 
-#editableDiv::-moz-selection {
+.editableDiv::-moz-selection {
   background-color: #3b82f6;
   color: white;
 }

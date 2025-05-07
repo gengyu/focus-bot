@@ -14,6 +14,8 @@
     "sea-build": "node -e \"require('fs').copyFileSync(process.execPath, 'mcp-connect')\" && npx --yes postject mcp-connect NODE_SEA_BLOB sea-prep.blob --sentinel-fuse NODE_SEA_FUSE_fce680ab2cc467b6e072b8b5df1996b2"
   },
   "dependencies": {
+    "exceljs": "^4.4.0",
+    "langchain": "^0.3.24",
     "@focus-bot/core": "workspace:*",
     "@koa/cors": "^5.0.0",
     "@koa/multer": "^3.1.0",

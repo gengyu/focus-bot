@@ -1,15 +1,14 @@
 import fs from 'fs';
 import path from 'path';
-import { PDFLoader } from 'langchain/document_loaders/fs/pdf';
-import { DocxLoader } from 'langchain/document_loaders/fs/docx';
+import pdfParse from 'pdf-parse';
 import ExcelJS from 'exceljs';
 import csvParser from 'csv-parser';
 import cheerio from 'cheerio';
 import xml2js from 'xml2js';
 import mammoth from 'mammoth';
-import { fileTypeFromFile } from 'file-type';
-import { Readable } from 'stream';
-import { promisify } from 'util';
+import {fileTypeFromFile} from 'file-type';
+import {Readable} from 'stream';
+import {promisify} from 'util';
 
 /**
  * 文件元信息接口
@@ -39,7 +38,8 @@ export interface FileParseResult {
 export class FileParserService {
   private static instance: FileParserService;
 
-  private constructor() {}
+  private constructor() {
+  }
 
   public static getInstance(): FileParserService {
     if (!FileParserService.instance) {
@@ -62,7 +62,7 @@ export class FileParserService {
       const stats = fs.statSync(filePath);
       const fileName = path.basename(filePath);
       const fileType = path.extname(filePath).toLowerCase().replace('.', '');
-      
+
       // 基本元信息
       const metadata: FileMetadata = {
         fileName,
@@ -170,7 +170,7 @@ export class FileParserService {
       }
 
       const formattedContent = this.formatContent(content);
-      
+
       if (includeMetadata) {
         const metadata = await this.getFileMetadata(filePath);
         return {
@@ -178,10 +178,14 @@ export class FileParserService {
           metadata
         };
       }
-      
+
       return formattedContent;
     } catch (error) {
-      throw new Error(`解析文件失败: ${error.message}`);
+      if (error instanceof Error) {
+        throw new Error(`解析文件失败: ${error.message}`);
+      } else {
+        throw error
+      }
     }
   }
 
@@ -189,25 +193,24 @@ export class FileParserService {
    * 解析PDF文件
    */
   private async parsePDF(filePath: string): Promise<string> {
-    const loader = new PDFLoader(filePath);
-    const docs = await loader.load();
-    return docs.map(doc => doc.pageContent).join('\n');
+    const dataBuffer = await fs.promises.readFile(filePath);
+    const data = await pdfParse(dataBuffer);
+    return data.text;
   }
 
   /**
    * 解析Word文件 (docx)
    */
   private async parseWord(filePath: string): Promise<string> {
-    const loader = new DocxLoader(filePath);
-    const docs = await loader.load();
-    return docs.map(doc => doc.pageContent).join('\n');
+    const result = await mammoth.extractRawText({path: filePath});
+    return result.value;
   }
-  
+
   /**
    * 解析Word文件 (doc)
    */
   private async parseDoc(filePath: string): Promise<string> {
-    const result = await mammoth.extractRawText({ path: filePath });
+    const result = await mammoth.extractRawText({path: filePath});
     return result.value;
   }
 
@@ -217,7 +220,7 @@ export class FileParserService {
   private async parseExcel(filePath: string): Promise<string> {
     const workbook = new ExcelJS.Workbook();
     await workbook.xlsx.readFile(filePath);
-    
+
     let content = [];
     workbook.worksheets.forEach(worksheet => {
       content.push(`Sheet: ${worksheet.name}`);
@@ -276,8 +279,9 @@ export class FileParserService {
    */
   private async parseXML(filePath: string): Promise<string> {
     const xml = await fs.promises.readFile(filePath, 'utf-8');
-    const parser = new xml2js.Parser({ explicitArray: false });
+    const parser = new xml2js.Parser({explicitArray: false});
     const parseString = promisify(parser.parseString);
+    // @ts-ignore
     const result = await parseString(xml);
     return JSON.stringify(result, null, 2);
   }
@@ -291,7 +295,7 @@ export class FileParserService {
     try {
       // 尝试作为文本文件读取，对于某些PPT可能不适用
       return `[PPT文件] ${path.basename(filePath)}\n该文件类型需要专用解析器`;
-    } catch (error) {
+    } catch (error: any) {
       return `无法解析PPT文件: ${error.message}`;
     }
   }
@@ -310,10 +314,10 @@ export class FileParserService {
     // 移除多余的空白字符，但保留段落结构
     content = content.replace(/[\t ]+/g, ' ');
     content = content.replace(/\n{3,}/g, '\n\n');
-    
+
     // 移除特殊字符
     content = content.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F-\x9F]/g, '');
-    
+
     // 限制内容长度
     const maxLength = 100000; // 根据实际需求调整
     if (content.length > maxLength) {

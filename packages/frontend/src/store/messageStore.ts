@@ -91,6 +91,7 @@ export const useMessageStore = defineStore<string, {
 
     // 调用API发送消息
     const [abort, readableStream] = chatAPI.sendMessage(userMessage, model, dialogId);
+    window.abort = abort;
     messageReaders.set(dialogId, abort);
     const [assistantStream1, assistantStream2] = readableStream.tee();
     updateMessage(assistantStream1, dialogId);

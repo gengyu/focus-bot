@@ -59,6 +59,9 @@ importers:
       dotenv:
         specifier: ^16.5.0
         version: 16.5.0
+      exceljs:
+        specifier: ^4.4.0
+        version: 4.4.0
       file-type:
         specifier: ^20.5.0
         version: 20.5.0
@@ -71,6 +74,9 @@ importers:
       koa-router:
         specifier: ^13.0.1
         version: 13.0.1
+      langchain:
+        specifier: ^0.3.24
+        version: 0.3.24(@langchain/core@0.3.54(openai@4.97.0(zod@3.24.3)))(axios@1.9.0)(cheerio@1.0.0)(openai@4.97.0(zod@3.24.3))
       mammoth:
         specifier: ^1.9.0
         version: 1.9.0
@@ -162,9 +168,6 @@ importers:
       eventemitter3:
         specifier: ^5.0.1
         version: 5.0.1
-      exceljs:
-        specifier: ^4.4.0
-        version: 4.4.0
       github-markdown-css:
         specifier: ^5.8.1
         version: 5.8.1
@@ -174,9 +177,6 @@ importers:
       katex:
         specifier: ^0.16.22
         version: 0.16.22
-      langchain:
-        specifier: ^0.3.24
-        version: 0.3.24(@langchain/core@0.3.54(openai@4.97.0(zod@3.24.3)))(axios@1.9.0)(cheerio@1.0.0)(openai@4.97.0(zod@3.24.3))
       loglevel:
         specifier: ^1.9.2
         version: 1.9.2

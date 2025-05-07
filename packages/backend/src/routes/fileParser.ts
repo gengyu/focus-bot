@@ -1,6 +1,7 @@
-import { Controller, Post, Body } from '@/decorators';
-import { FileParserService } from '../services/FileParserService';
-import { ResultHelper } from '../utils/ResultHelper';
+import {FileParserService} from '../services/FileParserService';
+
+import {ResultHelper} from "../routes/routeHelper.ts";
+import {Body, Controller, Post} from "../decorators/decorators.ts";
 
 @Controller('/invoke/fileParser')
 export class FileParserController {
@@ -16,7 +17,7 @@ export class FileParserController {
       const content = await this.fileParserService.parseFile(body.filePath);
       return ResultHelper.success(content);
     } catch (error) {
-      return ResultHelper.fail(error.message, null);
+      return ResultHelper.fail((error as Error).message, null);
     }
   }
 }
