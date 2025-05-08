@@ -49,27 +49,53 @@ export class ChatAPI {
     return await response.json();
   }
 
-  async parseFile(file: File): Promise<any> {
-    // 文件解析API
+  async uploadFile(file: File): Promise<{ filePath: string; metadata: any }> {
+    // 文件上传API
     const formData = new FormData();
     formData.append('file', file);
-    
-    try {
-      const response = await fetch(`${API_BASE_URL}/chat/parse-file`, {
-        method: 'POST',
-        body: formData,
-      });
-      
-      if (!response.ok) {
-        throw new Error(`文件解析失败: ${response.statusText}`);
-      }
-      
-      return await response.json();
-    } catch (error) {
-      console.error('文件解析请求失败:', error);
-      throw error;
-    }
+    formData.append('sizea', '123456');
+    const req = {method: 'upload', payload: formData};
+    const res = await this.fileParserTransport.invokeDirect(req);
+    if (!res.success) throw new Error(`解析文件失败: ${res.error}`);
+    return res.data;
+    // try {
+    //   const response = await fetch(`${API_BASE_URL}/chat/upload`, {
+    //     method: 'POST',
+    //     body: formData,
+    //   });
+    //
+    //   if (!response.ok) {
+    //     throw new Error(`文件上传失败: ${response.statusText}`);
+    //   }
+    //
+    //   return await response.json();
+    // } catch (error) {
+    //   console.error('文件上传请求失败:', error);
+    //   throw error;
+    // }
   }
+
+  // async parseFile(file: File): Promise<any> {
+  //   // 文件解析API
+  //   const formData = new FormData();
+  //   formData.append('file', file);
+  //
+  //   try {
+  //     const response = await fetch(`${API_BASE_URL}/chat/parse-file`, {
+  //       method: 'POST',
+  //       body: formData,
+  //     });
+  //
+  //     if (!response.ok) {
+  //       throw new Error(`文件解析失败: ${response.statusText}`);
+  //     }
+  //
+  //     return await response.json();
+  //   } catch (error) {
+  //     console.error('文件解析请求失败:', error);
+  //     throw error;
+  //   }
+  // }
 
   async getChatHistory(chatId: DialogId): Promise<ChatMessage[]> {
     const req = {method: 'getChatHistory', payload: {chatId}};

@@ -37,16 +37,20 @@ export class HTTPTransport implements Transport {
   async invokeDirect(request: TransportRequest): Promise<TransportResponse> {
     try {
       // 检查payload是否为FormData
-      let data = request;
+      let data = request.payload;
       let headers = {};
-      data = request.payload as any;
+      
       if (request.payload && typeof FormData !== 'undefined' && request.payload instanceof FormData) {
-        // data = request.payload as any;
-        // axios会自动设置multipart边界，无需手动设置Content-Type
-        headers = {...(this.client.defaults.headers || {}), ...this.client.defaults.headers.common};
+        // 删除Content-Type头部，让浏览器自动设置
+        headers = {
+          ...(this.client.defaults.headers || {}),
+          ...this.client.defaults.headers.common,
+          'Content-Type': 'multipart/form-data'
+        };
         // @ts-ignore
-        delete headers['Content-Type'];
+        // delete headers['Content-Type'];
       }
+      
       const method = this.config.prefix ? `${this.config.prefix}/${request.method}` : request.method;
       const response = await this.client.post('/invoke/' + method, data, {headers});
 

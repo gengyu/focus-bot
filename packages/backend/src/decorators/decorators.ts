@@ -3,9 +3,77 @@ import Router from 'koa-router';
 import {ResultHelper} from "../routes/routeHelper.ts";
 import {type} from "node:os";
 import {URL} from "node:url";
-
+import path from 'path';
+import fs from 'fs';
 
 export const router = new Router();
+import multer from '@koa/multer';
+
+// 配置multer存储
+const defaultMulterStorage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    const uploadDir = path.join(process.cwd(), 'data/uploads');
+    // 确保目录存在
+    fs.mkdirSync(uploadDir, { recursive: true });
+    cb(null, uploadDir);
+  },
+  filename: function (req, file, cb) {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
+  }
+});
+
+// const upload = multer({ storage: storage });
+
+// 示例路由
+// router.post('/upload', upload.single('file'), async (ctx) => {
+//   ctx.body = ResultHelper.success({ file: ctx.request.file });
+// });
+
+// Upload装饰器实现
+export interface UploadOptions {
+  multiple?: boolean;          // 是否支持多文件上传
+  maxSize?: number;           // 最大文件大小（字节）
+  fileFilter?: (file: any) => boolean; // 文件过滤函数
+  dest?: string;              // 自定义上传目录
+  filename?: (file: any) => string; // 自定义文件名生成函数
+  limits?: {                  // multer限制选项
+    fieldNameSize?: number;   // 字段名大小限制
+    fieldSize?: number;       // 字段值大小限制
+    fields?: number;          // 非文件字段数量限制
+    fileSize?: number;        // 文件大小限制
+    files?: number;           // 文件数量限制
+  }
+}
+
+/**
+ * 文件上传装饰器
+ * @param fieldName 文件字段名，默认为'file'
+ * @param options 上传选项
+ * @returns 方法装饰器
+ */
+export function Upload(fieldName: string = 'file', options: UploadOptions = {}): MethodDecorator {
+  return (target, propertyKey: string | symbol) => {
+    const controllerClass = target.constructor;
+    if (!Reflect.hasMetadata('upload_config', controllerClass)) {
+      Reflect.defineMetadata('upload_config', {}, controllerClass);
+    }
+    
+    const uploadConfig = Reflect.getMetadata('upload_config', controllerClass);
+    uploadConfig[propertyKey] = {
+      fieldName,
+      multiple: options.multiple || false,
+      maxSize: options.maxSize,
+      fileFilter: options.fileFilter,
+      dest: options.dest,
+      filename: options.filename,
+      limits: options.limits
+    };
+    
+    Reflect.defineMetadata('upload_config', uploadConfig, controllerClass);
+  };
+}
+
 
 export function Controller(prefix = ''): ClassDecorator {
   return (target: any) => {
@@ -113,6 +181,7 @@ export function registerControllers(controllers: any[]) {
   controllers.forEach(ControllerClass => {
     const prefix = Reflect.getMetadata('prefix', ControllerClass) || '';
     const routes = Reflect.getMetadata('routes', ControllerClass) || [];
+    const uploadConfig = Reflect.getMetadata('upload_config', ControllerClass) || {};
     const instance = new ControllerClass();
     routes.forEach((route: any) => {
       const fullPath = prefix + route.path;
@@ -201,40 +270,144 @@ export function registerControllers(controllers: any[]) {
 
         });
       } else {
-        //@ts-ignore
-        router[route.method](fullPath, async (ctx: any, next: any) => {
-          const handler = instance[route.handler];
-          const paramTypes = Reflect.getMetadata('design:paramtypes', instance, route.handler) || [];
-          const queryParams = Reflect.getMetadata('query_params', instance, route.handler) || [];
-          const bodyParams = Reflect.getMetadata('body_params', instance, route.handler) || [];
-          const routeParams = Reflect.getMetadata('route_params', instance, route.handler) || [];
+        // 检查是否有上传配置
+        const uploadConfig = Reflect.getMetadata('upload_config', ControllerClass) || {};
+        const methodUploadConfig = uploadConfig[route.handler];
+        
+        if (methodUploadConfig) {
+          // 如果有上传配置，创建自定义的multer实例
+          const fieldName = methodUploadConfig.fieldName || 'file';
+          const isMultiple = methodUploadConfig.multiple || false;
+          
+          // 创建自定义的multer配置
+          const multerOptions: any = {};
+          
+          // 配置存储
+          if (methodUploadConfig.dest || methodUploadConfig.filename) {
+            multerOptions.storage = multer.diskStorage({
+              destination: function (req, file, cb) {
+                const uploadDir = methodUploadConfig.dest || path.join(process.cwd(), 'uploads');
+                // 确保目录存在
+                fs.mkdirSync(uploadDir, { recursive: true });
+                cb(null, uploadDir);
+              },
+              filename: function (req, file, cb) {
+                if (methodUploadConfig.filename && typeof methodUploadConfig.filename === 'function') {
+                  cb(null, methodUploadConfig.filename(file));
+                } else {
+                  const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+                  cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
+                }
+              }
+            });
+          }else {
+            multerOptions.storage = defaultMulterStorage;
+          }
+          
+          // 配置文件大小限制
+          if (methodUploadConfig.maxSize || methodUploadConfig.limits) {
+            multerOptions.limits = methodUploadConfig.limits || {};
+            if (methodUploadConfig.maxSize) {
+              multerOptions.limits.fileSize = methodUploadConfig.maxSize;
+            }
+          }
+          
+          // 配置文件过滤器
+          if (methodUploadConfig.fileFilter && typeof methodUploadConfig.fileFilter === 'function') {
+            // @ts-ignore
+            multerOptions.fileFilter = (req, file, cb) => {
+              cb(null, methodUploadConfig.fileFilter(file));
+            };
+          }
+          
+          // 创建multer实例
+          const customUpload = multer(multerOptions);
+          
+          // 根据是否多文件上传选择不同的multer处理方法
+          const uploadMiddleware = isMultiple 
+            ? customUpload.array(fieldName) 
+            : customUpload.single(fieldName);
+          
+          //@ts-ignore
+          router[route.method](fullPath, uploadMiddleware, async (ctx: any, next: any) => {
+            const handler = instance[route.handler];
+            const paramTypes = Reflect.getMetadata('design:paramtypes', instance, route.handler) || [];
+            const queryParams = Reflect.getMetadata('query_params', instance, route.handler) || [];
+            const bodyParams = Reflect.getMetadata('body_params', instance, route.handler) || [];
+            const routeParams = Reflect.getMetadata('route_params', instance, route.handler) || [];
 
-          const args = [];
-          for (let i = 0; i < paramTypes.length; i++) {
-            // 优先级：路由参数 > Query > Body > ctx
-            const routeParam = routeParams.find((p: any) => p.index === i);
-            if (routeParam) {
-              args[i] = routeParam.key ? ctx.params?.[routeParam.key] : ctx.params;
-              continue;
+            const args = [];
+            for (let i = 0; i < paramTypes.length; i++) {
+              // 优先级：路由参数 > Query > Body > ctx
+              const routeParam = routeParams.find((p: any) => p.index === i);
+              if (routeParam) {
+                args[i] = routeParam.key ? ctx.params?.[routeParam.key] : ctx.params;
+                continue;
+              }
+              const queryParam = queryParams.find((p: any) => p.index === i);
+              if (queryParam) {
+                args[i] = queryParam.key ? ctx.query?.[queryParam.key] : ctx.query;
+                continue;
+              }
+              const bodyParam = bodyParams.find((p: any) => p.index === i);
+              if (bodyParam) {
+                args[i] = bodyParam.key ? ctx.request.body?.[bodyParam.key] : ctx.request.body;
+                continue;
+              }
+              // 默认注入ctx
+              args[i] = ctx;
             }
-            const queryParam = queryParams.find((p: any) => p.index === i);
-            if (queryParam) {
-              args[i] = queryParam.key ? ctx.query?.[queryParam.key] : ctx.query;
-              continue;
+            
+            // 将上传的文件信息添加到ctx.request.body中
+            if (isMultiple && ctx.request.files) {
+              ctx.request.body = ctx.request.body || {};
+              ctx.request.body[fieldName] = ctx.request.files;
+            } else if (ctx.request.file) {
+              ctx.request.body = ctx.request.body || {};
+              ctx.request.body[fieldName] = ctx.request.file;
             }
-            const bodyParam = bodyParams.find((p: any) => p.index === i);
-            if (bodyParam) {
-              args[i] = bodyParam.key ? ctx.request.body?.[bodyParam.key] : ctx.request.body;
-              continue;
+            
+            const result = await handler.apply(instance, args);
+            if (result !== undefined) {
+              ctx.body = result;
             }
-            // 默认注入ctx
-            args[i] = ctx;
-          }
-          const result = await handler.apply(instance, args);
-          if (result !== undefined) {
-            ctx.body = result;
-          }
-        });
+          });
+        } else {
+          //@ts-ignore
+          router[route.method](fullPath, async (ctx: any, next: any) => {
+            const handler = instance[route.handler];
+            const paramTypes = Reflect.getMetadata('design:paramtypes', instance, route.handler) || [];
+            const queryParams = Reflect.getMetadata('query_params', instance, route.handler) || [];
+            const bodyParams = Reflect.getMetadata('body_params', instance, route.handler) || [];
+            const routeParams = Reflect.getMetadata('route_params', instance, route.handler) || [];
+
+            const args = [];
+            for (let i = 0; i < paramTypes.length; i++) {
+              // 优先级：路由参数 > Query > Body > ctx
+              const routeParam = routeParams.find((p: any) => p.index === i);
+              if (routeParam) {
+                args[i] = routeParam.key ? ctx.params?.[routeParam.key] : ctx.params;
+                continue;
+              }
+              const queryParam = queryParams.find((p: any) => p.index === i);
+              if (queryParam) {
+                args[i] = queryParam.key ? ctx.query?.[queryParam.key] : ctx.query;
+                continue;
+              }
+              const bodyParam = bodyParams.find((p: any) => p.index === i);
+              if (bodyParam) {
+                args[i] = bodyParam.key ? ctx.request.body?.[bodyParam.key] : ctx.request.body;
+                continue;
+              }
+              // 默认注入ctx
+              args[i] = ctx;
+            }
+            const result = await handler.apply(instance, args);
+            if (result !== undefined) {
+              ctx.body = result;
+            }
+          });
+        }
       }
     });
   });

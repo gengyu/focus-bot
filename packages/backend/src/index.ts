@@ -8,8 +8,9 @@ import { ChatController } from './routes/chat';
 import { ConfigController } from './routes/config';
 import { FileParserController } from './routes/fileParser';
 
+
 const app = new Koa();
- 
+
 
 // 中间件配置
 app.use(cors({

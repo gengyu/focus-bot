@@ -1,5 +1,6 @@
 import fs from 'fs';
 import path from 'path';
+import { v4 as uuidv4 } from 'uuid';
 
 import pdfParse from 'pdf-parse';
 import ExcelJS from 'exceljs';
@@ -187,6 +188,33 @@ export class FileParserService {
       } else {
         throw error
       }
+    }
+  }
+
+  /**
+   * 上传文件
+   */
+  public async uploadFile(file: File): Promise<{ filePath: string; metadata: FileMetadata }> {
+    try {
+      // 创建临时目录
+      const tempDir = path.join(process.cwd(), 'data', 'uploads');
+      await fs.promises.mkdir(tempDir, { recursive: true });
+
+      // 生成唯一文件名
+      const fileExt = path.extname(file.name);
+      const fileName = `${uuidv4()}${fileExt}`;
+      const filePath = path.join(tempDir, fileName);
+
+      // 保存文件
+      const buffer = await file.arrayBuffer();
+      await fs.promises.writeFile(filePath, Buffer.from(buffer));
+
+      // 获取文件元信息
+      const metadata = await this.getFileMetadata(filePath);
+
+      return { filePath, metadata };
+    } catch (error) {
+      throw new Error(`文件上传失败: ${(error as Error).message}`);
     }
   }
 

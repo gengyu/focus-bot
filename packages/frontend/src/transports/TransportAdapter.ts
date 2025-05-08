@@ -58,13 +58,12 @@ export class TransportAdapter implements Transport {
    */
   async invokeDirect(request: TransportRequest): Promise<TransportResponse> {
     // 自动识别FormData并转发给HTTPTransport
-    if (
-      this.transport instanceof HTTPTransport &&
-      request.payload && typeof FormData !== 'undefined' && request.payload instanceof FormData
-    ) {
-      // @ts-ignore
-      return (this.transport as HTTPTransport).invokeDirect({...request, payload: request.payload});
-    }
+    // if (
+    //   this.transport instanceof HTTPTransport &&
+    //   request.payload && typeof FormData !== 'undefined' && request.payload instanceof FormData
+    // ) {
+    //   return (this.transport as HTTPTransport).invokeDirect({...request, payload: request.payload});
+    // }
     return this.transport.invokeDirect(request);
   }
 

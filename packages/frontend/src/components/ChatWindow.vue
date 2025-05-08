@@ -16,8 +16,10 @@
 
       <!-- 图片预览区域 -->
       <div v-if="previewImages.length > 0" class="mb-3 flex flex-wrap items-center gap-2">
-        <div v-for="(preview, index) in previewImages" :key="index" class="relative w-20 h-20 rounded-lg overflow-hidden border border-gray-200">
-          <img :src="preview" alt="图片预览" class="w-full h-full object-cover cursor-pointer" @click="(e) => showImg(index, e)">
+        <div v-for="(preview, index) in previewImages" :key="index"
+             class="relative w-20 h-20 rounded-lg overflow-hidden border border-gray-200">
+          <img :src="preview" alt="图片预览" class="w-full h-full object-cover cursor-pointer"
+               @click="(e) => showImg(index, e)">
           <button @click="removeImage(index)"
                   class="absolute top-1 right-1 bg-black/50 rounded-full p-1 hover:bg-black/70">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24"
@@ -30,9 +32,12 @@
 
       <!-- 文件预览区域 -->
       <div v-if="fileNames.length > 0" class="mb-3 flex flex-wrap items-center gap-2">
-        <div v-for="(fileName, index) in fileNames" :key="index" class="relative px-3 py-2 rounded-lg border border-gray-200 bg-gray-50 flex items-center">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+        <div v-for="(fileName, index) in fileNames" :key="index"
+             class="relative px-3 py-2 rounded-lg border border-gray-200 bg-gray-50 flex items-center">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-gray-500" fill="none" viewBox="0 0 24 24"
+               stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
           </svg>
           <span class="text-sm text-gray-700">{{ fileName }}</span>
           <button @click="removeFile(index)"
@@ -133,7 +138,8 @@
                 class="p-1.5 rounded-lg transition-colors cursor-pointer"
                 :class="[isFileUploadActive ? 'bg-blue-100' : 'hover:bg-gray-200']"
             >
-              <input type="file" accept=".pdf,.doc,.docx,.txt,.csv,.json,.xml" class="hidden" @change="handleFileUpload">
+              <input type="file" accept=".pdf,.doc,.docx,.txt,.csv,.json,.xml" class="hidden"
+                     @change="handleFileUpload">
               <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5"
                    :class="[isFileUploadActive ? 'text-blue-500' : 'text-gray-500']" fill="none" viewBox="0 0 24 24"
                    stroke="currentColor">
@@ -308,7 +314,7 @@ const availableModels = computed(() => {
 });
 
 
-const stopMessage = ()=> {
+const stopMessage = () => {
   if (isLoading.value) {// 如果正在发送消息，则不允许再次发送
     messageStore.stopMessage(props.chatId || '')
   }
@@ -347,7 +353,7 @@ const sendMessage = async () => {
 
         // 依次解析所有文件
         for (const file of fileFiles.value) {
-          const result = await messageStore.parseFile(file);
+          const result = await chatAPI.parseFile(file);
           fileUploadProgress.value = 70;
 
           if (result && result.content) {
@@ -374,7 +380,7 @@ const sendMessage = async () => {
       images: imageFiles.value.length > 0 ? imageFiles.value : undefined,
       files: fileFiles.value.length > 0 ? fileFiles.value : undefined
     };
-    
+
     // 将消息添加到消息列表中，确保在UI中显示
     if (!messageStore.messages[chatId]) {
       messageStore.messages[chatId] = [];
@@ -453,12 +459,15 @@ const handleFileUpload = async (event: Event) => {
 
   Array.from(input.files).forEach(file => {
     // 确保文件对象包含所需属性
-    const fileObj = new File([file], file.name, {
-      type: file.type,
-      lastModified: file.lastModified
-    });
-    fileFiles.value.push(fileObj);
+    // const fileObj = new File([file], file.name, {
+    //   type: file.type,
+    //   lastModified: file.lastModified,
+    //   name: file.name
+    // });
+    fileFiles.value.push(file);
     fileNames.value.push(file.name);
+    console.log(file.name)
+    chatAPI.uploadFile(file)
   });
 
   isFileUploadActive.value = true;
@@ -474,7 +483,6 @@ const handleFileUpload = async (event: Event) => {
     }
   }
 };
-
 
 
 // 格式化文件大小
