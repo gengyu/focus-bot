@@ -42,25 +42,35 @@ interface ChatMessageContent {
   type: MessageContentType
   text: string;
   // ChatCompletionContentPartImage.ImageURL;
-  images: string | Uint8Array[] | string[] | File[]
+  images: string | Uint8Array[] | string[] | MessageFile[]
   // ChatCompletionContentPartInputAudio.InputAudio;
-  input_audio: Array<{
-    data: string;
-    format: 'wav' | 'mp3';
-  }>
-  file: File | File[];
+
+  file: MessageFile | MessageFile[];
 }
 
+export interface MessageFile  {
+  id?: string;           // 文件唯一标识符
+  name: string;          // 文件名
+  size: number;          // 文件大小（字节）
+  type: string;          // 文件MIME类型
+  extension?: string;    // 文件扩展名
+  url?: string;          // 文件URL（如果是远程文件）
+  path?: string;         // 文件本地路径（如果是本地文件）
+  content?: Uint8Array;  // 文件内容（二进制数据）
+  createdAt?: number;    // 创建时间戳
+  updatedAt?: number;    // 更新时间戳
+  metadata?: Record<string, any>; // 其他自定义元数据
+}
 export interface ChatMessage {
   provider?: string
   timestamp: number;
   type: 'text';
-
+  
   role: RoleType;
   content: string | ChatMessageContent[];
-  images?: Uint8Array[] | string[] | File[];
+  images?: Uint8Array[] | string[] | MessageFile[];
   tool_calls?: any[];
-  files?: File | File[];
+  files?: MessageFile | MessageFile[];
 }
 
 // export interface Chat {

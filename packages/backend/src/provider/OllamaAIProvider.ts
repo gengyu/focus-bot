@@ -2,7 +2,6 @@ import {LLMProvider, ProviderResponseChunk} from "./LLMProvider";
 import {type ChatMessage, ProviderConfig} from "../../../../share/type";
 
 import {type Message, Ollama} from "ollama";
-import {undefined} from "zod";
 
 export class OllamaAIProvider implements LLMProvider {
   private ollama: Ollama;
