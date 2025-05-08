@@ -23,6 +23,13 @@ const defaultMulterStorage = multer.diskStorage({
   }
 });
 
+// @ts-ignore
+const fileFilter = (req, file, callback) => {
+  // fix problem can't save arabic strings
+  file.originalname = Buffer.from(file.originalname, 'latin1').toString('utf8');
+  callback(null, true);
+};
+
 // const upload = multer({ storage: storage });
 
 // 示例路由
@@ -318,6 +325,8 @@ export function registerControllers(controllers: any[]) {
             multerOptions.fileFilter = (req, file, cb) => {
               cb(null, methodUploadConfig.fileFilter(file));
             };
+          }else {
+            multerOptions.fileFilter = fileFilter;
           }
           
           // 创建multer实例
