@@ -77,7 +77,7 @@
         <!--          bg-gray-50 rounded-lg border border-gray-200 focus:outline-none focus:border-blue-500 focus:bg-white transition-colors overflow-y-auto-->
         <div ref="editableDiv"
              contenteditable="true"
-             class="min-h-[72px] max-h-[200px] w-full px-4 py-2.5  focus:outline-none"
+             class="editableDiv min-h-[72px] max-h-[200px] w-full px-4 py-2.5  focus:outline-none"
              :class="{'empty-content': !messageInput}"
              @input="handleInput"
              @keydown.enter.prevent="handleEnterKey"
@@ -161,8 +161,8 @@
               </svg>
             </button>
             <button @click="isLoading ? stopMessage() : sendMessage()"
-                class="px-6 py-2.5 rounded-lg focus:outline-none transition-colors self-end"
-                :class="[isLoading ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-500 hover:bg-blue-600 text-white']"
+                    class="px-6 py-2.5 rounded-lg focus:outline-none transition-colors self-end"
+                    :class="[isLoading ? 'bg-gray-400' : 'bg-blue-500 hover:bg-blue-600 text-white']"
             >
               <span v-if="!isLoading">发送</span>
               <span v-else class="flex items-center">
@@ -173,7 +173,7 @@
                         <path class="opacity-75" fill="currentColor"
                               d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
-                    发送中...
+                    停止
                 </span>
             </button>
           </div>
@@ -196,6 +196,7 @@ import {useMessageStore} from "../store/messageStore.ts";
 import MessageBubble from './MessageBubble.vue';
 import {toast} from "vue-sonner";
 import VueEasyLightbox from 'vue-easy-lightbox';
+import {chatAPI} from "../services/chatApi.ts";
 
 
 // // 配置MarkdownIt实例
@@ -318,21 +319,20 @@ const sendMessage = async () => {
   // 检查是否有内容可发送
   if (!messageInput.value.trim() && !imageFiles.value.length && !fileFiles.value.length) return;
 
-  // 如果正在发送消息，则停止当前消息发送
-  if (isLoading.value) {
-    messageStore.stopMessage(props.chatId || '')
+  if (!messageInput.value.trim() && !imageFiles.value.length) return;
+  if (isLoading.value) {// 如果正在发送消息，则不允许再次发送
     return
-  };
+  }
 
   isLoading.value = true; // 设置loading状态
 
   try {
-    // 检查模型是否已选择
+    // 发送消息到服务器
     const model = props.model;
     if (!model) {
       console.error('未选择模型');
       toast.warning('未选择模型');
-      isLoading.value = false;
+      isLoading.value = false; // 重置loading状态
       return;
     }
     const chatId = props.chatId || '';
@@ -399,7 +399,7 @@ const sendMessage = async () => {
       }
       scrollToBottom();
     }
-    console.log('消息发送完成');
+    console.log('done')
 
   } catch (error) {
     console.error('发送消息失败:', error);
@@ -411,6 +411,8 @@ const sendMessage = async () => {
   // 滚动到底部
   scrollToBottom();
 };
+
+const maxFileSize = 10 * 1024 * 1024; // 10MB限制
 
 // 处理图片上传
 const handleImageUpload = async (event: Event) => {
@@ -455,6 +457,18 @@ const handleFileUpload = async (event: Event) => {
   }
 };
 
+
+
+// 格式化文件大小
+const formatFileSize = (bytes: number): string => {
+  if (bytes === 0) return '0 B';
+  const k = 1024;
+  const sizes = ['B', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2))} ${sizes[i]}`;
+};
+
+
 const removeImage = (index: number) => {
   imageFiles.value.splice(index, 1);
   previewImages.value.splice(index, 1);
@@ -489,7 +503,7 @@ const showImg = (index: number) => {
 
 // 发送消息时处理图片上传
 const handleImageMessage = async () => {
-  if (!imageFile.value) return;
+  if (!imageFiles.value) return;
 
   try {
     // const response = await chatApi.sendImage(imageFile.value);
@@ -514,40 +528,10 @@ const scrollToBottom = () => {
 
 };
 
-// 更新输入框内容
-const updateEditableContent = () => {
-  if (editableDiv.value) {
-    editableDiv.value.innerText = messageInput.value;
-  }
-};
-
-// 监听输入框内容变化
-//   watch(messageInput, updateEditableContent);
-
 
 </script>
 
 <style scoped>
-@import 'highlight.js/styles/github.css';
-
-.markdown-body {
-  background-color: transparent;
-  font-size: 15px;
-  line-height: 1.6;
-}
-
-.markdown-body pre {
-  background-color: #f6f8fa;
-  border-radius: 6px;
-  padding: 16px;
-}
-
-.markdown-body code {
-  background-color: rgba(175, 184, 193, 0.2);
-  border-radius: 6px;
-  padding: 0.2em 0.4em;
-  font-size: 85%;
-}
 
 .think-process {
   opacity: 0.85;
