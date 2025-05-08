@@ -160,9 +160,7 @@
                       d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"/>
               </svg>
             </button>
-            <button
-                @click="sendMessage"
-                :disabled="isLoading"
+            <button @click="isLoading ? stopMessage() : sendMessage()"
                 class="px-6 py-2.5 rounded-lg focus:outline-none transition-colors self-end"
                 :class="[isLoading ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-500 hover:bg-blue-600 text-white']"
             >
@@ -309,7 +307,11 @@ const availableModels = computed(() => {
 });
 
 
-
+const stopMessage = ()=> {
+  if (isLoading.value) {// 如果正在发送消息，则不允许再次发送
+    messageStore.stopMessage(props.chatId || '')
+  }
+}
 
 // 发送消息
 const sendMessage = async () => {
