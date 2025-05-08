@@ -105,6 +105,15 @@ export const useMessageStore = defineStore<string, {
   const sendImage = async (imageFile: File) => {
     return await chatAPI.sendImage(imageFile);
   }
+  
+  /**
+   * 解析文件
+   * @param file 文件对象
+   * @returns 解析结果
+   */
+  const parseFile = async (file: File) => {
+    return await chatAPI.parseFile(file);
+  }
 
   /**
    * 获取聊天历史
@@ -121,6 +130,7 @@ export const useMessageStore = defineStore<string, {
     messages,
     sendMessage,
     sendImage,
+    parseFile,
     refreshChatHistory
   }
 });

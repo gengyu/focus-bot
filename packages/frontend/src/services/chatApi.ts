@@ -44,6 +44,28 @@ export class ChatAPI {
     return await response.json();
   }
 
+  async parseFile(file: File): Promise<any> {
+    // 文件解析API
+    const formData = new FormData();
+    formData.append('file', file);
+    
+    try {
+      const response = await fetch(`${API_BASE_URL}/chat/parse-file`, {
+        method: 'POST',
+        body: formData,
+      });
+      
+      if (!response.ok) {
+        throw new Error(`文件解析失败: ${response.statusText}`);
+      }
+      
+      return await response.json();
+    } catch (error) {
+      console.error('文件解析请求失败:', error);
+      throw error;
+    }
+  }
+
   async getChatHistory(chatId: DialogId): Promise<ChatMessage[]> {
     const req = {method: 'getChatHistory', payload: {chatId}};
     const res = await this.transport.invokeDirect(req);

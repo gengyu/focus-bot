@@ -28,6 +28,31 @@
         </div>
       </div>
       
+      <!-- 文件预览区域 -->
+      <div v-if="fileNames.length > 0" class="mb-3 flex flex-wrap items-center gap-2">
+        <div v-for="(fileName, index) in fileNames" :key="index" class="relative px-3 py-2 rounded-lg border border-gray-200 bg-gray-50 flex items-center">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+          </svg>
+          <span class="text-sm text-gray-700">{{ fileName }}</span>
+          <button @click="removeFile(index)"
+                  class="ml-2 bg-gray-200 rounded-full p-1 hover:bg-gray-300">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-500" fill="none" viewBox="0 0 24 24"
+                 stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+          </button>
+        </div>
+        
+        <!-- 文件上传进度条 -->
+        <div v-if="fileUploadProgress > 0" class="w-full mt-2">
+          <div class="text-xs text-gray-500 mb-1">文件解析进度</div>
+          <div class="w-full bg-gray-200 rounded-full h-2.5">
+            <div class="bg-blue-600 h-2.5 rounded-full" :style="{ width: fileUploadProgress + '%' }"></div>
+          </div>
+        </div>
+      </div>
+      
       <!-- 图片预览弹窗 -->
       <vue-easy-lightbox
         :visible="showLightbox"
@@ -100,6 +125,20 @@
                    stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                       d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+              </svg>
+            </label>
+            
+            <!-- 文件上传按钮 -->
+            <label
+                class="p-1.5 rounded-lg transition-colors cursor-pointer"
+                :class="[isFileUploadActive ? 'bg-blue-100' : 'hover:bg-gray-200']"
+            >
+              <input type="file" accept=".pdf,.doc,.docx,.txt,.csv,.json,.xml" class="hidden" @change="handleFileUpload">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5"
+                   :class="[isFileUploadActive ? 'text-blue-500' : 'text-gray-500']" fill="none" viewBox="0 0 24 24"
+                   stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
               </svg>
             </label>
 
@@ -202,6 +241,12 @@ const previewImages = ref<string[]>([]);
 const showLightbox = ref(false);
 const currentImgIndex = ref(0);
 
+// 文件上传相关
+const fileFiles = ref<File[]>([]);
+const fileNames = ref<string[]>([]);
+const fileUploadProgress = ref<number>(0);
+const isFileUploading = ref<boolean>(false);
+
 const isLoading = ref(false);
 const isComposing = ref(false); // 是否正在输入法编辑状态
 
@@ -210,6 +255,7 @@ const isSearchActive = ref(false);
 const isReasoningActive = ref(false);
 const isVoiceInputActive = ref(false);
 const isImageUploadActive = ref(false);
+const isFileUploadActive = ref(false);
 
 // 处理输入框内容变化
 const handleInput = (event: Event) => {
@@ -267,35 +313,67 @@ const availableModels = computed(() => {
 
 // 发送消息
 const sendMessage = async () => {
-  if (!messageInput.value.trim() && !imageFiles.value.length) return;
-  if (isLoading.value) {// 如果正在发送消息，则不允许再次发送
+  // 检查是否有内容可发送
+  if (!messageInput.value.trim() && !imageFiles.value.length && !fileFiles.value.length) return;
+  
+  // 如果正在发送消息，则停止当前消息发送
+  if (isLoading.value) {
     messageStore.stopMessage(props.chatId || '')
     return
   };
 
   isLoading.value = true; // 设置loading状态
   
-  // 创建用户消息
-  const userMessage: ChatMessage = {
-    role: 'user',
-    content: messageInput.value.trim(),
-    timestamp: Date.now(),
-    type: imageFiles.value.length > 0 ? 'image' : 'text',
-    images: imageFiles.value.length > 0 ? imageFiles.value : undefined
-  };
-
   try {
-    // 发送消息到服务器
+    // 检查模型是否已选择
     const model = props.model;
     if (!model) {
       console.error('未选择模型');
       toast.warning('未选择模型');
-      isLoading.value = false; // 重置loading状态
+      isLoading.value = false;
       return;
     }
     const chatId = props.chatId || '';
+    
+    // 处理文件上传和解析
+    let fileContent = '';
+    if (fileFiles.value.length > 0) {
+      try {
+        // 显示文件上传进度
+        fileUploadProgress.value = 30;
+        toast.info('正在解析文件，请稍候...');
+        
+        // 依次解析所有文件
+        for (const file of fileFiles.value) {
+          const result = await messageStore.parseFile(file);
+          fileUploadProgress.value = 70;
+          
+          if (result && result.content) {
+            // 将解析结果添加到消息内容中
+            fileContent += `\n文件 ${file.name} 解析结果:\n${result.content}\n`;
+          }
+        }
+        
+        fileUploadProgress.value = 100;
+        toast.success('文件解析完成');
+      } catch (error) {
+        console.error('文件解析失败:', error);
+        toast.error('文件解析失败: ' + (error instanceof Error ? error.message : String(error)));
+        fileUploadProgress.value = 0;
+      }
+    }
+    
+    // 创建用户消息
+    const userMessage: ChatMessage = {
+      role: 'user',
+      content: messageInput.value.trim() + (fileContent ? fileContent : ''),
+      timestamp: Date.now(),
+      type: 'text',
+      images: imageFiles.value.length > 0 ? imageFiles.value : undefined,
+      file: fileFiles.value.length > 0 ? fileFiles.value : undefined
+    };
 
-    // 清空输入框和图片
+    // 清空输入框、图片和文件
     if (editableDiv.value) {
       editableDiv.value.innerText = '';
     }
@@ -303,9 +381,13 @@ const sendMessage = async () => {
     imageFiles.value = [];
     previewImages.value = [];
     isImageUploadActive.value = false;
-    console.log(imageFiles.value)
+    fileFiles.value = [];
+    fileNames.value = [];
+    isFileUploadActive.value = false;
+    fileUploadProgress.value = 0;
+    
     // 使用对话管理器发送消息
-    const  readableStream = await messageStore.sendMessage(userMessage.content as string, model, chatId );
+    const readableStream = await messageStore.sendMessage(userMessage.content as string, model, chatId);
 
     const reader = readableStream.getReader();
     while (true) {
@@ -315,14 +397,14 @@ const sendMessage = async () => {
       }
       scrollToBottom();
     }
-    console.log('done')
+    console.log('消息发送完成');
 
   } catch (error) {
     console.error('发送消息失败:', error);
+    toast.error('发送消息失败: ' + (error instanceof Error ? error.message : String(error)));
   } finally {
     isLoading.value = false; // 无论成功还是失败，都重置loading状态
   }
-
 
   // 滚动到底部
   scrollToBottom();
@@ -347,11 +429,54 @@ const handleImageUpload = async (event: Event) => {
   input.value = '';
 };
 
+// 处理文件上传
+const handleFileUpload = async (event: Event) => {
+  const input = event.target as HTMLInputElement;
+  if (!input.files?.length) return;
+
+  Array.from(input.files).forEach(file => {
+    fileFiles.value.push(file);
+    fileNames.value.push(file.name);
+  });
+
+  isFileUploadActive.value = true;
+  // 清除input的value，允许上传相同的文件
+  input.value = '';
+  
+  // 显示上传的文件名到输入框
+  if (fileNames.value.length > 0) {
+    const fileText = `已选择文件: ${fileNames.value.join(', ')}`;
+    if (editableDiv.value) {
+      editableDiv.value.innerText = fileText;
+      messageInput.value = fileText;
+    }
+  }
+};
+
 const removeImage = (index: number) => {
   imageFiles.value.splice(index, 1);
   previewImages.value.splice(index, 1);
   if (previewImages.value.length === 0) {
     isImageUploadActive.value = false;
+  }
+};
+
+const removeFile = (index: number) => {
+  fileFiles.value.splice(index, 1);
+  fileNames.value.splice(index, 1);
+  if (fileNames.value.length === 0) {
+    isFileUploadActive.value = false;
+    if (editableDiv.value) {
+      editableDiv.value.innerText = '';
+      messageInput.value = '';
+    }
+  } else {
+    // 更新输入框显示的文件名
+    const fileText = `已选择文件: ${fileNames.value.join(', ')}`;
+    if (editableDiv.value) {
+      editableDiv.value.innerText = fileText;
+      messageInput.value = fileText;
+    }
   }
 };
 
