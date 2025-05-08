@@ -6,10 +6,10 @@
       "timestamp": 1746364521224,
       "conversationId": "",
       "model": {
-        "id": "gemma3:12b",
-        "name": "gemma3:12b",
+        "id": "qwen3:0.6b",
+        "name": "qwen3:0.6b",
         "description": "Ollama 本地模型",
-        "size": 8149190199,
+        "size": 522653526,
         "enabled": true,
         "providerId": "ollama"
       }

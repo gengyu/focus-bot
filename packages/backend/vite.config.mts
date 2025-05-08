@@ -27,7 +27,7 @@ export default defineConfig({
     }
   },
   server:{
-    port:3000,
+    port:3001,
     // logLevel: 'info',
     hmr:   true,
     // 自定义日志配置，确保所有控制台输出都能显示

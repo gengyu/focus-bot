@@ -15,7 +15,7 @@
       <input 
         type="text" 
         v-model="settings.serverUrl" 
-        placeholder="例如: http://localhost:3000" 
+        placeholder="例如: http://localhost:3001"
         class="input input-bordered w-full max-w-md" 
       />
     </div>

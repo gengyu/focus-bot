@@ -60,6 +60,7 @@ export interface ChatMessage {
   content: string | ChatMessageContent[];
   images?: Uint8Array[] | string[] | File[];
   tool_calls?: any[];
+  files?: File | File[];
 }
 
 // export interface Chat {

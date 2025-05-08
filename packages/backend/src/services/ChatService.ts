@@ -67,9 +67,12 @@ export class ChatService {
 
     const controller: AbortController = new AbortController();
     const signal = controller.signal;
+    const historyMessages = await this.chatHistoryService.getMessages(chatId);
 
 
-    const stream = llmProvider.streamChat([message], model.id, signal);
+    const stream = llmProvider.streamChat(
+      historyMessages.filter(Boolean)
+      , model.id, signal);
 
 
     const readableStream = new ReadableStream<ProviderResponseChunk>({

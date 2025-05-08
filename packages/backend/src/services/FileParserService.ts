@@ -1,5 +1,6 @@
 import fs from 'fs';
 import path from 'path';
+
 import pdfParse from 'pdf-parse';
 import ExcelJS from 'exceljs';
 import csvParser from 'csv-parser';
@@ -100,7 +101,7 @@ export class FileParserService {
 
       return metadata;
     } catch (error) {
-      throw new Error(`获取文件元信息失败: ${error.message}`);
+      throw new Error(`获取文件元信息失败: ${(error as Error).message}`);
     }
   }
 
@@ -221,12 +222,14 @@ export class FileParserService {
     const workbook = new ExcelJS.Workbook();
     await workbook.xlsx.readFile(filePath);
 
-    let content = [];
+    let content: string[] = [];
     workbook.worksheets.forEach(worksheet => {
       content.push(`Sheet: ${worksheet.name}`);
       worksheet.eachRow((row, rowNumber) => {
+        // 若果是  	values: CellValue[] | { [key: string]: CellValue };
+        const values = row.values instanceof Array ? row.values : Object.values(row.values);
         content.push(
-          row.values
+          values
             .slice(1)
             .map(cell => (cell ? cell.toString() : ''))
             .join('\t')

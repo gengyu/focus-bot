@@ -412,6 +412,12 @@ const sendMessage = async () => {
   scrollToBottom();
 };
 
+
+// 检查文件大小
+// if (file.size > maxFileSize) {
+//   toast.error(`文件 ${file.name} 超过10MB限制`);
+//   return;
+// }
 const maxFileSize = 10 * 1024 * 1024; // 10MB限制
 
 // 处理图片上传

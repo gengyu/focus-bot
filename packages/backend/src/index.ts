@@ -36,8 +36,8 @@ app.use(decoratorRouter.routes()).use(decoratorRouter.allowedMethods());
 // 启动服务器
 console.log('running on import.meta.env.PROD', process.env.PROD);
 
-  app.listen(process.env.PROD || 3000);
-  console.log('running on http://localhost:3000');
+  app.listen(process.env.PROD || 3001);
+  console.log('running on http://localhost:3001');
 
 
 export const viteNodeApp = app;
