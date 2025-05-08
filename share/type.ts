@@ -56,7 +56,7 @@ export interface MessageFile  {
   extension?: string;    // 文件扩展名
   url?: string;          // 文件URL（如果是远程文件）
   path?: string;         // 文件本地路径（如果是本地文件）
-  content?: Uint8Array;  // 文件内容（二进制数据）
+  content?: Uint8Array| string;  // 文件内容（二进制数据）
   createdAt?: number;    // 创建时间戳
   updatedAt?: number;    // 更新时间戳
   metadata?: Record<string, any>; // 其他自定义元数据
