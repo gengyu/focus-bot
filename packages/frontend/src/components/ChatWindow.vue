@@ -17,7 +17,7 @@
       <!-- 图片预览区域 -->
       <div v-if="previewImages.length > 0" class="mb-3 flex flex-wrap items-center gap-2">
         <div v-for="(preview, index) in previewImages" :key="index" class="relative w-20 h-20 rounded-lg overflow-hidden border border-gray-200">
-          <img :src="preview" alt="图片预览" class="w-full h-full object-cover cursor-pointer" @click="showImg(index)">
+          <img :src="preview" alt="图片预览" class="w-full h-full object-cover cursor-pointer" @click="(e) => showImg(index, e)">
           <button @click="removeImage(index)"
                   class="absolute top-1 right-1 bg-black/50 rounded-full p-1 hover:bg-black/70">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24"
@@ -374,6 +374,12 @@ const sendMessage = async () => {
       images: imageFiles.value.length > 0 ? imageFiles.value : undefined,
       files: fileFiles.value.length > 0 ? fileFiles.value : undefined
     };
+    
+    // 将消息添加到消息列表中，确保在UI中显示
+    if (!messageStore.messages[chatId]) {
+      messageStore.messages[chatId] = [];
+    }
+    messageStore.messages[chatId].push(userMessage);
 
     // 清空输入框、图片和文件
     if (editableDiv.value) {
@@ -389,6 +395,7 @@ const sendMessage = async () => {
     fileUploadProgress.value = 0;
 
     // 使用对话管理器发送消息
+    // 确保在发送消息前已经将用户消息添加到消息列表中
     const readableStream = await messageStore.sendMessage(userMessage.content as string, model, chatId);
 
     const reader = readableStream.getReader();
@@ -445,7 +452,12 @@ const handleFileUpload = async (event: Event) => {
   if (!input.files?.length) return;
 
   Array.from(input.files).forEach(file => {
-    fileFiles.value.push(file);
+    // 确保文件对象包含所需属性
+    const fileObj = new File([file], file.name, {
+      type: file.type,
+      lastModified: file.lastModified
+    });
+    fileFiles.value.push(fileObj);
     fileNames.value.push(file.name);
   });
 
@@ -502,24 +514,33 @@ const removeFile = (index: number) => {
   }
 };
 
-const showImg = (index: number) => {
+const showImg = (index: number, e?: Event) => {
   currentImgIndex.value = index;
   showLightbox.value = true;
+  // 防止事件冒泡
+  e?.stopPropagation();
 };
 
 // 发送消息时处理图片上传
 const handleImageMessage = async () => {
-  if (!imageFiles.value) return;
+  if (!imageFiles.value || imageFiles.value.length === 0) return;
 
   try {
-    // const response = await chatApi.sendImage(imageFile.value);
-    // messages.value.push(response);
+    // 图片已经在sendMessage函数中处理，这里只需要滚动到底部
     scrollToBottom();
-    cancelImageUpload(); // 清除预览
   } catch (error) {
-    log.error("Failed to upload image:", error);
+    log.error("处理图片消息失败:", error);
+    toast.error('处理图片失败: ' + (error instanceof Error ? error.message : String(error)));
   }
 };
+
+// 清除图片上传预览
+const cancelImageUpload = () => {
+  imageFiles.value = [];
+  previewImages.value = [];
+  isImageUploadActive.value = false;
+};
+
 
 // 定义emit事件
 const emit = defineEmits<{

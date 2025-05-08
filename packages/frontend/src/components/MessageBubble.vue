@@ -38,19 +38,19 @@
             :src="getImageSrc(image)" 
             alt="上传图片" 
             class="max-w-[200px] max-h-[200px] rounded-lg cursor-pointer" 
-            @click="showFullImage(image, index)"
+            @click="(e) => showFullImage(image, index, e)"
           >
         </div>
       </div>
       <!-- 显示上传的文件 -->
       <div v-if="message.files && (Array.isArray(message.files) ? message.files.length > 0 : true)" class="mt-3">
-        <div v-for="(file, index) in getFilesArray(message.files)" :key="index" class="mb-2 px-3 py-2 bg-gray-100 rounded-lg flex items-center">
+        <div v-for="(file, index) in getFilesArray(message.files)" :key="index" class="mb-2 px-3 py-2 bg-gray-100 rounded-lg flex items-center hover:bg-gray-200 transition-colors">
           <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
           </svg>
-          <div class="flex flex-col">
-            <span class="text-sm font-medium">{{ file.name }}</span>
-            <span class="text-xs text-gray-500">{{ formatFileSize(file.size) }}</span>
+          <div class="flex flex-col flex-1">
+            <span class="text-sm font-medium">{{ file.name || '未命名文件' }}</span>
+            <span class="text-xs text-gray-500">{{ formatFileSize(file.size || 0) }}</span>
           </div>
         </div>
       </div>
@@ -111,6 +111,9 @@ const getImageSrc = (image: any): string => {
     // 将Uint8Array转换为Blob并创建URL
     const blob = new Blob([image]);
     return URL.createObjectURL(blob);
+  } else if (image instanceof File) {
+    // 处理File对象
+    return URL.createObjectURL(image);
   } else if (image && typeof image === 'object' && 'url' in image) {
     return image.url as string;
   } else if (image && typeof image === 'object' && 'content' in image && image.content instanceof Uint8Array) {
@@ -121,21 +124,47 @@ const getImageSrc = (image: any): string => {
 };
 
 // 显示全屏图片
-const showFullImage = (image: any, index: number) => {
+const showFullImage = (image: any, index: number, e?: Event) => {
   previewImages.value = [];
   if (props.chatMessage.images && Array.isArray(props.chatMessage.images)) {
+    // 确保所有图片都能正确获取URL
     previewImages.value = props.chatMessage.images.map(img => getImageSrc(img));
   } else if (props.chatMessage.images) {
+    // 处理单个图片的情况
     previewImages.value = [getImageSrc(image)];
   }
+  
+  // 确保预览图片数组不为空
+  if (previewImages.value.length === 0 && image) {
+    previewImages.value = [getImageSrc(image)];
+  }
+  
   currentImgIndex.value = index;
   showLightbox.value = true;
+  
+  // 防止事件冒泡
+  e?.stopPropagation();
 };
 
+
 // 将文件转换为数组
-const getFilesArray = (files: MessageFile | MessageFile[] | undefined): MessageFile[] => {
+const getFilesArray = (files: MessageFile | MessageFile[] | File | File[] | undefined): MessageFile[] => {
   if (!files) return [];
-  return Array.isArray(files) ? files : [files];
+  
+  // 转换为数组处理
+  const filesArray = Array.isArray(files) ? files : [files];
+  
+  // 将File对象转换为MessageFile格式
+  return filesArray.map(file => {
+    if (file instanceof File) {
+      return {
+        name: file.name,
+        size: file.size,
+        type: file.type
+      } as MessageFile;
+    }
+    return file as MessageFile;
+  });
 };
 
 // 格式化文件大小
@@ -167,17 +196,22 @@ const message = computed(() => {
     }
   }
 
+  // 确保images和files属性正确传递
+  const images = chatMessage.images || [];
+  const files = chatMessage.files || [];
+
   return {
     role: chatMessage.role,
     content: content,
     timestamp: chatMessage.timestamp,
-    type: chatMessage.type,
+    type: chatMessage.type || 'text',
     imageUrl: chatMessage.imageUrl,
     thinking: thinking,
-    images: chatMessage.images,
-    files: chatMessage.files
+    images: images,
+    files: files
   }
 })
+
 
 </script>
 
