@@ -372,7 +372,7 @@ const sendMessage = async () => {
       timestamp: Date.now(),
       type: 'text',
       images: imageFiles.value.length > 0 ? imageFiles.value : undefined,
-      file: fileFiles.value.length > 0 ? fileFiles.value : undefined
+      files: fileFiles.value.length > 0 ? fileFiles.value : undefined
     };
 
     // 清空输入框、图片和文件
