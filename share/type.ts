@@ -113,3 +113,30 @@ export interface Conversation {
   // tags: ['客服', '高优先级'],         // 标签分类（可用于搜索、筛选）
 }
 
+
+
+/**
+ * 文件元信息接口
+ */
+export interface FileMetadata {
+  fileName: string;
+  originalname?: string;
+  fileSize: number;
+  fileType: string;
+  createdAt: Date;
+  modifiedAt: Date;
+  accessedAt: Date;
+  mimeType?: string;
+  author?: string;
+  pageCount?: number;
+  wordCount?: number;
+  additionalInfo?: Record<string, any>;
+}
+
+/**
+ * 文件解析结果接口
+ */
+export interface FileParseResult {
+  content: string;
+  metadata: FileMetadata;
+}

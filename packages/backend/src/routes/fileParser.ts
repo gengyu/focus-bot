@@ -29,6 +29,7 @@ export class FileParserController {
   async uploadFile(@Body() body: { file: multer.File }) {
     try {
       const result = await this.fileParserService.parseFile(body.file.path,  true);
+      result.metadata.originalname =body.file.originalname
       return ResultHelper.success(result);
     } catch (error) {
       return ResultHelper.fail((error as Error).message, null);

@@ -11,31 +11,8 @@ import mammoth from 'mammoth';
 import {fileTypeFromFile} from 'file-type';
 import {Readable} from 'stream';
 import {promisify} from 'util';
+import {FileMetadata, FileParseResult} from "../../../../share/type.ts";
 
-/**
- * 文件元信息接口
- */
-export interface FileMetadata {
-  fileName: string;
-  fileSize: number;
-  fileType: string;
-  createdAt: Date;
-  modifiedAt: Date;
-  accessedAt: Date;
-  mimeType?: string;
-  author?: string;
-  pageCount?: number;
-  wordCount?: number;
-  additionalInfo?: Record<string, any>;
-}
-
-/**
- * 文件解析结果接口
- */
-export interface FileParseResult {
-  content: string;
-  metadata: FileMetadata;
-}
 
 export class FileParserService {
   private static instance: FileParserService;
@@ -68,6 +45,7 @@ export class FileParserService {
       // 基本元信息
       const metadata: FileMetadata = {
         fileName,
+        originalname: fileName,
         fileSize: stats.size,
         fileType,
         createdAt: stats.birthtime,
