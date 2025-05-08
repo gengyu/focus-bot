@@ -11,6 +11,11 @@ export class ChatAPI {
     prefix: 'chat'
   });
 
+  private fileParserTransport = new TransportAdapter(TransportType.HTTP, {
+    serverUrl: API_BASE_URL,
+    prefix: 'fileParser'
+  });
+
 
   sendMessage(message: ChatMessage, model: Model, chatId: string): [abort: (reason?: any) => void, ReadableStream<ChatMessage>] {
     const req: TransportRequest = {method: 'sendMessage', payload: {message, model, chatId}};
@@ -85,6 +90,13 @@ export class ChatAPI {
     const req = {method: 'getDialogList', payload: {}};
     const res = await this.transport.invokeDirect(req);
     if (!res.success) throw new Error(`获取对话列表失败: ${res.error}`);
+    return res.data;
+  }
+
+  async parseFile(filePath: string): Promise<string> {
+    const req = {method: 'parse', payload: {filePath}};
+    const res = await this.fileParserTransport.invokeDirect(req);
+    if (!res.success) throw new Error(`解析文件失败: ${res.error}`);
     return res.data;
   }
 

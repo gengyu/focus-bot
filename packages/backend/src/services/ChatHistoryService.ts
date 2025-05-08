@@ -54,7 +54,7 @@ export class ChatHistoryService {
       // },
       write(chunk) {
         if (!message) message = {...chunk};
-        else message.content += chunk.content;
+        else message.content += chunk.content as string;
       },
       close: async () => {
         const chatHistory = await this.loadChatHistory(chatId);

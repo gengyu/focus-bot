@@ -27,7 +27,7 @@
           </button>
         </div>
       </div>
-      
+
       <!-- 文件预览区域 -->
       <div v-if="fileNames.length > 0" class="mb-3 flex flex-wrap items-center gap-2">
         <div v-for="(fileName, index) in fileNames" :key="index" class="relative px-3 py-2 rounded-lg border border-gray-200 bg-gray-50 flex items-center">
@@ -43,7 +43,7 @@
             </svg>
           </button>
         </div>
-        
+
         <!-- 文件上传进度条 -->
         <div v-if="fileUploadProgress > 0" class="w-full mt-2">
           <div class="text-xs text-gray-500 mb-1">文件解析进度</div>
@@ -52,13 +52,13 @@
           </div>
         </div>
       </div>
-      
+
       <!-- 图片预览弹窗 -->
       <vue-easy-lightbox
-        :visible="showLightbox"
-        :imgs="previewImages"
-        :index="currentImgIndex"
-        @hide="showLightbox = false"
+          :visible="showLightbox"
+          :imgs="previewImages"
+          :index="currentImgIndex"
+          @hide="showLightbox = false"
       ></vue-easy-lightbox>
 
       <!-- 输入框区域 -->
@@ -127,7 +127,7 @@
                       d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
               </svg>
             </label>
-            
+
             <!-- 文件上传按钮 -->
             <label
                 class="p-1.5 rounded-lg transition-colors cursor-pointer"
@@ -315,7 +315,7 @@ const availableModels = computed(() => {
 const sendMessage = async () => {
   // 检查是否有内容可发送
   if (!messageInput.value.trim() && !imageFiles.value.length && !fileFiles.value.length) return;
-  
+
   // 如果正在发送消息，则停止当前消息发送
   if (isLoading.value) {
     messageStore.stopMessage(props.chatId || '')
@@ -323,7 +323,7 @@ const sendMessage = async () => {
   };
 
   isLoading.value = true; // 设置loading状态
-  
+
   try {
     // 检查模型是否已选择
     const model = props.model;
@@ -334,7 +334,7 @@ const sendMessage = async () => {
       return;
     }
     const chatId = props.chatId || '';
-    
+
     // 处理文件上传和解析
     let fileContent = '';
     if (fileFiles.value.length > 0) {
@@ -342,18 +342,18 @@ const sendMessage = async () => {
         // 显示文件上传进度
         fileUploadProgress.value = 30;
         toast.info('正在解析文件，请稍候...');
-        
+
         // 依次解析所有文件
         for (const file of fileFiles.value) {
           const result = await messageStore.parseFile(file);
           fileUploadProgress.value = 70;
-          
+
           if (result && result.content) {
             // 将解析结果添加到消息内容中
             fileContent += `\n文件 ${file.name} 解析结果:\n${result.content}\n`;
           }
         }
-        
+
         fileUploadProgress.value = 100;
         toast.success('文件解析完成');
       } catch (error) {
@@ -362,7 +362,7 @@ const sendMessage = async () => {
         fileUploadProgress.value = 0;
       }
     }
-    
+
     // 创建用户消息
     const userMessage: ChatMessage = {
       role: 'user',
@@ -385,7 +385,7 @@ const sendMessage = async () => {
     fileNames.value = [];
     isFileUploadActive.value = false;
     fileUploadProgress.value = 0;
-    
+
     // 使用对话管理器发送消息
     const readableStream = await messageStore.sendMessage(userMessage.content as string, model, chatId);
 
@@ -442,7 +442,7 @@ const handleFileUpload = async (event: Event) => {
   isFileUploadActive.value = true;
   // 清除input的value，允许上传相同的文件
   input.value = '';
-  
+
   // 显示上传的文件名到输入框
   if (fileNames.value.length > 0) {
     const fileText = `已选择文件: ${fileNames.value.join(', ')}`;
