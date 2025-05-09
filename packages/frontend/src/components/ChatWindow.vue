@@ -392,14 +392,29 @@ const handleImageUpload = async (event: Event) => {
   const input = event.target as HTMLInputElement;
   if (!input.files?.length) return;
 
-  Array.from(input.files).forEach(file => {
-    imageFiles.value.push(file);
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      previewImages.value.push(e.target?.result as string);
-    };
-    reader.readAsDataURL(file);
-  });
+  for (const file of input.files) {
+    // fileFiles.value.push(file);
+    const fileParseResult: MessageFile = {
+      content: '',
+      metadata: {
+        fileName: file.name,
+        originalname: file.name,
+        fileSize: file.size,
+        fileType: file.type,
+        modifiedAt: file.lastModified,
+        mimeType: file.type,
+      }
+    }
+    const result = await chatAPI.parseFile(file)
+  }
+  // Array.from(input.files).forEach(file => {
+  //   imageFiles.value.push(file);
+  //   const reader = new FileReader();
+  //   reader.onload = (e) => {
+  //     previewImages.value.push(e.target?.result as string);
+  //   };
+  //   reader.readAsDataURL(file);
+  // });
 
   isImageUploadActive.value = true;
   // 清除input的value，允许上传相同的文件

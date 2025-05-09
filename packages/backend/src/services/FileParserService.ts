@@ -11,6 +11,9 @@ import mammoth from 'mammoth';
 import {fileTypeFromFile} from 'file-type';
 import {Readable} from 'stream';
 import {promisify} from 'util';
+import imageSize from 'image-size';
+import exifParser from 'exif-parser';
+import { getColorFromURL } from 'color-thief-node';
 import {FileMetadata, MessageFile} from "../../../../share/type.ts";
 
 
@@ -75,6 +78,29 @@ export class FileParserService {
           // Word文档可以获取作者、页数等信息
           // 这里简化处理
           break;
+        case 'jpg':
+        case 'jpeg':
+        case 'png':
+        case 'gif':
+        case 'webp':
+        case 'bmp':
+        case 'tiff':
+        case 'svg':
+          try {
+            // 获取图片尺寸信息
+            const dimensions = imageSize(filePath);
+            if (dimensions) {
+              metadata.additionalInfo = metadata.additionalInfo ?? {};
+              metadata.additionalInfo.width = dimensions.width;
+              metadata.additionalInfo.height = dimensions.height;
+              if (dimensions.type) {
+                metadata.additionalInfo.format = dimensions.type;
+              }
+            }
+          } catch (e) {
+            // 忽略错误，继续处理
+          }
+          break;
         // 可以添加更多文件类型的元信息提取
       }
 
@@ -127,6 +153,16 @@ export class FileParserService {
         case '.pptx':
         case '.ppt':
           content = await this.parsePPT(filePath);
+          break;
+        case '.jpg':
+        case '.jpeg':
+        case '.png':
+        case '.gif':
+        case '.webp':
+        case '.bmp':
+        case '.tiff':
+        case '.svg':
+          content = await this.parseImage(filePath);
           break;
         case '.js':
         case '.ts':
@@ -314,6 +350,136 @@ export class FileParserService {
    */
   private async parseTextFile(filePath: string): Promise<string> {
     return fs.promises.readFile(filePath, 'utf-8');
+  }
+
+  /**
+   * 解析图片文件
+   */
+  private async parseImage(filePath: string): Promise<string> {
+    try {
+      // 获取图片元数据
+      const dimensions = imageSize(filePath);
+      const fileName = path.basename(filePath);
+      const fileType = path.extname(filePath).toLowerCase().replace('.', '');
+      const stats = fs.statSync(filePath);
+      
+      // 构建图片描述信息
+      let imageInfo = `[图片文件] ${fileName}\n`;
+      imageInfo += `格式: ${fileType.toUpperCase()}\n`;
+      imageInfo += `尺寸: ${dimensions.width || '未知'} x ${dimensions.height || '未知'} 像素\n`;
+      imageInfo += `大小: ${this.formatFileSize(stats.size)}\n`;
+      
+      // 尝试获取更多图片信息
+      try {
+        const fileTypeResult = await fileTypeFromFile(filePath);
+        if (fileTypeResult) {
+          imageInfo += `MIME类型: ${fileTypeResult.mime}\n`;
+        }
+      } catch (e) {
+        // 忽略错误
+      }
+      
+      // 提取EXIF数据（仅适用于JPEG和某些TIFF图像）
+      if (['jpg', 'jpeg', 'tiff'].includes(fileType.toLowerCase())) {
+        try {
+          const buffer = fs.readFileSync(filePath);
+          const parser = exifParser.create(buffer);
+          const exifData = parser.parse();
+          
+          if (exifData && exifData.tags) {
+            imageInfo += `\n[EXIF数据]\n`;
+            
+            // 相机信息
+            if (exifData.tags.Make || exifData.tags.Model) {
+              imageInfo += `相机: ${exifData.tags.Make || ''} ${exifData.tags.Model || ''}`.trim() + '\n';
+            }
+            
+            // 拍摄参数
+            if (exifData.tags.FNumber) {
+              imageInfo += `光圈: f/${exifData.tags.FNumber}\n`;
+            }
+            
+            if (exifData.tags.ExposureTime) {
+              const exposureTime = exifData.tags.ExposureTime;
+              imageInfo += `曝光时间: ${exposureTime < 1 ? `1/${Math.round(1/exposureTime)}` : exposureTime}秒\n`;
+            }
+            
+            if (exifData.tags.ISO) {
+              imageInfo += `ISO: ${exifData.tags.ISO}\n`;
+            }
+            
+            if (exifData.tags.FocalLength) {
+              imageInfo += `焦距: ${exifData.tags.FocalLength}mm\n`;
+            }
+            
+            // 拍摄时间
+            if (exifData.tags.DateTimeOriginal) {
+              const date = new Date(exifData.tags.DateTimeOriginal * 1000);
+              imageInfo += `拍摄时间: ${date.toLocaleString()}\n`;
+            }
+            
+            // GPS信息
+            if (exifData.tags.GPSLatitude && exifData.tags.GPSLongitude) {
+              imageInfo += `GPS坐标: ${exifData.tags.GPSLatitude.toFixed(6)}, ${exifData.tags.GPSLongitude.toFixed(6)}\n`;
+            }
+          }
+        } catch (e) {
+          // 忽略EXIF解析错误
+        }
+      }
+      
+      // 提取颜色信息
+      try {
+        // 分析图片主要颜色
+        const dominantColor = await this.extractDominantColor(filePath);
+        if (dominantColor) {
+          imageInfo += `\n[颜色分析]\n`;
+          imageInfo += `主色调: RGB(${dominantColor[0]}, ${dominantColor[1]}, ${dominantColor[2]})\n`;
+          imageInfo += `十六进制: #${this.rgbToHex(dominantColor[0], dominantColor[1], dominantColor[2])}\n`;
+        }
+      } catch (e) {
+        // 忽略颜色分析错误
+      }
+      
+      return imageInfo;
+    } catch (error: any) {
+      return `无法解析图片文件: ${error.message}`;
+    }
+  }
+  
+  /**
+   * 提取图片的主要颜色
+   */
+  private async extractDominantColor(filePath: string): Promise<number[] | null> {
+    try {
+      // 使用color-thief-node提取主要颜色
+      const dominantColor = await getColorFromURL(filePath);
+      return dominantColor;
+    } catch (e) {
+      return null;
+    }
+  }
+  
+  /**
+   * 将RGB值转换为十六进制颜色代码
+   */
+  private rgbToHex(r: number, g: number, b: number): string {
+    return [r, g, b]
+      .map(x => {
+        const hex = x.toString(16);
+        return hex.length === 1 ? '0' + hex : hex;
+      })
+      .join('');
+  }
+  
+  /**
+   * 格式化文件大小
+   */
+  private formatFileSize(bytes: number): string {
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(2) + ' KB';
+    if (bytes < 1024 * 1024 * 1024) return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
+    return (bytes / (1024 * 1024 * 1024)).toFixed(2) + ' GB';
   }
 
   /**

@@ -1,7 +1,11 @@
 import { FileParserService } from './services/FileParserService';
 import path from 'path';
 import fs from 'fs';
+import https from 'https';
 import { promisify } from 'util';
+
+// 使用Node.js的stream.pipeline，但兼容性更好的方式
+const pipeline = promisify(require('stream').pipeline);
 
 /**
  * 测试FileParserService的功能
@@ -33,6 +37,21 @@ async function testFileParser() {
     // 创建测试HTML文件
     const htmlFilePath = path.join(testDir, 'test.html');
     fs.writeFileSync(htmlFilePath, '<html><head><title>测试页面</title></head><body><h1>测试标题</h1><p>这是一个测试段落</p></body></html>');
+
+    // 创建一个简单的测试图片文件（如果不存在）
+    const imagePath = path.join(testDir, 'test.jpg');
+    if (!fs.existsSync(imagePath)) {
+      try {
+        // 使用一个示例图片URL，这里使用一个公共图片
+        const imageUrl = 'https://picsum.photos/800/600';
+        await downloadFile(imageUrl, imagePath);
+        console.log('测试图片下载完成');
+      } catch (error) {
+        console.error('下载测试图片失败:', error);
+        // 创建一个空图片文件，以便测试能继续
+        fs.writeFileSync(imagePath, Buffer.from([]));
+      }
+    }
 
     console.log('测试文件创建完成');
 
@@ -66,10 +85,50 @@ async function testFileParser() {
     const metadata = await fileParserService.getFileMetadata(textFilePath);
     console.log('文件元信息:', JSON.stringify(metadata, null, 2));
 
+    // 测试图片解析（包含新增的EXIF和颜色分析功能）
+    console.log('\n===== 测试图片解析（增强功能）=====');
+    const imagePath = path.join(testDir, 'test.jpg');
+    if (fs.existsSync(imagePath)) {
+      const imageContent = await fileParserService.parseFile(imagePath);
+      console.log('图片解析结果:');
+      console.log(imageContent);
+
+      // 测试带元信息的图片解析
+      const imageResult = await fileParserService.parseFile(imagePath, true);
+      console.log('图片解析结果(带元信息):', JSON.stringify(imageResult.metadata, null, 2));
+    } else {
+      console.log('测试图片不存在，跳过图片解析测试');
+    }
+
     console.log('\n所有测试完成');
   } catch (error) {
     console.error('测试过程中出错:', error);
   }
+}
+
+/**
+ * 下载文件的辅助函数
+ */
+async function downloadFile(url: string, destination: string): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const fileStream = fs.createWriteStream(destination);
+    https.get(url, (response) => {
+      if (response.statusCode !== 200) {
+        fileStream.close();
+        reject(new Error(`下载失败，状态码: ${response.statusCode}`));
+        return;
+      }
+      
+      response.pipe(fileStream);
+      fileStream.on('finish', () => {
+        fileStream.close();
+        resolve();
+      });
+    }).on('error', (err) => {
+      fileStream.close();
+      reject(err);
+    });
+  });
 }
 
 // 执行测试
