@@ -2,7 +2,7 @@ import {defineStore} from 'pinia';
 import {type Ref, ref} from 'vue';
 import type {AppSetting, ProviderConfig} from '../../../../share/type';
 import {configAPI} from "../services/api.ts";
-import {toast} from "vue-sonner";
+import {toast} from "vue3-toastify";
 import log from "loglevel";
 
 // 默认供应商配置

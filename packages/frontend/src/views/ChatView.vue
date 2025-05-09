@@ -179,7 +179,7 @@ import {useAppSettingStore} from "../store/appSettingStore.js";
 import {type Dialog, type DialogId, type Model} from "../../../../share/type.ts";
 import {useConversationStore} from "../store/conversationStore.ts";
 
-import {toast} from "vue-sonner";
+import {toast} from "vue3-toastify";
 
 
 const {appSetting} = useAppSettingStore();

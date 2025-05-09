@@ -5,6 +5,7 @@ import './styles/index.css';
 import {createPinia} from "pinia";
 import log from "loglevel";
 log.setLevel("info");
+import "vue3-toastify/dist/index.css";
 
 const store = createPinia();
 

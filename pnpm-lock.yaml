@@ -213,6 +213,9 @@ importers:
       vue-sonner:
         specifier: ^1.3.2
         version: 1.3.2
+      vue3-toastify:
+        specifier: ^0.2.8
+        version: 0.2.8(vue@3.5.13(typescript@5.8.3))
     devDependencies:
       '@tailwindcss/postcss':
         specifier: ^4.1.5
@@ -3867,6 +3870,15 @@ packages:
     hasBin: true
     peerDependencies:
       typescript: '>=5.0.0'
+
+  vue3-toastify@0.2.8:
+    resolution: {integrity: sha512-8jDOqsJaBZEbGpCbhWDETJc11D1lZefvgFPq/IPdM+U7+qyXoVPDvK6uq/FIgyV7qV0NcNzvGBMEzjsLQqGROw==}
+    engines: {node: '>=20', npm: '>=9.0.0'}
+    peerDependencies:
+      vue: '>=3.2.0'
+    peerDependenciesMeta:
+      vue:
+        optional: true
 
   vue@3.5.13:
     resolution: {integrity: sha512-wmeiSMxkZCSc+PM2w2VRsOYAZC8GdipNFRTsLSfodVqI9mbejKeXEGr8SckuLnrQPGe3oJN5c3K0vpoU9q/wCQ==}
@@ -7873,6 +7885,10 @@ snapshots:
       '@volar/typescript': 2.4.13
       '@vue/language-core': 2.2.10(typescript@5.8.3)
       typescript: 5.8.3
+
+  vue3-toastify@0.2.8(vue@3.5.13(typescript@5.8.3)):
+    optionalDependencies:
+      vue: 3.5.13(typescript@5.8.3)
 
   vue@3.5.13(typescript@5.8.3):
     dependencies:

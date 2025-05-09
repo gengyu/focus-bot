@@ -48,24 +48,19 @@ interface ChatMessageContent {
   file: MessageFile | MessageFile[];
 }
 
+// FileParseResult
 export interface MessageFile  {
-  id?: string;           // 文件唯一标识符
-  name: string;          // 文件名
-  size: number;          // 文件大小（字节）
-  type: string;          // 文件MIME类型
-  extension?: string;    // 文件扩展名
+  content?: string;  // 文件内容
+  metadata: FileMetadata;  // 其他自定义元数据
   url?: string;          // 文件URL（如果是远程文件）
   path?: string;         // 文件本地路径（如果是本地文件）
-  content?: Uint8Array| string;  // 文件内容（二进制数据）
-  createdAt?: number;    // 创建时间戳
-  updatedAt?: number;    // 更新时间戳
-  metadata?: Record<string, any>; // 其他自定义元数据
+
 }
 export interface ChatMessage {
   provider?: string
   timestamp: number;
   type: 'text';
-  
+
   role: RoleType;
   content: string | ChatMessageContent[];
   images?: Uint8Array[] | string[] | MessageFile[];
@@ -119,24 +114,18 @@ export interface Conversation {
  * 文件元信息接口
  */
 export interface FileMetadata {
-  fileName: string;
-  originalname?: string;
-  fileSize: number;
-  fileType: string;
-  createdAt: Date;
-  modifiedAt: Date;
-  accessedAt: Date;
-  mimeType?: string;
-  author?: string;
-  pageCount?: number;
-  wordCount?: number;
-  additionalInfo?: Record<string, any>;
+  fileName: string; // 文件名
+  originalname?: string; // 原始文件名（可选）
+  fileSize?: number; // 文件大小（字节）
+  fileType?: string; // 文件类型
+  createdAt?: number; // 创建时间
+  modifiedAt?: number; // 最后修改时间
+  accessedAt?: number; // 最后访问时间
+  mimeType?: string; // MIME类型（可选）
+  author?: string; // 作者信息（可选）
+  pageCount?: number; // 页数（可选）
+  wordCount?: number; // 字数统计（可选）
+  additionalInfo?: Record<string, any>; // 其他自定义元数据（可选）
 }
 
-/**
- * 文件解析结果接口
- */
-export interface FileParseResult {
-  content: string;
-  metadata: FileMetadata;
-}
+

@@ -11,7 +11,7 @@ import mammoth from 'mammoth';
 import {fileTypeFromFile} from 'file-type';
 import {Readable} from 'stream';
 import {promisify} from 'util';
-import {FileMetadata, FileParseResult} from "../../../../share/type.ts";
+import {FileMetadata, MessageFile} from "../../../../share/type.ts";
 
 
 export class FileParserService {
@@ -48,9 +48,9 @@ export class FileParserService {
         originalname: fileName,
         fileSize: stats.size,
         fileType,
-        createdAt: stats.birthtime,
-        modifiedAt: stats.mtime,
-        accessedAt: stats.atime,
+        createdAt: stats.birthtime.getTime(),
+        modifiedAt: stats.mtime.getTime(),
+        accessedAt: stats.atime.getTime(),
         additionalInfo: {}
       };
 
@@ -90,8 +90,8 @@ export class FileParserService {
    * @returns 解析后的文本内容和元信息
    */
   public async parseFile(filePath: string): Promise<string>;
-  public async parseFile(filePath: string, includeMetadata: boolean): Promise<FileParseResult>;
-  public async parseFile(filePath: string, includeMetadata: boolean = false): Promise<string | FileParseResult> {
+  public async parseFile(filePath: string, includeMetadata: boolean): Promise<MessageFile>;
+  public async parseFile(filePath: string, includeMetadata: boolean = false): Promise<string | MessageFile> {
     if (!fs.existsSync(filePath)) {
       throw new Error('文件不存在');
     }

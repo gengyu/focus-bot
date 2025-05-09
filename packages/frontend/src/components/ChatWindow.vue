@@ -31,15 +31,15 @@
       </div>
 
       <!-- 文件预览区域 -->
-      <div v-if="fileNames.length > 0" class="mb-3 flex flex-wrap items-center gap-2">
-        <div v-for="(fileName, index) in fileNames" :key="index"
+      <div v-if="fileFiles.length > 0" class="mb-3 flex flex-wrap items-center gap-2">
+        <div v-for="(fileName, index) in fileFiles" :key="index"
              class="relative px-3 py-2 rounded-lg border border-gray-200 bg-gray-50 flex items-center">
           <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-gray-500" fill="none" viewBox="0 0 24 24"
                stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                   d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
           </svg>
-          <span class="text-sm text-gray-700">{{ fileName }}</span>
+          <span class="text-sm text-gray-700">{{ fileName.metadata.fileName }}</span>
           <button @click="removeFile(index)"
                   class="ml-2 bg-gray-200 rounded-full p-1 hover:bg-gray-300">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-500" fill="none" viewBox="0 0 24 24"
@@ -53,7 +53,7 @@
         <div v-if="fileUploadProgress > 0" class="w-full mt-2">
           <div class="text-xs text-gray-500 mb-1">文件解析进度</div>
           <div class="w-full bg-gray-200 rounded-full h-2.5">
-            <div class="bg-blue-600 h-2.5 rounded-full" :style="{ width: fileUploadProgress + '%' }"></div>
+            <div class="bg-blue-600 h-2.5 rounded-full transition-all duration-1500" :style="{ width: fileUploadProgress + '%' }"></div>
           </div>
         </div>
       </div>
@@ -195,30 +195,14 @@
 
 <script setup lang="ts">
 import {computed, defineProps, ref, watch} from 'vue';
-import type {ChatMessage, Model} from "../../../../share/type.ts";
+import { type ChatMessage, MessageFile, type Model } from "../../../../share/type.ts";
 import log from "loglevel";
 import {useConversationStore} from "../store/conversationStore.ts";
 import {useMessageStore} from "../store/messageStore.ts";
 import MessageBubble from './MessageBubble.vue';
-import {toast} from "vue-sonner";
+import {toast} from "vue3-toastify";
 import VueEasyLightbox from 'vue-easy-lightbox';
 import {chatAPI} from "../services/chatApi.ts";
-
-
-// // 配置MarkdownIt实例
-// const md = new MarkdownIt({
-//   typographer: true,
-//   highlight: function (str, lang) {
-//     if (lang && hljs.getLanguage(lang)) {
-//       try {
-//         return hljs.highlight(str, {language: lang}).value;
-//       } catch (__) {
-//       }
-//     }
-//     return ''; // 使用额外的默认转义
-//   }
-// });
-// md.use(markdownItKatex);
 
 // 使用对话管理Store
 const dialogStore = useConversationStore();
@@ -232,25 +216,22 @@ const props = defineProps<{
 
 
 const chatMessages = computed(() => {
-  return messageStore.messages[props.chatId]?.filter(Boolean)
+  return messageStore.messages[props.chatId as string]?.filter(Boolean)
 });
 
 
 const messageInput = ref('');
 const messageContainer = ref<HTMLElement | null>(null);
 const editableDiv = ref<HTMLElement>();
-const imagePreview = ref<string | null>(null);
-const imageFileName = ref<string>('');
+
 const imageFiles = ref<File[]>([]);
 const previewImages = ref<string[]>([]);
 const showLightbox = ref(false);
 const currentImgIndex = ref(0);
 
 // 文件上传相关
-const fileFiles = ref<File[]>([]);
-const fileNames = ref<string[]>([]);
+const fileFiles = ref<MessageFile[]>([]);
 const fileUploadProgress = ref<number>(0);
-const isFileUploading = ref<boolean>(false);
 
 const isLoading = ref(false);
 const isComposing = ref(false); // 是否正在输入法编辑状态
@@ -322,6 +303,7 @@ const stopMessage = () => {
 
 // 发送消息
 const sendMessage = async () => {
+
   // 检查是否有内容可发送
   if (!messageInput.value.trim() && !imageFiles.value.length && !fileFiles.value.length) return;
 
@@ -343,38 +325,10 @@ const sendMessage = async () => {
     }
     const chatId = props.chatId || '';
 
-    // 处理文件上传和解析
-    let fileContent = '';
-    if (fileFiles.value.length > 0) {
-      try {
-        // 显示文件上传进度
-        fileUploadProgress.value = 30;
-        toast.info('正在解析文件，请稍候...');
-
-        // 依次解析所有文件
-        for (const file of fileFiles.value) {
-          const result = await chatAPI.parseFile(file);
-          fileUploadProgress.value = 70;
-
-          if (result && result.content) {
-            // 将解析结果添加到消息内容中
-            fileContent += `\n文件 ${file.name} 解析结果:\n${result.content}\n`;
-          }
-        }
-
-        fileUploadProgress.value = 100;
-        toast.success('文件解析完成');
-      } catch (error) {
-        console.error('文件解析失败:', error);
-        toast.error('文件解析失败: ' + (error instanceof Error ? error.message : String(error)));
-        fileUploadProgress.value = 0;
-      }
-    }
-
     // 创建用户消息
     const userMessage: ChatMessage = {
       role: 'user',
-      content: messageInput.value.trim() + (fileContent ? fileContent : ''),
+      content: messageInput.value.trim(),
       timestamp: Date.now(),
       type: 'text',
       images: imageFiles.value.length > 0 ? imageFiles.value : undefined,
@@ -396,7 +350,7 @@ const sendMessage = async () => {
     previewImages.value = [];
     isImageUploadActive.value = false;
     fileFiles.value = [];
-    fileNames.value = [];
+
     isFileUploadActive.value = false;
     fileUploadProgress.value = 0;
 
@@ -456,32 +410,42 @@ const handleImageUpload = async (event: Event) => {
 const handleFileUpload = async (event: Event) => {
   const input = event.target as HTMLInputElement;
   if (!input.files?.length) return;
-
-  Array.from(input.files).forEach(file => {
-    // 确保文件对象包含所需属性
-    // const fileObj = new File([file], file.name, {
-    //   type: file.type,
-    //   lastModified: file.lastModified,
-    //   name: file.name
-    // });
-    fileFiles.value.push(file);
-    fileNames.value.push(file.name);
-    console.log(file.name)
-    chatAPI.uploadFile(file)
-  });
-
+  fileUploadProgress.value = 30;
+  for (const file of input.files) {
+    // fileFiles.value.push(file);
+    const fileParseResult: MessageFile ={
+      content: '',
+      metadata: {
+        fileName: file.name,
+        originalname: file.name,
+        fileSize: file.size,
+        fileType: file.type,
+        modifiedAt: file.lastModified,
+        mimeType: file.type,
+      }
+    }
+    const result = await chatAPI.parseFile(file)
+    fileFiles.value.push(fileParseResult);
+    console.log(result)
+    fileUploadProgress.value += Math.round(40/input.files.length);
+  };
+  fileUploadProgress.value = 100;
   isFileUploadActive.value = true;
   // 清除input的value，允许上传相同的文件
   input.value = '';
+  setTimeout(() => {
+    fileUploadProgress.value = 0;
+  }, 1000);
 
   // 显示上传的文件名到输入框
-  if (fileNames.value.length > 0) {
-    const fileText = `已选择文件: ${fileNames.value.join(', ')}`;
-    if (editableDiv.value) {
-      editableDiv.value.innerText = fileText;
-      messageInput.value = fileText;
-    }
-  }
+  // if (fileNames.value.length > 0) {
+  //   const fileText = `已选择文件: ${fileNames.value.join(', ')}`;
+  //   if (editableDiv.value) {
+  //     editableDiv.value.innerText = fileText;
+  //     messageInput.value = fileText;
+  //   }
+  // }
+
 };
 
 
@@ -504,9 +468,9 @@ const removeImage = (index: number) => {
 };
 
 const removeFile = (index: number) => {
+
   fileFiles.value.splice(index, 1);
-  fileNames.value.splice(index, 1);
-  if (fileNames.value.length === 0) {
+  if (fileFiles.value.length === 0) {
     isFileUploadActive.value = false;
     if (editableDiv.value) {
       editableDiv.value.innerText = '';
@@ -514,7 +478,7 @@ const removeFile = (index: number) => {
     }
   } else {
     // 更新输入框显示的文件名
-    const fileText = `已选择文件: ${fileNames.value.join(', ')}`;
+    const fileText = `已选择文件: ${fileFiles.value.join(', ')}`;
     if (editableDiv.value) {
       editableDiv.value.innerText = fileText;
       messageInput.value = fileText;
@@ -585,12 +549,12 @@ const scrollToBottom = () => {
 }
 
 /* 添加文本选中样式 */
-#editableDiv::selection {
+.editableDiv::selection {
   background-color: #3b82f6;
   color: white;
 }
 
-#editableDiv::-moz-selection {
+.editableDiv::-moz-selection {
   background-color: #3b82f6;
   color: white;
 }
