@@ -19,8 +19,14 @@ import {FileMetadata, MessageFile} from "../../../../share/type.ts";
 
 export class FileParserService {
   private static instance: FileParserService;
+  private metadataCache: Map<string, { metadata: FileMetadata; timestamp: number }>;
+  private contentCache: Map<string, { content: string; timestamp: number }>;
+  private readonly CACHE_TTL = 5 * 60 * 1000; // 缓存有效期5分钟
+  private readonly MAX_CACHE_SIZE = 100; // 最大缓存条目数
 
   private constructor() {
+    this.metadataCache = new Map();
+    this.contentCache = new Map();
   }
 
   public static getInstance(): FileParserService {
@@ -35,10 +41,35 @@ export class FileParserService {
    * @param filePath 文件路径
    * @returns 文件元信息
    */
+  private cleanCache(cache: Map<string, any>): void {
+    const now = Date.now();
+    for (const [key, value] of cache.entries()) {
+      if (now - value.timestamp > this.CACHE_TTL) {
+        cache.delete(key);
+      }
+    }
+    if (cache.size > this.MAX_CACHE_SIZE) {
+      const entriesToDelete = Array.from(cache.entries())
+        .sort((a, b) => a[1].timestamp - b[1].timestamp)
+        .slice(0, cache.size - this.MAX_CACHE_SIZE);
+      for (const [key] of entriesToDelete) {
+        cache.delete(key);
+      }
+    }
+  }
+
   public async getFileMetadata(filePath: string): Promise<FileMetadata> {
     if (!fs.existsSync(filePath)) {
       throw new Error('文件不存在');
     }
+
+    const stats = fs.statSync(filePath);
+    const cachedData = this.metadataCache.get(filePath);
+    if (cachedData && stats.mtimeMs <= cachedData.metadata.modifiedAt) {
+      return cachedData.metadata;
+    }
+
+    this.cleanCache(this.metadataCache);
 
     try {
       const stats = fs.statSync(filePath);
@@ -88,7 +119,8 @@ export class FileParserService {
         case 'svg':
           try {
             // 获取图片尺寸信息
-            const dimensions = imageSize(filePath);
+            const buffer = fs.readFileSync(filePath);
+      const dimensions = imageSize(buffer);
             if (dimensions) {
               metadata.additionalInfo = metadata.additionalInfo ?? {};
               metadata.additionalInfo.width = dimensions.width;
@@ -104,6 +136,10 @@ export class FileParserService {
         // 可以添加更多文件类型的元信息提取
       }
 
+      this.metadataCache.set(filePath, {
+        metadata,
+        timestamp: Date.now()
+      });
       return metadata;
     } catch (error) {
       throw new Error(`获取文件元信息失败: ${(error as Error).message}`);
@@ -121,6 +157,18 @@ export class FileParserService {
     if (!fs.existsSync(filePath)) {
       throw new Error('文件不存在');
     }
+
+    const stats = fs.statSync(filePath);
+    const cachedContent = this.contentCache.get(filePath);
+    if (cachedContent && stats.mtimeMs <= stats.mtimeMs) {
+      if (includeMetadata) {
+        const metadata = await this.getFileMetadata(filePath);
+        return { content: cachedContent.content, metadata };
+      }
+      return cachedContent.content;
+    }
+
+    this.cleanCache(this.contentCache);
 
     const extension = path.extname(filePath).toLowerCase();
     let content = '';
@@ -186,6 +234,11 @@ export class FileParserService {
       }
 
       const formattedContent = this.formatContent(content);
+      
+      this.contentCache.set(filePath, {
+        content: formattedContent,
+        timestamp: Date.now()
+      });
 
       if (includeMetadata) {
         const metadata = await this.getFileMetadata(filePath);
@@ -288,22 +341,38 @@ export class FileParserService {
   private async parseCSV(filePath: string): Promise<string> {
     return new Promise((resolve, reject) => {
       const results: any[] = [];
-      fs.createReadStream(filePath)
-        .pipe(csvParser())
-        .on('data', (data) => results.push(data))
+      const stream = fs.createReadStream(filePath, { highWaterMark: 64 * 1024 }); // 优化缓冲区大小
+      
+      stream
+        .pipe(csvParser({ maxRows: 10000 })) // 限制最大行数以防止内存溢出
+        .on('data', (data) => {
+          if (results.length < 10000) { // 额外的安全检查
+            results.push(data);
+          }
+        })
         .on('end', () => {
           try {
-            // 将CSV数据转换为字符串
-            const headers = Object.keys(results[0] || {});
-            const rows = results.map(row => {
-              return headers.map(header => row[header]).join('\t');
-            });
-            resolve([headers.join('\t'), ...rows].join('\n'));
+            if (results.length === 0) {
+              resolve('');
+              return;
+            }
+            // 使用更高效的字符串拼接方法
+            const headers = Object.keys(results[0]);
+            const output = [headers.join('\t')];
+            
+            for (const row of results) {
+              output.push(headers.map(header => row[header] || '').join('\t'));
+            }
+            
+            resolve(output.join('\n'));
           } catch (error) {
             reject(error);
           }
         })
-        .on('error', (error) => reject(error));
+        .on('error', (error) => {
+          stream.destroy();
+          reject(error);
+        });
     });
   }
 
@@ -357,91 +426,97 @@ export class FileParserService {
    */
   private async parseImage(filePath: string): Promise<string> {
     try {
-      // 获取图片元数据
-      const dimensions = imageSize(filePath);
+      // 使用流式读取图片文件并并行处理
+      const buffer = await fs.promises.readFile(filePath);
       const fileName = path.basename(filePath);
-      const fileType = path.extname(filePath).toLowerCase().replace('.', '');
       const stats = fs.statSync(filePath);
       
+      // 并行执行所有异步操作
+      const [
+        dimensions,
+        fileTypeResult,
+        exifData,
+        dominantColor
+      ] = await Promise.allSettled([
+        imageSize(buffer),
+        fileTypeFromFile(filePath),
+        this.getExifData(buffer),
+        this.extractDominantColor(filePath)
+      ]);
+      
       // 构建图片描述信息
-      let imageInfo = `[图片文件] ${fileName}\n`;
-      imageInfo += `格式: ${fileType.toUpperCase()}\n`;
-      imageInfo += `尺寸: ${dimensions.width || '未知'} x ${dimensions.height || '未知'} 像素\n`;
-      imageInfo += `大小: ${this.formatFileSize(stats.size)}\n`;
+      const imageInfo: string[] = [
+        `[图片文件] ${fileName}`,
+        `格式: ${fileTypeResult.status === 'fulfilled' ? fileTypeResult.value.ext.toUpperCase() : path.extname(filePath).slice(1).toUpperCase()}`,
+        `尺寸: ${dimensions.status === 'fulfilled' ? `${dimensions.value.width || '未知'} x ${dimensions.value.height || '未知'}` : '未知'} 像素`,
+        `大小: ${this.formatFileSize(stats.size)}`
+      ];
       
-      // 尝试获取更多图片信息
-      try {
-        const fileTypeResult = await fileTypeFromFile(filePath);
-        if (fileTypeResult) {
-          imageInfo += `MIME类型: ${fileTypeResult.mime}\n`;
-        }
-      } catch (e) {
-        // 忽略错误
+      if (fileTypeResult.status === 'fulfilled') {
+        imageInfo.push(`MIME类型: ${fileTypeResult.value.mime}`);
       }
       
-      // 提取EXIF数据（仅适用于JPEG和某些TIFF图像）
-      if (['jpg', 'jpeg', 'tiff'].includes(fileType.toLowerCase())) {
-        try {
-          const buffer = fs.readFileSync(filePath);
-          const parser = exifParser.create(buffer);
-          const exifData = parser.parse();
+      // 处理EXIF数据
+      if (exifData.status === 'fulfilled' && exifData.value) {
+        const tags = exifData.value.tags;
+        if (tags) {
+          imageInfo.push('', '[EXIF数据]');
           
-          if (exifData && exifData.tags) {
-            imageInfo += `\n[EXIF数据]\n`;
-            
-            // 相机信息
-            if (exifData.tags.Make || exifData.tags.Model) {
-              imageInfo += `相机: ${exifData.tags.Make || ''} ${exifData.tags.Model || ''}`.trim() + '\n';
-            }
-            
-            // 拍摄参数
-            if (exifData.tags.FNumber) {
-              imageInfo += `光圈: f/${exifData.tags.FNumber}\n`;
-            }
-            
-            if (exifData.tags.ExposureTime) {
-              const exposureTime = exifData.tags.ExposureTime;
-              imageInfo += `曝光时间: ${exposureTime < 1 ? `1/${Math.round(1/exposureTime)}` : exposureTime}秒\n`;
-            }
-            
-            if (exifData.tags.ISO) {
-              imageInfo += `ISO: ${exifData.tags.ISO}\n`;
-            }
-            
-            if (exifData.tags.FocalLength) {
-              imageInfo += `焦距: ${exifData.tags.FocalLength}mm\n`;
-            }
-            
-            // 拍摄时间
-            if (exifData.tags.DateTimeOriginal) {
-              const date = new Date(exifData.tags.DateTimeOriginal * 1000);
-              imageInfo += `拍摄时间: ${date.toLocaleString()}\n`;
-            }
-            
-            // GPS信息
-            if (exifData.tags.GPSLatitude && exifData.tags.GPSLongitude) {
-              imageInfo += `GPS坐标: ${exifData.tags.GPSLatitude.toFixed(6)}, ${exifData.tags.GPSLongitude.toFixed(6)}\n`;
-            }
+          // 相机信息
+          if (tags.Make || tags.Model) {
+            imageInfo.push(`相机: ${[tags.Make, tags.Model].filter(Boolean).join(' ')}`);
           }
-        } catch (e) {
-          // 忽略EXIF解析错误
+          
+          // 拍摄参数
+          const shootingInfo = [
+            tags.FNumber && `光圈: f/${tags.FNumber}`,
+            tags.ExposureTime && `曝光时间: ${tags.ExposureTime < 1 ? `1/${Math.round(1/tags.ExposureTime)}` : tags.ExposureTime}秒`,
+            tags.ISO && `ISO: ${tags.ISO}`,
+            tags.FocalLength && `焦距: ${tags.FocalLength}mm`
+          ].filter(Boolean);
+          
+          if (shootingInfo.length > 0) {
+            imageInfo.push(...shootingInfo);
+          }
+          
+          // 拍摄时间
+          if (tags.DateTimeOriginal) {
+            const date = new Date(tags.DateTimeOriginal * 1000);
+            imageInfo.push(`拍摄时间: ${date.toLocaleString()}`);
+          }
+          
+          // GPS信息
+          if (tags.GPSLatitude && tags.GPSLongitude) {
+            imageInfo.push(`GPS坐标: ${tags.GPSLatitude.toFixed(6)}, ${tags.GPSLongitude.toFixed(6)}`);
+          }
         }
       }
       
-      // 提取颜色信息
-      try {
-        // 分析图片主要颜色
-        const dominantColor = await this.extractDominantColor(filePath);
-        if (dominantColor) {
-          imageInfo += `\n[颜色分析]\n`;
-          imageInfo += `主色调: RGB(${dominantColor[0]}, ${dominantColor[1]}, ${dominantColor[2]})\n`;
-          imageInfo += `十六进制: #${this.rgbToHex(dominantColor[0], dominantColor[1], dominantColor[2])}\n`;
-        }
-      } catch (e) {
-        // 忽略颜色分析错误
+      // 处理颜色信息
+      if (dominantColor.status === 'fulfilled' && dominantColor.value) {
+        const [r, g, b] = dominantColor.value;
+        imageInfo.push(
+          '',
+          '[颜色分析]',
+          `主色调: RGB(${r}, ${g}, ${b})`,
+          `十六进制: #${this.rgbToHex(r, g, b)}`
+        );
       }
       
-      return imageInfo;
+      return imageInfo.join('\n');
+    } catch (error) {
+      return `无法解析图片文件: ${error instanceof Error ? error.message : '未知错误'}`;
+    }
+  }
+
+  private async getExifData(buffer: Buffer) {
+    try {
+      const parser = exifParser.create(buffer);
+      return parser.parse();
+    } catch {
+      return null;
+    }
+  }
     } catch (error: any) {
       return `无法解析图片文件: ${error.message}`;
     }
