@@ -12,8 +12,10 @@ import {fileTypeFromFile} from 'file-type';
 import {Readable} from 'stream';
 import {promisify} from 'util';
 import imageSize from 'image-size';
+// @ts-ignore
 import exifParser from 'exif-parser';
-import { getColorFromURL } from 'color-thief-node';
+// @ts-ignore
+import ColorThief from 'colorthief';
 import {FileMetadata, MessageFile} from "../../../../share/type.ts";
 
 
@@ -65,6 +67,7 @@ export class FileParserService {
 
     const stats = fs.statSync(filePath);
     const cachedData = this.metadataCache.get(filePath);
+    // @ts-ignore
     if (cachedData && stats.mtimeMs <= cachedData.metadata.modifiedAt) {
       return cachedData.metadata;
     }
@@ -344,6 +347,7 @@ export class FileParserService {
       const stream = fs.createReadStream(filePath, { highWaterMark: 64 * 1024 }); // 优化缓冲区大小
       
       stream
+        // @ts-ignore
         .pipe(csvParser({ maxRows: 10000 })) // 限制最大行数以防止内存溢出
         .on('data', (data) => {
           if (results.length < 10000) { // 额外的安全检查
@@ -447,12 +451,14 @@ export class FileParserService {
       // 构建图片描述信息
       const imageInfo: string[] = [
         `[图片文件] ${fileName}`,
+        // @ts-ignore
         `格式: ${fileTypeResult.status === 'fulfilled' ? fileTypeResult.value.ext.toUpperCase() : path.extname(filePath).slice(1).toUpperCase()}`,
         `尺寸: ${dimensions.status === 'fulfilled' ? `${dimensions.value.width || '未知'} x ${dimensions.value.height || '未知'}` : '未知'} 像素`,
         `大小: ${this.formatFileSize(stats.size)}`
       ];
       
       if (fileTypeResult.status === 'fulfilled') {
+        // @ts-ignore
         imageInfo.push(`MIME类型: ${fileTypeResult.value.mime}`);
       }
       
@@ -513,10 +519,6 @@ export class FileParserService {
     try {
       const parser = exifParser.create(buffer);
       return parser.parse();
-    } catch {
-      return null;
-    }
-  }
     } catch (error: any) {
       return `无法解析图片文件: ${error.message}`;
     }
@@ -524,17 +526,19 @@ export class FileParserService {
   
   /**
    * 提取图片的主要颜色
+   * 如有其他图像处理需求（如模糊识别、色系分析），也可以结合 sharp 或 jimp 等图像库增强功能。
    */
   private async extractDominantColor(filePath: string): Promise<number[] | null> {
     try {
-      // 使用color-thief-node提取主要颜色
-      const dominantColor = await getColorFromURL(filePath);
-      return dominantColor;
+      const colorThief = new ColorThief();
+      // 使用 getPalette 获取主色（默认取第一个颜色）
+      const palette = await colorThief.getPalette(filePath, 1);
+      return palette ? palette[0] : null;
     } catch (e) {
       return null;
     }
   }
-  
+
   /**
    * 将RGB值转换为十六进制颜色代码
    */
