@@ -242,11 +242,18 @@ const handlerSelectChat = async (dailogId: DialogId) => {
 const messageContainer = ref<HTMLElement | undefined>(undefined);
 
 
-// const isUserScrolling = ref(false);
+const isUserScrolling = ref(false);
+const isAutoScrolling = ref(false);
+let scrollTimeout: number | undefined;
 
-// const isAutoScrolling = ref(false);
+const handlerScroll = (arg?:{force:boolean}) => {
+  if(arg?.force){
+    isUserScrolling.value = false;
+  }
 
-const handlerScroll = () => {
+  // 手动触发，不触发自动滚动
+  if(isUserScrolling.value) return;
+
   if (messageContainer.value ) {
     const container: HTMLElement = messageContainer.value;
     const documentHeight = container.scrollHeight;   // 获取页面总高度
@@ -255,7 +262,7 @@ const handlerScroll = () => {
     const distanceFromBottom = documentHeight - scrollTop - windowHeight;
     // 只有当距离底部超过110px时才自动滚动
     if (distanceFromBottom > 110) {
-      // isAutoScrolling.value = true;
+      isAutoScrolling.value = true;
       container.scrollTo({
         top: container.scrollHeight,
         behavior: 'smooth'
@@ -264,22 +271,68 @@ const handlerScroll = () => {
   }
 };
 
-// onMounted(() => {
-//   if (messageContainer.value) {
-//     messageContainer.value.addEventListener('scroll', (event) => {
-//
-//       if (!isAutoScrolling.value) {
-//         isUserScrolling.value = true;
-//         // 用户停止滚动1秒后恢复自动滚动
-//         setTimeout(() => {
-//           isUserScrolling.value = false;
-//         }, 1000);
-//       } else {
-//         isAutoScrolling.value = false;
-//       }
-//     });
-//   }
-// });
+onMounted(() => {
+  if (messageContainer.value) {
+    const container = messageContainer.value;
+    
+    // 监听滚动事件
+    container.addEventListener('scroll', () => {
+      // 自动滚动
+      if (isAutoScrolling.value) {
+        isAutoScrolling.value = false;
+      }
+    });
+    
+    // 监听鼠标事件
+    container.addEventListener('mousedown', () => {
+      isUserScrolling.value = true;
+    });
+    
+    container.addEventListener('mouseup', () => {
+      // 增加延迟，防止mouseup后立即执行的代码滚动被错误地认为是用户滚动
+      clearTimeout(scrollTimeout);
+      scrollTimeout = setTimeout(() => {
+        isUserScrolling.value = false;
+      }, 100);
+    });
+    
+    // 监听触摸事件
+    container.addEventListener('touchstart', () => {
+      isUserScrolling.value = true;
+    });
+    
+    container.addEventListener('touchend', () => {
+      clearTimeout(scrollTimeout);
+      scrollTimeout = setTimeout(() => {
+        isUserScrolling.value = false;
+      }, 100);
+    });
+    
+    // 监听键盘事件
+    container.addEventListener('keydown', (event) => {
+      // 监听可能触发滚动的键盘按键
+      if (
+        event.key === 'PageUp' || 
+        event.key === 'PageDown' || 
+        event.key === 'ArrowUp' || 
+        event.key === 'ArrowDown' || 
+        event.key === 'Home' || 
+        event.key === 'End' || 
+        event.key === ' '
+      ) {
+        isUserScrolling.value = true;
+        // 键盘操作可能触发多次滚动事件，需要延迟重置
+        clearTimeout(scrollTimeout);
+        scrollTimeout = setTimeout(() => {
+          isUserScrolling.value = false;
+        }, 200);
+      }
+    });
+  }
+  
+  // 初始滚动
+  handlerScroll();
+});
 
 
 onMounted(handlerScroll);
@@ -364,7 +417,7 @@ const startEditTitle = (chat: Dialog) => {
 };
 
 const saveTitle = async () => {
-  const title =  editDialog.value.title.trim()
+  // const title =  editDialog.value.title.trim()
   if (editDialog.value.id && editDialog.value.title && editDialog.value.title.trim() !== '') {
     await updateDialog(editDialog.value.id, {title: editDialog.value.title});
   }

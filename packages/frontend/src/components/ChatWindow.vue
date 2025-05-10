@@ -194,7 +194,7 @@
 </template>
 
 <script setup lang="ts">
-import {computed, defineProps, ref} from 'vue';
+import {computed, defineProps, nextTick, ref} from 'vue';
 import {type ChatMessage, type DialogId, type MessageFile, type Model} from "../../../../share/type.ts";
 import log from "loglevel";
 import {useConversationStore} from "../store/conversationStore.ts";
@@ -351,7 +351,7 @@ const sendMessage = async () => {
     isFileUploadActive.value = false;
     fileUploadProgress.value = 0;
 
-    scrollToBottom();
+    nextTick(()=> scrollToBottom({force: true}));
     // 使用对话管理器发送消息
     // 确保在发送消息前已经将用户消息添加到消息列表中
     const readableStream = await messageStore.sendMessage(userMessage, model, chatId);
@@ -362,7 +362,7 @@ const sendMessage = async () => {
       if (done) {
         break;
       }
-      scrollToBottom();
+      nextTick(scrollToBottom);
     }
     console.log('done')
 
@@ -373,8 +373,6 @@ const sendMessage = async () => {
     isLoading.value = false; // 无论成功还是失败，都重置loading状态
   }
 
-  // 滚动到底部
-  scrollToBottom();
 };
 
 
@@ -535,15 +533,13 @@ const cancelImageUpload = () => {
 
 // 定义emit事件
 const emit = defineEmits<{
-  (e: 'scroll'): void
+  (e: 'scroll', arg: {force: boolean}): void
 }>();
 
 // 滚动到底部
-const scrollToBottom = () => {
-
+const scrollToBottom = (arg= {force: false}) => {
   // 发送滚动事件给父组件
-  emit('scroll');
-
+  emit('scroll' ,arg);
 };
 
 
