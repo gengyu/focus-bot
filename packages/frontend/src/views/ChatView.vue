@@ -69,7 +69,6 @@
     <div
         ref="messageContainer"
         class="flex-1 relative flex flex-col
-
          min-w-0
          h-screen
           scroll-smooth
@@ -159,6 +158,7 @@
         </div>
       </header>
       <main class="flex-1 flex justify-center rounded-b-xl mx-6 mb-6 min-h-0">
+        {{isUserScrolling}}
         <ChatWindow
             :model="selectedModel"
             :activeDialogId="conversation.activeDialogId"
@@ -271,12 +271,14 @@ const handlerScroll = (arg?:{force:boolean}) => {
   }
 };
 
+
 onMounted(() => {
   if (messageContainer.value) {
     const container = messageContainer.value;
     
     // 监听滚动事件
     container.addEventListener('scroll', () => {
+      console.log('滚动事件触发')
       // 自动滚动
       if (isAutoScrolling.value) {
         isAutoScrolling.value = false;
@@ -288,12 +290,9 @@ onMounted(() => {
       isUserScrolling.value = true;
     });
     
-    container.addEventListener('mouseup', () => {
+    container.addEventListener('mousemove', () => {
       // 增加延迟，防止mouseup后立即执行的代码滚动被错误地认为是用户滚动
-      clearTimeout(scrollTimeout);
-      scrollTimeout = setTimeout(() => {
-        isUserScrolling.value = false;
-      }, 100);
+      isUserScrolling.value = true;
     });
     
     // 监听触摸事件
@@ -301,16 +300,14 @@ onMounted(() => {
       isUserScrolling.value = true;
     });
     
-    container.addEventListener('touchend', () => {
-      clearTimeout(scrollTimeout);
-      scrollTimeout = setTimeout(() => {
-        isUserScrolling.value = false;
-      }, 100);
+    container.addEventListener('touchmove', () => {
+      isUserScrolling.value = true;
     });
     
     // 监听键盘事件
-    container.addEventListener('keydown', (event) => {
+    container.addEventListener("keydown", (event) => {
       // 监听可能触发滚动的键盘按键
+      console.log(event.key)
       if (
         event.key === 'PageUp' || 
         event.key === 'PageDown' || 
@@ -322,10 +319,10 @@ onMounted(() => {
       ) {
         isUserScrolling.value = true;
         // 键盘操作可能触发多次滚动事件，需要延迟重置
-        clearTimeout(scrollTimeout);
-        scrollTimeout = setTimeout(() => {
-          isUserScrolling.value = false;
-        }, 200);
+        // clearTimeout(scrollTimeout);
+        // scrollTimeout = setTimeout(() => {
+        //   isUserScrolling.value = false;
+        // }, 200);
       }
     });
   }
