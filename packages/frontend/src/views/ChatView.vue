@@ -161,7 +161,7 @@
       <main class="flex-1 flex justify-center rounded-b-xl mx-6 mb-6 min-h-0">
         <ChatWindow
             :model="selectedModel"
-            :chatId="conversation.activeDialogId"
+            :activeDialogId="conversation.activeDialogId"
             @scroll="handlerScroll"
             class="max-w-260"
         />

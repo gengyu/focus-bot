@@ -49,7 +49,7 @@
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
           </svg>
           <div class="flex flex-col flex-1">
-            <span class="text-sm font-medium">{{ file.name || '未命名文件' }}</span>
+            <span class="text-sm font-medium text-gray-600">{{ file.name || '未命名文件' }}</span>
             <span class="text-xs text-gray-500">{{ formatFileSize(file.size || 0) }}</span>
           </div>
         </div>
@@ -148,7 +148,7 @@ const showFullImage = (image: any, index: number, e?: Event) => {
 
 
 // 将文件转换为数组
-const getFilesArray = (files: MessageFile | MessageFile[] | File | File[] | undefined): MessageFile[] => {
+const getFilesArray = (files: MessageFile | MessageFile[] | File | File[] | undefined) => {
   if (!files) return [];
   
   // 转换为数组处理
@@ -161,9 +161,13 @@ const getFilesArray = (files: MessageFile | MessageFile[] | File | File[] | unde
         name: file.name,
         size: file.size,
         type: file.type
-      } as MessageFile;
+      } ;
     }
-    return file as MessageFile;
+    return {
+      name: file.metadata.fileName,
+      size: file.metadata.fileSize,
+      type: file.metadata.mimeType
+    }
   });
 };
 

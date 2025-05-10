@@ -18,10 +18,9 @@ export const useMessageStore = defineStore<string, {
   messages: Ref<Record<DialogId, ChatMessage[]>>,
   sendMessage(message: ChatMessage, model: Model, dialogId: DialogId): Promise<ReadableStream<ChatMessage>>,
   stopMessage(dialogId: DialogId): void,
-  sendImage: (imageFile: File) => Promise<ChatMessage>,
+  // sendImage: (imageFile: File) => Promise<ChatMessage>,
   refreshChatHistory: (dialogId: DialogId) => Promise<void>
 }>('message', () => {
-
 
   const messages = ref<Record<DialogId, ChatMessage[]>>({});
 
@@ -43,6 +42,7 @@ export const useMessageStore = defineStore<string, {
         }
         if (value) {
           const result = JSON.parse(value);
+          assistantMessage.timestamp = result.timestamp;
           assistantMessage.content += result?.content ?? '';
         }
       }
@@ -92,24 +92,6 @@ export const useMessageStore = defineStore<string, {
   }
 
   /**
-   * 发送图片
-   * @param imageFile 图片文件
-   * @returns 消息对象
-   */
-  const sendImage = async (imageFile: File) => {
-    return await chatAPI.sendImage(imageFile);
-  }
-  
-  /**
-   * 解析文件
-   * @param file 文件对象
-   * @returns 解析结果
-   */
-  const parseFile = async (file: File) => {
-    return await chatAPI.parseFile(file);
-  }
-
-  /**
    * 获取聊天历史
    * @param dialogId 对话ID
    * @returns 消息数组
@@ -123,8 +105,6 @@ export const useMessageStore = defineStore<string, {
     stopMessage,
     messages,
     sendMessage,
-    sendImage,
-    parseFile,
     refreshChatHistory
   }
 });

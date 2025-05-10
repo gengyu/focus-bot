@@ -9,7 +9,8 @@ import {useAppSettingStore} from "./appSettingStore.ts";
 // 创建单例实例
 
 /**
- * 会话存储
+ * 会话存储 conversationStore 包含的所有对话数据，包括对话列表、活动对话ID等。
+ * 提供创建、删除、更新对话等功能，并管理对话列表的状态。
  * 负责会话数据的状态管理和持久化
  */
 export const useConversationStore = defineStore<string, {

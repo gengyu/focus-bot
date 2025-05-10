@@ -16,20 +16,28 @@ export class OllamaAIProvider implements LLMProvider {
     });
   }
 
-  private formatMessage(messages: ChatMessage[]){
+  private formatMessage(messages: ChatMessage[]) {
     return messages.map((msg) => {
-      if(msg.role === 'user'){
+      if (msg.role === 'user') {
         // 处理imgs
         const images = msg.images?.map((img) => {
-          if(img instanceof Uint8Array || typeof img === 'string'){
+          if (img instanceof Uint8Array || typeof img === 'string') {
             return ''
           }
           return (img as MessageFile).url?.split(',')[1];
-        }).filter(Boolean)
+        }).filter(Boolean);
+
+        const files = Array.isArray(msg.files) ? msg.files
+          : msg.files ? [msg.files] : [];
+
+        const fileContent = files.map((messageFile) => {
+          return messageFile.metadata.originalname + '\n' +messageFile.content
+        }).filter(Boolean).join('\n');
+
 
         return {
           role: msg.role,
-          content: msg.content,
+          content: (fileContent ?? '') +  msg.content,
           images,
         } as Message
       }
@@ -75,7 +83,7 @@ export class OllamaAIProvider implements LLMProvider {
     // as ChatCompletionMessageParam[]
     const mags: Message[] = this.formatMessage(messages);
 
-    let abortHandler: ()=>void;
+    let abortHandler: () => void;
     try {
       console.log('📦 OpenAI Stream:', mags);
       if (signal?.aborted) {

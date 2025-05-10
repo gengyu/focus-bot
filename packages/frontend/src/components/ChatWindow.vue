@@ -194,8 +194,8 @@
 </template>
 
 <script setup lang="ts">
-import {computed, defineProps, ref, watch} from 'vue';
-import { type ChatMessage, MessageFile, type Model } from "../../../../share/type.ts";
+import {computed, defineProps, ref} from 'vue';
+import {type ChatMessage, type DialogId, type MessageFile, type Model} from "../../../../share/type.ts";
 import log from "loglevel";
 import {useConversationStore} from "../store/conversationStore.ts";
 import {useMessageStore} from "../store/messageStore.ts";
@@ -210,13 +210,13 @@ const messageStore = useMessageStore();
 
 const props = defineProps<{
   model?: Model
-  chatId?: string
+  activeDialogId?: string
   // chatMessages?: ChatMessage[]
 }>();
 
 
 const chatMessages = computed(() => {
-  return messageStore.messages[props.chatId as string]?.filter(Boolean)
+  return messageStore.messages[props.activeDialogId as string]?.filter(Boolean)
 });
 
 
@@ -297,7 +297,7 @@ const availableModels = computed(() => {
 
 const stopMessage = () => {
   if (isLoading.value) {// 如果正在发送消息，则不允许再次发送
-    messageStore.stopMessage(props.chatId || '')
+    messageStore.stopMessage(props.activeDialogId || '')
   }
 }
 
@@ -305,11 +305,13 @@ const stopMessage = () => {
 const sendMessage = async () => {
 
   // 检查是否有内容可发送
-  if (!messageInput.value.trim() && !imageFiles.value.length && !fileFiles.value.length) return;
-
-  if (!messageInput.value.trim() && !imageFiles.value.length) return;
+  if (!messageInput.value.trim()) return;
   if (isLoading.value) {// 如果正在发送消息，则不允许再次发送
     return
+  }
+  const dialog = dialogStore.conversation.dialogs.find(dialog => dialog.id === props.activeDialogId);
+  if(dialog?.title.startsWith('新会话')){
+    dialogStore.updateDialog(props.activeDialogId as DialogId, {title: messageInput.value.trim()});
   }
 
   isLoading.value = true; // 设置loading状态
@@ -323,7 +325,7 @@ const sendMessage = async () => {
       isLoading.value = false; // 重置loading状态
       return;
     }
-    const chatId = props.chatId || '';
+    const chatId = props.activeDialogId || '';
 
     // 创建用户消息
     const userMessage: ChatMessage = {
@@ -335,11 +337,6 @@ const sendMessage = async () => {
       files: fileFiles.value.length > 0 ? fileFiles.value : undefined
     };
 
-    // // 将消息添加到消息列表中，确保在UI中显示
-    // if (!messageStore.messages[chatId]) {
-    //   messageStore.messages[chatId] = [];
-    // }
-    // messageStore.messages[chatId].push(userMessage);
 
     // 清空输入框、图片和文件
     if (editableDiv.value) {
@@ -354,6 +351,7 @@ const sendMessage = async () => {
     isFileUploadActive.value = false;
     fileUploadProgress.value = 0;
 
+    scrollToBottom();
     // 使用对话管理器发送消息
     // 确保在发送消息前已经将用户消息添加到消息列表中
     const readableStream = await messageStore.sendMessage(userMessage, model, chatId);
