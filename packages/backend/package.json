@@ -25,6 +25,7 @@
     "dotenv": "^16.5.0",
     "exceljs": "^4.4.0",
     "exif-parser": "^0.1.12",
+    "exif-reader": "^2.0.2",
     "file-type": "^20.5.0",
     "iconv-lite": "^0.6.3",
     "image-size": "^2.0.2",

@@ -1,5 +1,5 @@
 import {LLMProvider, ProviderResponseChunk} from "./LLMProvider";
-import {type ChatMessage, ProviderConfig} from "../../../../share/type";
+import {type ChatMessage, MessageFile, ProviderConfig} from "../../../../share/type";
 
 import {type Message, Ollama} from "ollama";
 
@@ -14,6 +14,29 @@ export class OllamaAIProvider implements LLMProvider {
       // apiKey: this.config.apiKey,
       host: this.config.apiUrl
     });
+  }
+
+  private formatMessage(messages: ChatMessage[]){
+    return messages.map((msg) => {
+      if(msg.role === 'user'){
+        // 处理imgs
+        const images = msg.images?.map((img) => {
+          if(img instanceof Uint8Array || typeof img === 'string'){
+            return ''
+          }
+          return (img as MessageFile).url?.split(',')[1];
+        }).filter(Boolean)
+
+        return {
+          role: msg.role,
+          content: msg.content,
+          images,
+        } as Message
+      }
+
+      return {role: msg.role, content: msg.content};
+
+    })
   }
 
   async chat(messages: ChatMessage[], modelId: string, signal?: AbortSignal) {
@@ -50,22 +73,17 @@ export class OllamaAIProvider implements LLMProvider {
 
   async* streamChat(messages: ChatMessage[], modelId: string, signal?: AbortSignal) {
     // as ChatCompletionMessageParam[]
-    const msgs: Message[] = messages.map((msg) => {
-      return {
-        role: msg.role as string,
-        content: msg.content as string,
-      }
-    })
+    const mags: Message[] = this.formatMessage(messages);
 
     let abortHandler: ()=>void;
     try {
-      console.log('📦 OpenAI Stream:', msgs);
+      console.log('📦 OpenAI Stream:', mags);
       if (signal?.aborted) {
         return;
       }
       const stream = await this.ollama.chat({
         model: modelId,
-        messages: msgs,
+        messages: mags,
         options: {
           temperature: this.config.temperature,
           // max_tokens: this.config.maxTokens,

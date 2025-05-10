@@ -224,7 +224,7 @@ const messageInput = ref('');
 const messageContainer = ref<HTMLElement | null>(null);
 const editableDiv = ref<HTMLElement>();
 
-const imageFiles = ref<File[]>([]);
+const imageFiles = ref<MessageFile[]>([]);
 const previewImages = ref<string[]>([]);
 const showLightbox = ref(false);
 const currentImgIndex = ref(0);
@@ -335,11 +335,11 @@ const sendMessage = async () => {
       files: fileFiles.value.length > 0 ? fileFiles.value : undefined
     };
 
-    // 将消息添加到消息列表中，确保在UI中显示
-    if (!messageStore.messages[chatId]) {
-      messageStore.messages[chatId] = [];
-    }
-    messageStore.messages[chatId].push(userMessage);
+    // // 将消息添加到消息列表中，确保在UI中显示
+    // if (!messageStore.messages[chatId]) {
+    //   messageStore.messages[chatId] = [];
+    // }
+    // messageStore.messages[chatId].push(userMessage);
 
     // 清空输入框、图片和文件
     if (editableDiv.value) {
@@ -356,7 +356,7 @@ const sendMessage = async () => {
 
     // 使用对话管理器发送消息
     // 确保在发送消息前已经将用户消息添加到消息列表中
-    const readableStream = await messageStore.sendMessage(userMessage.content as string, model, chatId);
+    const readableStream = await messageStore.sendMessage(userMessage, model, chatId);
 
     const reader = readableStream.getReader();
     while (true) {
@@ -405,8 +405,13 @@ const handleImageUpload = async (event: Event) => {
         mimeType: file.type,
       }
     }
-    const result = await chatAPI.parseFile(file)
+    const result: MessageFile = await chatAPI.parseFile(file);
+    result.metadata.modifiedAt = fileParseResult.metadata.modifiedAt
+    // fileFiles.value.push(result);
+    imageFiles.value.push(result as MessageFile);
+    previewImages.value.push(result.url as string);
   }
+
   // Array.from(input.files).forEach(file => {
   //   imageFiles.value.push(file);
   //   const reader = new FileReader();
@@ -439,8 +444,9 @@ const handleFileUpload = async (event: Event) => {
         mimeType: file.type,
       }
     }
-    const result = await chatAPI.parseFile(file)
-    fileFiles.value.push(fileParseResult);
+    const result = await chatAPI.parseFile(file);
+    result.metadata = fileParseResult.metadata
+    fileFiles.value.push(result);
     console.log(result)
     fileUploadProgress.value += Math.round(40/input.files.length);
   };

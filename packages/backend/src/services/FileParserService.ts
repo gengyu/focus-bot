@@ -19,6 +19,7 @@ import ColorThief from 'colorthief';
 import {FileMetadata, MessageFile} from "../../../../share/type.ts";
 
 
+
 export class FileParserService {
   private static instance: FileParserService;
   private metadataCache: Map<string, { metadata: FileMetadata; timestamp: number }>;
@@ -247,7 +248,8 @@ export class FileParserService {
         const metadata = await this.getFileMetadata(filePath);
         return {
           content: formattedContent,
-          metadata
+          metadata,
+          url: await this.imageToBase64Node(filePath)
         };
       }
 
@@ -258,6 +260,19 @@ export class FileParserService {
       } else {
         throw error
       }
+    }
+  }
+
+
+  async  imageToBase64Node(filePath: string) {
+    try {
+      const fileBuffer = await fs.promises.readFile(filePath);
+      const base64String = fileBuffer.toString('base64');
+      const mimeType = 'image/' + filePath.split('.').pop(); // 简单地根据文件扩展名获取 MIME 类型，可能不准确
+      return `data:${mimeType};base64,${base64String}`;
+    } catch (error) {
+      console.error('读取文件失败:', error);
+      return ''
     }
   }
 

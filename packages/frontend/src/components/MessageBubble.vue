@@ -35,7 +35,7 @@
       <div v-if="message.images && message.images.length > 0" class="mt-3 flex flex-wrap gap-2">
         <div v-for="(image, index) in message.images" :key="index" class="relative">
           <img 
-            :src="getImageSrc(image)" 
+            :src="getImageSrc(image)"
             alt="上传图片" 
             class="max-w-[200px] max-h-[200px] rounded-lg cursor-pointer" 
             @click="(e) => showFullImage(image, index, e)"

@@ -16,7 +16,7 @@ export const useMessageStore = defineStore<string, {
   // setActiveDialog: (dailogId: string) => Promise<void>,
   // createConversation: (title: string, model?: Model) => Promise<Conversation>,
   messages: Ref<Record<DialogId, ChatMessage[]>>,
-  sendMessage(content: string, model: Model, dialogId: DialogId): Promise<ReadableStream<ChatMessage>>,
+  sendMessage(message: ChatMessage, model: Model, dialogId: DialogId): Promise<ReadableStream<ChatMessage>>,
   stopMessage(dialogId: DialogId): void,
   sendImage: (imageFile: File) => Promise<ChatMessage>,
   refreshChatHistory: (dialogId: DialogId) => Promise<void>
@@ -72,26 +72,19 @@ export const useMessageStore = defineStore<string, {
 
   /**
    * 发送消息
-   * @param content 消息内容
+   * @param userMessage 消息内容
    * @param model 模型信息
    * @param dialogId 对话ID
    * @returns 消息流
    */
-  const sendMessage = async (content: string, model: Model, dialogId: DialogId) => {
+  const sendMessage = async (userMessage: ChatMessage, model: Model, dialogId: DialogId) => {
     // 创建用户消息
-    const userMessage: ChatMessage = {
-      role: 'user',
-      content,
-      timestamp: Date.now(),
-      type: 'text',
-      // images
-    };
+    userMessage.timestamp = Date.now();
     messages.value[dialogId] = messages.value[dialogId] || [];
     messages.value[dialogId].push(userMessage);
 
     // 调用API发送消息
     const [abort, readableStream] = chatAPI.sendMessage(userMessage, model, dialogId);
-    window.abort = abort;
     messageReaders.set(dialogId, abort);
     const [assistantStream1, assistantStream2] = readableStream.tee();
     updateMessage(assistantStream1, dialogId);
