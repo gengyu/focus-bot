@@ -16,7 +16,7 @@ export class OllamaAIProvider implements LLMProvider {
     });
   }
 
-  private formatMessage(messages: ChatMessage[]) {
+  private formatMessage(messages: ChatMessage[]): Message[] {
     return messages.map((msg) => {
       if (msg.role === 'user') {
         // 处理imgs
@@ -42,7 +42,7 @@ export class OllamaAIProvider implements LLMProvider {
         } as Message
       }
 
-      return {role: msg.role, content: msg.content};
+      return {role: msg.role, content: msg.content as string};
 
     })
   }
@@ -79,19 +79,18 @@ export class OllamaAIProvider implements LLMProvider {
     }
   }
 
-  async* streamChat(messages: ChatMessage[], modelId: string, signal?: AbortSignal) {
-    // as ChatCompletionMessageParam[]
-    const mags: Message[] = this.formatMessage(messages);
+  async* streamChat(chatMessages: ChatMessage[], modelId: string, signal?: AbortSignal) {
+    const messages: Message[] = this.formatMessage(chatMessages);
 
     let abortHandler: () => void;
     try {
-      console.log('📦 OpenAI Stream:', mags);
+      console.log('📦 OpenAI Stream:', messages);
       if (signal?.aborted) {
         return;
       }
       const stream = await this.ollama.chat({
         model: modelId,
-        messages: mags,
+        messages: messages,
         options: {
           temperature: this.config.temperature,
           // max_tokens: this.config.maxTokens,
@@ -102,15 +101,13 @@ export class OllamaAIProvider implements LLMProvider {
       abortHandler = () => {
         stream?.abort();
       }
+
       signal?.addEventListener('abort', abortHandler);
       if (signal?.aborted) {
         return;
       }
 
-      // const response = await ollama.chat({ model: 'llama3.1', messages: [message], stream: true })
-      // for await (const part of response) {
-      // 	process.stdout.write(part.message.content)
-      // }
+
       for await (const part of stream) {
         let content = part.message.content;
         yield {

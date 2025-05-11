@@ -10,9 +10,15 @@
          :class="message.role === 'user' ? 'bg-blue-500 text-white rounded-tr-sm' : 'bg-white rounded-tl-sm'"
     >
       <!-- AI思考过程 -->
-      <div v-if="message.type === 'text' && message.role !== 'user' && message.thinking"
+      <div v-if="message.type === 'text' && message.role !== 'user'"
            class="markdown-body think-process break-words">
-        <div class="flex items-center mb-2">
+
+        <div v-if="!message.content && !message.thinking" class="h-5 flex items-center justify-items-start">
+          <span class="animate-bounce [animation-delay:-0.3s] bg-gray-400 rounded-full h-2 w-2 mr-2"></span>
+          <span class="animate-bounce [animation-delay:-0.15s] bg-gray-400 rounded-full h-2 w-2 mr-2"></span>
+          <span class="animate-bounce bg-gray-400 rounded-full h-2 w-2"></span>
+        </div>
+        <div v-if="message.thinking" class="flex items-center mb-2">
           <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-400 mr-1" fill="none" viewBox="0 0 24 24"
                stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
@@ -21,26 +27,29 @@
         </div>
         <div class="text-gray-600 bg-gray-50 rounded-lg px-3 pt-3 pb-0.25" v-html="mdRender(message.thinking)"></div>
       </div>
-<!--      &lt;!&ndash; 图片消息 &ndash;&gt;-->
-<!--      <div v-else-if="message.type === 'image'" class="max-w-sm rounded-lg overflow-hidden">-->
-<!--        <img :src="message.imageUrl" alt="聊天图片" class="w-full">-->
-<!--      </div>-->
+      <!--      &lt;!&ndash; 图片消息 &ndash;&gt;-->
+      <!--      <div v-else-if="message.type === 'image'" class="max-w-sm rounded-lg overflow-hidden">-->
+      <!--        <img :src="message.imageUrl" alt="聊天图片" class="w-full">-->
+      <!--      </div>-->
       <!-- 显示上传的图片 -->
       <div v-if="message.images && message.images.length > 0" class="mb-3 flex flex-wrap gap-2">
         <div v-for="(image, index) in message.images" :key="index" class="relative">
-          <img 
-            :src="getImageSrc(image)"
-            alt="上传图片" 
-            class="max-w-[200px] max-h-[200px] rounded-lg cursor-pointer"
-            @click="(e) => showFullImage(image, index, e)"
+          <img
+              :src="getImageSrc(image)"
+              alt="上传图片"
+              class="max-w-[200px] max-h-[200px] rounded-lg cursor-pointer"
+              @click="(e) => showFullImage(image, index, e)"
           >
         </div>
       </div>
       <!-- 显示上传的文件 -->
       <div v-if="message.files && (Array.isArray(message.files) ? message.files.length > 0 : true)" class="mb-3">
-        <div v-for="(file, index) in getFilesArray(message.files)" :key="index" class="mb-2 px-3 py-2 bg-gray-100 rounded-lg flex items-center hover:bg-gray-200 transition-colors">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+        <div v-for="(file, index) in getFilesArray(message.files)" :key="index"
+             class="mb-2 px-3 py-2 bg-gray-100 rounded-lg flex items-center hover:bg-gray-200 transition-colors">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-gray-500" fill="none" viewBox="0 0 24 24"
+               stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
           </svg>
           <div class="flex flex-col flex-1">
             <span class="text-sm font-medium text-gray-600">{{ file.name || '未命名文件' }}</span>
@@ -65,13 +74,13 @@
       <span class="text-blue-600 text-sm">我</span>
     </div>
   </div>
-  
+
   <!-- 图片预览弹窗 -->
   <vue-easy-lightbox
-    :visible="showLightbox"
-    :imgs="previewImages"
-    :index="currentImgIndex"
-    @hide="showLightbox = false"
+      :visible="showLightbox"
+      :imgs="previewImages"
+      :index="currentImgIndex"
+      @hide="showLightbox = false"
   ></vue-easy-lightbox>
 </template>
 
@@ -133,15 +142,15 @@ const showFullImage = (image: any, index: number, e?: Event) => {
     // 处理单个图片的情况
     previewImages.value = [getImageSrc(image)];
   }
-  
+
   // 确保预览图片数组不为空
   if (previewImages.value.length === 0 && image) {
     previewImages.value = [getImageSrc(image)];
   }
-  
+
   currentImgIndex.value = index;
   showLightbox.value = true;
-  
+
   // 防止事件冒泡
   e?.stopPropagation();
 };
@@ -150,10 +159,10 @@ const showFullImage = (image: any, index: number, e?: Event) => {
 // 将文件转换为数组
 const getFilesArray = (files: MessageFile | MessageFile[] | File | File[] | undefined) => {
   if (!files) return [];
-  
+
   // 转换为数组处理
   const filesArray = Array.isArray(files) ? files : [files];
-  
+
   // 将File对象转换为MessageFile格式
   return filesArray.map(file => {
     if (file instanceof File) {
@@ -161,7 +170,7 @@ const getFilesArray = (files: MessageFile | MessageFile[] | File | File[] | unde
         name: file.name,
         size: file.size,
         type: file.type
-      } ;
+      };
     }
     return {
       name: file.metadata.fileName,
@@ -210,7 +219,7 @@ const message = computed(() => {
     timestamp: chatMessage.timestamp,
     type: chatMessage.type || 'text',
     // imageUrl: chatMessage.imageUrl,
-    thinking: thinking,
+    thinking: thinking.trim(),
     images: images,
     files: files
   }

@@ -173,7 +173,7 @@
 
 <script setup lang="ts">
 import ChatWindow from '../components/ChatWindow.vue';
-import {computed, nextTick, onMounted, ref} from 'vue';
+import {computed, nextTick, onMounted,onBeforeUnmount, ref} from 'vue';
 import {Listbox, ListboxButton, ListboxOption, ListboxOptions} from '@headlessui/vue'
 import {CheckIcon, ChevronUpDownIcon} from '@heroicons/vue/20/solid'
 import {useAppSettingStore} from "../store/appSettingStore.js";
@@ -227,6 +227,7 @@ const handlerSelectModel = async () => {
 }
 
 const handlerSelectChat = async (dailogId: DialogId) => {
+  if(dailogId === conversation.activeDialogId) return;
   await setActiveDialog(dailogId);
   const activeDialog = conversation.dialogs.find(dialog => dialog.id === conversation.activeDialogId);
     if (activeDialog?.model) {
@@ -245,7 +246,6 @@ const messageContainer = ref<HTMLElement | undefined>(undefined);
 
 const isUserScrolling = ref(false);
 const isAutoScrolling = ref(false);
-let scrollTimeout: number | undefined;
 
 const handlerScroll = (arg?:{force:boolean}) => {
   if(arg?.force){
@@ -274,80 +274,72 @@ const handlerScroll = (arg?:{force:boolean}) => {
 
 
 onMounted(() => {
-  if (messageContainer.value) {
-    const container = messageContainer.value;
-    
-    // 监听滚动事件
-    container.addEventListener('scroll', () => {
-      // 自动滚动
-      if (isAutoScrolling.value) {
-        isAutoScrolling.value = false;
+  if (!messageContainer.value) return;
+
+  const container = messageContainer.value;
+
+  // 自动滚动标志位重置
+  const handleScroll = () => {
+    if (isAutoScrolling.value) {
+      isAutoScrolling.value = false;
+    }
+  };
+
+  // 用户开始滚动（鼠标滚轮）
+  const handleWheel = () => {
+    isUserScrolling.value = true;
+  };
+
+  // 触摸移动时视为用户滚动
+  const handleTouchMove = () => {
+    isUserScrolling.value = true;
+  };
+
+  // 键盘按键触发滚动行为
+  const handleKeyDown = (event: KeyboardEvent) => {
+    const scrollKeys = ['PageUp', 'PageDown', 'ArrowUp', 'ArrowDown', 'Home', 'End', ' '];
+    if (scrollKeys.includes(event.key)) {
+      isUserScrolling.value = true;
+    }
+  };
+
+  // 滚动结束处理：如果接近底部则恢复自动滚动
+  const handleScrollEnd = () => {
+    if (isUserScrolling.value) {
+      const documentHeight = container.scrollHeight;
+      const scrollTop = container.scrollTop;
+      const windowHeight = container.clientHeight;
+      const distanceFromBottom = documentHeight - scrollTop - windowHeight;
+
+      if (distanceFromBottom < 110) {
+        isUserScrolling.value = false;
       }
-    });
-    
-    // 监听鼠标事件
-    container.addEventListener('mousedown', () => {
-      // isUserScrolling.value = true;
-    });
-    
-    container.addEventListener('mousemove', () => {
-      // 增加延迟，防止mouseup后立即执行的代码滚动被错误地认为是用户滚动
-      // isUserScrolling.value = true;
-    });
-    
-    // 监听触摸事件
-    container.addEventListener('touchstart', () => {
-      // isUserScrolling.value = true;
-    });
-    
-    container.addEventListener('touchmove', () => {
-      isUserScrolling.value = true;
-    });
-    // 监听鼠标中建
-    container.addEventListener('wheel', () => {
-      isUserScrolling.value = true;
-    });
+    }
+  };
 
-   // 监听鼠标中建
-    container.addEventListener('focusin', () => {
-      isUserScrolling.value = true;
-    });
+  // 绑定事件监听器
+  container.addEventListener('scroll', handleScroll);
+  container.addEventListener('wheel', handleWheel);
+  container.addEventListener('touchmove', handleTouchMove);
+  container.addEventListener('keydown', handleKeyDown);
+  container.addEventListener('scrollend', handleScrollEnd);
 
-
-    // container.addEventListener('click', () => {
-    //   console.log(3333)
-    //   container.focus();
-    // });
-    //
-    // 监听键盘事件
-    container.addEventListener("keydown", (event) => {
-      // 监听可能触发滚动的键盘按键
-      console.log(event.key)
-      if (
-        event.key === 'PageUp' || 
-        event.key === 'PageDown' || 
-        event.key === 'ArrowUp' || 
-        event.key === 'ArrowDown' || 
-        event.key === 'Home' || 
-        event.key === 'End' || 
-        event.key === ' '
-      ) {
-        isUserScrolling.value = true;
-        // 键盘操作可能触发多次滚动事件，需要延迟重置
-        // clearTimeout(scrollTimeout);
-        // scrollTimeout = setTimeout(() => {
-        //   isUserScrolling.value = false;
-        // }, 200);
-      }
-    });
-  }
-  
   // 初始滚动
   handlerScroll();
+
+  // 返回时解绑事件（可选）
+  onBeforeUnmount(() => {
+    container.removeEventListener('scroll', handleScroll);
+    container.removeEventListener('wheel', handleWheel);
+    container.removeEventListener('touchmove', handleTouchMove);
+    container.removeEventListener('keydown', handleKeyDown);
+    container.removeEventListener('scrollend', handleScrollEnd);
+  });
 });
 
 
-onMounted(handlerScroll);
+
+
 
 // 计算分组的聊天列表
 const groupedChats = computed<Array<{ title: string; chats: Dialog[] }>>(() => {

@@ -82,7 +82,7 @@
         <!--          bg-gray-50 rounded-lg border border-gray-200 focus:outline-none focus:border-blue-500 focus:bg-white transition-colors overflow-y-auto-->
         <div ref="editableDiv"
              contenteditable="true"
-             class="editableDiv min-h-[72px] max-h-[200px] w-full px-4 py-2.5  focus:outline-none"
+             class="editableDiv min-h-[72px] max-h-[200px] w-full px-2 py-2  focus:outline-none"
              :class="{'empty-content': !messageInput}"
              @input="handleInput"
              @keydown.enter.prevent="handleEnterKey"

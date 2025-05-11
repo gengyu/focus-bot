@@ -20,6 +20,65 @@ export class OpenAIProvider implements LLMProvider {
 		});
 	}
 
+	formatMessage(messages: ChatMessage[]): Array<ChatCompletionMessageParam> {
+		return messages.map((message) => {
+			// 处理包含图片的消息
+			if (message.images && message.images.length > 0) {
+				const content: any[] = [];
+				
+				// 如果有文本内容，添加文本部分
+				if (typeof message.content === 'string') {
+					content.push({
+						type: 'text',
+						text: message.content
+					});
+				}
+				
+				// 添加所有图片
+				message.images.forEach(image => {
+					let imageUrl = '';
+					if (typeof image === 'string') {
+						imageUrl = image;
+					} else if (image instanceof Uint8Array) {
+						// 处理二进制图片数据 - 这里可能需要转换为 base64 或其他格式
+						// 这部分需要根据实际需求实现
+					} else if ('url' in image) {
+						imageUrl = image.url || '';
+					} else if ('path' in image) {
+						imageUrl = image.path || '';
+					}
+					
+					if (imageUrl) {
+						content.push({
+							type: 'image_url',
+							image_url: {
+								url: imageUrl
+							}
+						});
+					}
+				});
+				
+				return {
+					role: message.role,
+					content: content
+				};
+			}
+			
+			// 处理包含文件的消息
+			if (message.files) {
+				// 这里可以根据需要处理文件
+				// 目前 OpenAI API 可能不直接支持文件附件，可能需要特殊处理
+				// 例如将文件内容作为文本添加，或者上传文件后获取 URL
+			}
+			
+			// 默认处理纯文本消息
+			return {
+				role: message.role,
+				content: message.content
+			};
+		});
+	}
+
 	async chat(messages: ChatMessage[], modelId: string, signal?: AbortSignal) {
 		try {
 			const msgs = messages.map((msg) => {
