@@ -233,7 +233,6 @@ const currentImgIndex = ref(0);
 const fileFiles = ref<MessageFile[]>([]);
 const fileUploadProgress = ref<number>(0);
 
-const isLoading = ref(false);
 const isComposing = ref(false); // 是否正在输入法编辑状态
 
 // 功能开关状态
@@ -296,10 +295,16 @@ const availableModels = computed(() => {
 
 
 const stopMessage = () => {
-  if (isLoading.value) {// 如果正在发送消息，则不允许再次发送
+  if (isLoading.value) {
     messageStore.stopMessage(props.activeDialogId || '')
   }
 }
+
+//  loading map 存储正在发送的消息的ID和promise
+const loadingMap = ref<Record<DialogId, boolean>>({});
+const isLoading = computed(() => {
+  return loadingMap.value[props.activeDialogId as DialogId] || false;
+});
 
 // 发送消息
 const sendMessage = async () => {
@@ -314,7 +319,8 @@ const sendMessage = async () => {
     dialogStore.updateDialog(props.activeDialogId as DialogId, {title: messageInput.value.trim()});
   }
 
-  isLoading.value = true; // 设置loading状态
+  // 设置loading状态
+  loadingMap.value[props.activeDialogId as DialogId]=  true;
 
   try {
     // 发送消息到服务器
@@ -322,7 +328,7 @@ const sendMessage = async () => {
     if (!model) {
       console.error('未选择模型');
       toast.warning('未选择模型');
-      isLoading.value = false; // 重置loading状态
+      loadingMap.value[props.activeDialogId as DialogId] = false;
       return;
     }
     const chatId = props.activeDialogId || '';
@@ -370,7 +376,8 @@ const sendMessage = async () => {
     console.error('发送消息失败:', error);
     toast.error('发送消息失败: ' + (error instanceof Error ? error.message : String(error)));
   } finally {
-    isLoading.value = false; // 无论成功还是失败，都重置loading状态
+    // 无论成功还是失败，都重置loading状态
+    loadingMap.value[props.activeDialogId as DialogId] = false;
   }
 
 };

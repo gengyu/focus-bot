@@ -43,6 +43,7 @@ export const useMessageStore = defineStore<string, {
         if (value) {
           const result = JSON.parse(value);
           assistantMessage.timestamp = result.timestamp;
+          // assistantMessage.role = result.role;
           assistantMessage.content += result?.content ?? '';
         }
       }

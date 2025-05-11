@@ -2,7 +2,7 @@
   <div class="flex h-screen bg-[#f5f6fa]">
     <aside
         class="transition-all duration-300 bg-white border-r border-[#e5e7eb] flex flex-col pb-5 shadow-[2px_0_8px_rgba(0,0,0,0.04)]"
-        :class="[isAsideCollapsed ? 'w-10 overflow-hidden' : 'w-60']"
+        :class="[isAsideCollapsed ? 'w-0 overflow-hidden' : 'w-60']"
     >
       <div class="flex items-center h-14 px-3 border-b border-[#f0f0f0]">
         <svg class="w-6 h-6 mr-2.5 text-blue-600" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -20,7 +20,7 @@
           新建对话
         </button>
       </div>
-      <nav class="flex-1 pt-4">
+      <nav class="flex-1 shrink-0 overflow-y-auto pt-4">
         <div v-for="group in groupedChats" :key="group.title" class="mb-4">
           <div class="pl-6 text-sm text-gray-500 mb-2">{{ group.title }}</div>
           <ul class="pl-6 m-0">
@@ -33,7 +33,7 @@
                 'hover:bg-[#e0e7ef] hover:text-[#2563eb] hover:font-semibold': conversation.activeDialogId !== chat.id
               }"
             >
-              <div class="flex-1 flex items-center" @click="handlerSelectChat(chat.id)">
+              <div class="flex-1 flex items-center shrink-0 text-ellipsis overflow-hidden" @click="handlerSelectChat(chat.id)">
                 <input v-if="isEditing && chat.id == editDialog.id"
                        v-model="editDialog.title"
                        @blur="saveTitle()"
@@ -68,7 +68,9 @@
     </aside>
     <div
         ref="messageContainer"
+        tabindex="-1"
         class="flex-1 relative flex flex-col
+          focus:outline-none focus:ring-1 focus:ring-gray-500/25
          min-w-0
          h-screen
           scroll-smooth
@@ -158,7 +160,6 @@
         </div>
       </header>
       <main class="flex-1 flex justify-center rounded-b-xl mx-6 mb-6 min-h-0">
-        {{isUserScrolling}}
         <ChatWindow
             :model="selectedModel"
             :activeDialogId="conversation.activeDialogId"
@@ -235,7 +236,7 @@ const handlerSelectChat = async (dailogId: DialogId) => {
   }
 
   await nextTick();
-  handlerScroll();
+  handlerScroll({force: true});
 }
 
 
@@ -278,7 +279,6 @@ onMounted(() => {
     
     // 监听滚动事件
     container.addEventListener('scroll', () => {
-      console.log('滚动事件触发')
       // 自动滚动
       if (isAutoScrolling.value) {
         isAutoScrolling.value = false;
@@ -287,23 +287,38 @@ onMounted(() => {
     
     // 监听鼠标事件
     container.addEventListener('mousedown', () => {
-      isUserScrolling.value = true;
+      // isUserScrolling.value = true;
     });
     
     container.addEventListener('mousemove', () => {
       // 增加延迟，防止mouseup后立即执行的代码滚动被错误地认为是用户滚动
-      isUserScrolling.value = true;
+      // isUserScrolling.value = true;
     });
     
     // 监听触摸事件
     container.addEventListener('touchstart', () => {
-      isUserScrolling.value = true;
+      // isUserScrolling.value = true;
     });
     
     container.addEventListener('touchmove', () => {
       isUserScrolling.value = true;
     });
-    
+    // 监听鼠标中建
+    container.addEventListener('wheel', () => {
+      isUserScrolling.value = true;
+    });
+
+   // 监听鼠标中建
+    container.addEventListener('focusin', () => {
+      isUserScrolling.value = true;
+    });
+
+
+    // container.addEventListener('click', () => {
+    //   console.log(3333)
+    //   container.focus();
+    // });
+    //
     // 监听键盘事件
     container.addEventListener("keydown", (event) => {
       // 监听可能触发滚动的键盘按键

@@ -6,7 +6,7 @@
       <span class="text-green-600 text-sm">AI</span>
     </div>
     <!-- 消息气泡 -->
-    <div class="max-w-[75%] rounded-2xl px-4 py-3"
+    <div class="max-w-[75%] rounded-2xl px-4 py-3 break-all"
          :class="message.role === 'user' ? 'bg-blue-500 text-white rounded-tr-sm' : 'bg-white rounded-tl-sm'"
     >
       <!-- AI思考过程 -->
