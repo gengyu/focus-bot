@@ -4,7 +4,7 @@
     <div class="flex-1 px-6 pt-4 pb-30" ref="messageContainer">
 
       <div v-for="(message, index) in chatMessages" :key="index" class="mb-6">
-        <MessageBubble v-if="message" :chatMessage="message" :index="index"/>
+        <MessageBubble v-if="message" :chatMessage="message" :index="index" @resend="handleResend"/>
       </div>
     </div>
 
@@ -210,6 +210,7 @@ import MessageBubble from './MessageBubble.vue';
 import {toast} from "vue3-toastify";
 import VueEasyLightbox from 'vue-easy-lightbox';
 import {chatAPI} from "../services/chatApi.ts";
+import { v4 as uuidv4 } from 'uuid';
 
 // 使用对话管理Store
 const dialogStore = useConversationStore();
@@ -380,6 +381,7 @@ const sendMessage = async () => {
 
     // 创建用户消息
     const userMessage: ChatMessage = {
+      id: uuidv4(),
       role: 'user',
       type: 'text',
       timestamp: Date.now(),
@@ -496,7 +498,6 @@ const handleFileUpload = async (event: Event) => {
     console.log(result)
     fileUploadProgress.value += Math.round(40 / input.files.length);
   }
-  ;
   fileUploadProgress.value = 100;
   isFileUploadActive.value = true;
   // 清除input的value，允许上传相同的文件
@@ -581,6 +582,38 @@ const cancelImageUpload = () => {
   isImageUploadActive.value = false;
 };
 
+// 处理重发消息
+const handleResend = async (message: ChatMessage) => {
+  if (isLoading.value) return;
+  
+  // 如果是用户消息，直接设置到输入框
+  if (message.role === 'user') {
+    const textContent = message.content
+      .filter(content => content.type === 'text')
+      .map(content => content.text)
+      .join('\n');
+    
+    if (editableDiv.value) {
+      editableDiv.value.innerText = textContent;
+      messageInput.value = textContent;
+    }
+    
+    // 处理图片内容
+    const images = message.content
+      .filter(content => content.type === 'image')
+      .flatMap(content => content.images || []);
+    imageFiles.value = images;
+    previewImages.value = images.map(img => img.url || '');
+    isImageUploadActive.value = images.length > 0;
+    
+    // 处理文件内容
+    const files = message.content
+      .filter(content => content.type === 'file')
+      .flatMap(content => content.files || []);
+    fileFiles.value = files;
+    isFileUploadActive.value = files.length > 0;
+  }
+};
 
 // 定义emit事件
 const emit = defineEmits<{
@@ -624,4 +657,5 @@ const scrollToBottom = (arg = {force: false}) => {
   background-color: #3b82f6;
   color: white;
 }
+
 </style>

@@ -6,9 +6,22 @@
       <span class="text-green-600 text-sm">AI</span>
     </div>
     <!-- 消息气泡 -->
-    <div class="max-w-[75%] rounded-2xl px-4 py-3 break-all"
+    <div class="max-w-[75%] rounded-2xl px-4 py-3 break-all relative group"
          :class="messages.role === 'user' ? 'bg-blue-500 text-white rounded-tr-sm' : 'bg-white rounded-tl-sm'"
     >
+      <!-- 操作按钮 -->
+      <div class="absolute right-2 top-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+        <button @click="copyMessage" class="p-1 rounded hover:bg-black/10 transition-colors">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" :class="messages.role === 'user' ? 'text-white' : 'text-gray-500'" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+          </svg>
+        </button>
+        <button @click="resendMessage" class="p-1 rounded hover:bg-black/10 transition-colors">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" :class="messages.role === 'user' ? 'text-white' : 'text-gray-500'" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+          </svg>
+        </button>
+      </div>
       <div v-for="message in messages.content">
         <!-- AI思考过程 -->
         <div v-if=" messages.role !== 'user'"
@@ -232,6 +245,25 @@ const getMessageContent = () => {
   return '';
 };
 
+const emit = defineEmits<{
+  resend: [message: ChatMessage]
+}>();
+
+// 复制消息内容
+const copyMessage = () => {
+  const text = messages.value.content
+    .map(msg => msg.content || msg.text || '')
+    .filter(Boolean)
+    .join('\n');
+  navigator.clipboard.writeText(text)
+    .then(() => toast.success('已复制到剪贴板'))
+    .catch(() => toast.error('复制失败'));
+};
+
+// 重发消息
+const resendMessage = () => {
+  emit('resend', props.chatMessage);
+};
 </script>
 
 <style scoped lang="less">

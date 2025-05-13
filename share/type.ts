@@ -56,6 +56,7 @@ export interface MessageFile  {
 }
 
 export interface ChatMessage {
+  id: string
   provider?: string
   timestamp: number;
   type: 'text';

@@ -1,6 +1,6 @@
 import {LLMProvider, ProviderResponseChunk} from "./LLMProvider";
-import {type ChatMessage, MessageFile, ProviderConfig} from "../../../../share/type";
-
+import {type ChatMessage, ProviderConfig} from "../../../../share/type";
+import { v4 as uuidv4 } from 'uuid';
 import {type Message, Ollama} from "ollama";
 
 export class OllamaAIProvider implements LLMProvider {
@@ -117,10 +117,13 @@ export class OllamaAIProvider implements LLMProvider {
       }
 
 
+      const messageId = uuidv4();
+      
+
       for await (const part of stream) {
         let content = part.message.content;
         yield {
-          id: '',
+          id: messageId,
           content: content,
           provider: this.config.id,
           model: modelId,
