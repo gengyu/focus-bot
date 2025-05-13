@@ -17,12 +17,12 @@
       <!-- 图片预览区域 -->
       <div v-if="previewImages.length > 0" class="mb-3 flex flex-wrap items-center gap-2">
         <div v-for="(preview, index) in previewImages" :key="index"
-             class="relative w-20 h-20 rounded-lg overflow-hidden border border-gray-200">
+             class="relative w-20 h-20 rounded-lg overflow-hidden border border-gray-200 group">
           <img :src="preview" alt="图片预览" class="w-full h-full object-cover cursor-pointer"
                @click="(e) => showImg(index, e)">
           <button @click="removeImage(index)"
-                  class="absolute top-1 right-1 bg-black/50 rounded-full p-1 hover:bg-black/70">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24"
+                  class="absolute top-1 right-1 bg-black/50 rounded-full p-1 hover:bg-black/70 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 text-white" fill="none" viewBox="0 0 24 24"
                  stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
             </svg>
@@ -53,7 +53,8 @@
         <div v-if="fileUploadProgress > 0" class="w-full mt-2">
           <div class="text-xs text-gray-500 mb-1">文件解析进度</div>
           <div class="w-full bg-gray-200 rounded-full h-2.5">
-            <div class="bg-blue-600 h-2.5 rounded-full transition-all duration-1500" :style="{ width: fileUploadProgress + '%' }"></div>
+            <div class="bg-blue-600 h-2.5 rounded-full transition-all duration-1500"
+                 :style="{ width: fileUploadProgress + '%' }"></div>
           </div>
         </div>
       </div>
@@ -195,7 +196,13 @@
 
 <script setup lang="ts">
 import {computed, defineProps, nextTick, ref} from 'vue';
-import {type ChatMessage, type DialogId, type MessageFile, type Model} from "../../../../share/type.ts";
+import {
+  type ChatMessage,
+  type DialogId,
+  type MessageFile,
+  type Model,
+  type ChatMessageContent
+} from "../../../../share/type.ts";
 import log from "loglevel";
 import {useConversationStore} from "../store/conversationStore.ts";
 import {useMessageStore} from "../store/messageStore.ts";
@@ -316,18 +323,50 @@ const sendMessage = async () => {
   }
 
   let activeDialogId = props.activeDialogId;
-  if(!activeDialogId){
+  if (!activeDialogId) {
     activeDialogId = await dialogStore.createDialog();
   }
 
   //  初始化会话框
   const dialog = dialogStore.conversation.dialogs.find(dialog => dialog.id === activeDialogId);
-  if(dialog?.title.startsWith('新会话')){
+  if (dialog?.title.startsWith('新会话')) {
     dialogStore.updateDialog(props.activeDialogId as DialogId, {title: messageInput.value.trim()});
   }
 
   // 设置loading状态
-  loadingMap.value[activeDialogId]=  true;
+  loadingMap.value[activeDialogId] = true;
+
+  const content: ChatMessageContent[] = [];
+
+  // 添加图片内容
+  if (imageFiles.value.length > 0) {
+    content.push({
+      type: 'image',
+      text: '',
+      images: imageFiles.value,
+      files: []
+    });
+  }
+
+  // 添加文件内容
+  if (fileFiles.value.length > 0) {
+    content.push({
+      type: 'file',
+      text: '',
+      images: [],
+      files: fileFiles.value
+    });
+  }
+
+  // 添加文本内容
+  if (messageInput.value.trim()) {
+    content.push({
+      type: 'text',
+      text: messageInput.value.trim(),
+      images: [],
+      files: []
+    });
+  }
 
   try {
     // 发送消息到服务器
@@ -342,11 +381,9 @@ const sendMessage = async () => {
     // 创建用户消息
     const userMessage: ChatMessage = {
       role: 'user',
-      content: messageInput.value.trim(),
-      timestamp: Date.now(),
       type: 'text',
-      images: imageFiles.value.length > 0 ? imageFiles.value : undefined,
-      files: fileFiles.value.length > 0 ? fileFiles.value : undefined
+      timestamp: Date.now(),
+      content: content
     };
 
 
@@ -363,7 +400,7 @@ const sendMessage = async () => {
     isFileUploadActive.value = false;
     fileUploadProgress.value = 0;
 
-    nextTick(()=> scrollToBottom({force: true}));
+    nextTick(() => scrollToBottom({force: true}));
     // 使用对话管理器发送消息
     // 确保在发送消息前已经将用户消息添加到消息列表中
     const readableStream = await messageStore.sendMessage(userMessage, model, activeDialogId);
@@ -442,7 +479,7 @@ const handleFileUpload = async (event: Event) => {
   fileUploadProgress.value = 30;
   for (const file of input.files) {
     // fileFiles.value.push(file);
-    const fileParseResult: MessageFile ={
+    const fileParseResult: MessageFile = {
       content: '',
       metadata: {
         fileName: file.name,
@@ -457,8 +494,9 @@ const handleFileUpload = async (event: Event) => {
     result.metadata = fileParseResult.metadata
     fileFiles.value.push(result);
     console.log(result)
-    fileUploadProgress.value += Math.round(40/input.files.length);
-  };
+    fileUploadProgress.value += Math.round(40 / input.files.length);
+  }
+  ;
   fileUploadProgress.value = 100;
   isFileUploadActive.value = true;
   // 清除input的value，允许上传相同的文件
@@ -546,13 +584,13 @@ const cancelImageUpload = () => {
 
 // 定义emit事件
 const emit = defineEmits<{
-  (e: 'scroll', arg: {force: boolean}): void
+  (e: 'scroll', arg: { force: boolean }): void
 }>();
 
 // 滚动到底部
-const scrollToBottom = (arg= {force: false}) => {
+const scrollToBottom = (arg = {force: false}) => {
   // 发送滚动事件给父组件
-  emit('scroll' ,arg);
+  emit('scroll', arg);
 };
 
 

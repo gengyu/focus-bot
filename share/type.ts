@@ -35,17 +35,16 @@ export interface AppSetting {
 }
 
 
-type MessageContentType = 'text' | 'image_url' | 'input_audio' | 'file' | 'application' | 'unknown';
+type MessageContentType = 'text' | 'image' | 'audio' | 'file' | 'application' | 'unknown';
 type RoleType = 'user' | 'developer' | 'system' | 'assistant' | 'tool' | 'function';
 
-interface ChatMessageContent {
+export interface ChatMessageContent {
   type: MessageContentType
   text: string;
   // ChatCompletionContentPartImage.ImageURL;
-  images: string | Uint8Array[] | string[] | MessageFile[]
+  images: MessageFile | MessageFile[]
   // ChatCompletionContentPartInputAudio.InputAudio;
-
-  file: MessageFile | MessageFile[];
+  files: MessageFile | MessageFile[]
 }
 
 // FileParseResult
@@ -54,18 +53,15 @@ export interface MessageFile  {
   metadata: FileMetadata;  // 其他自定义元数据
   url?: string;          // 文件URL（如果是远程文件）
   path?: string;         // 文件本地路径（如果是本地文件）
-
 }
+
 export interface ChatMessage {
   provider?: string
   timestamp: number;
   type: 'text';
-
   role: RoleType;
   content: string | ChatMessageContent[];
-  images?: Uint8Array[] | string[] | MessageFile[];
   tool_calls?: any[];
-  files?: MessageFile | MessageFile[];
 }
 
 // export interface Chat {

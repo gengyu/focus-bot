@@ -28,7 +28,12 @@ export const useMessageStore = defineStore<string, {
     const reader = readableStream.getReader();
     try {
       let assistantMessage = reactive<ChatMessage>({
-        content: '',
+        content: [{
+          type: 'text',
+          text: '',
+          images: [],
+          files: []
+        }],
         role: 'assistant',
         timestamp: Date.now(),
         type: 'text'
@@ -43,8 +48,20 @@ export const useMessageStore = defineStore<string, {
         if (value) {
           const result = JSON.parse(value);
           assistantMessage.timestamp = result.timestamp;
-          // assistantMessage.role = result.role;
-          assistantMessage.content += result?.content ?? '';
+          if (typeof result.content === 'string') {
+            if (Array.isArray(assistantMessage.content)) {
+              assistantMessage.content[0].text += result.content;
+            } else {
+              assistantMessage.content = [{
+                type: 'text',
+                text: result.content,
+                images: [],
+                files: []
+              }];
+            }
+          } else if (Array.isArray(result.content)) {
+            assistantMessage.content = result.content;
+          }
         }
       }
     } catch (error) {

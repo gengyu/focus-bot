@@ -1,75 +1,74 @@
 <template>
-  <div class="flex" :class="message.role === 'user' ? 'justify-end' : 'justify-start'">
+  <div class="flex" :class="messages.role === 'user' ? 'justify-end' : 'justify-start'">
     <!-- AI头像 -->
-    <div v-if="message.role !== 'user'"
+    <div v-if="messages.role !== 'user'"
          class="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center mr-3">
       <span class="text-green-600 text-sm">AI</span>
     </div>
     <!-- 消息气泡 -->
     <div class="max-w-[75%] rounded-2xl px-4 py-3 break-all"
-         :class="message.role === 'user' ? 'bg-blue-500 text-white rounded-tr-sm' : 'bg-white rounded-tl-sm'"
+         :class="messages.role === 'user' ? 'bg-blue-500 text-white rounded-tr-sm' : 'bg-white rounded-tl-sm'"
     >
-      <!-- AI思考过程 -->
-      <div v-if="message.type === 'text' && message.role !== 'user'"
-           class="markdown-body think-process break-words">
+      <div v-for="message in messages.content">
+        <!-- AI思考过程 -->
+        <div v-if=" messages.role !== 'user'"
+             class="markdown-body think-process break-words">
 
-        <div v-if="!message.content && !message.thinking" class="h-5 flex items-center justify-items-start">
-          <span class="animate-bounce [animation-delay:-0.3s] bg-gray-400 rounded-full h-2 w-2 mr-2"></span>
-          <span class="animate-bounce [animation-delay:-0.15s] bg-gray-400 rounded-full h-2 w-2 mr-2"></span>
-          <span class="animate-bounce bg-gray-400 rounded-full h-2 w-2"></span>
+          <div v-if="!message.content && !message.thinking" class="h-5 flex items-center justify-items-start">
+            <span class="animate-bounce [animation-delay:-0.3s] bg-gray-400 rounded-full h-2 w-2 mr-2"></span>
+            <span class="animate-bounce [animation-delay:-0.15s] bg-gray-400 rounded-full h-2 w-2 mr-2"></span>
+            <span class="animate-bounce bg-gray-400 rounded-full h-2 w-2"></span>
+          </div>
+          <div v-if="message.thinking" class="flex items-center mb-2">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-400 mr-1" fill="none" viewBox="0 0 24 24"
+                 stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+            </svg>
+            <span class="text-gray-400 text-sm">思考过程</span>
+          </div>
+          <div class="text-gray-600 bg-gray-50 rounded-lg px-3 pt-3 pb-0.25" v-html="mdRender(message.thinking)"></div>
         </div>
-        <div v-if="message.thinking" class="flex items-center mb-2">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-400 mr-1" fill="none" viewBox="0 0 24 24"
-               stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
-          </svg>
-          <span class="text-gray-400 text-sm">思考过程</span>
-        </div>
-        <div class="text-gray-600 bg-gray-50 rounded-lg px-3 pt-3 pb-0.25" v-html="mdRender(message.thinking)"></div>
-      </div>
-      <!--      &lt;!&ndash; 图片消息 &ndash;&gt;-->
-      <!--      <div v-else-if="message.type === 'image'" class="max-w-sm rounded-lg overflow-hidden">-->
-      <!--        <img :src="message.imageUrl" alt="聊天图片" class="w-full">-->
-      <!--      </div>-->
-      <!-- 显示上传的图片 -->
-      <div v-if="message.images && message.images.length > 0" class="mb-3 flex flex-wrap gap-2">
-        <div v-for="(image, index) in message.images" :key="index" class="relative">
-          <img
-              :src="getImageSrc(image)"
-              alt="上传图片"
-              class="max-w-[200px] max-h-[200px] rounded-lg cursor-pointer"
-              @click="(e) => showFullImage(image, index, e)"
-          >
-        </div>
-      </div>
-      <!-- 显示上传的文件 -->
-      <div v-if="message.files && (Array.isArray(message.files) ? message.files.length > 0 : true)" class="mb-3">
-        <div v-for="(file, index) in getFilesArray(message.files)" :key="index"
-             class="mb-2 px-3 py-2 bg-gray-100 rounded-lg flex items-center hover:bg-gray-200 transition-colors">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-gray-500" fill="none" viewBox="0 0 24 24"
-               stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-          </svg>
-          <div class="flex flex-col flex-1">
-            <span class="text-sm font-medium text-gray-600">{{ file.name || '未命名文件' }}</span>
-            <span class="text-xs text-gray-500">{{ formatFileSize(file.size || 0) }}</span>
+        <!-- 显示上传的图片 -->
+        <div v-if="message.images && message.images.length > 0" class="mb-3 flex flex-wrap gap-2">
+          <div v-for="(image, index) in message.images" :key="index" class="relative">
+            <img
+                :src="getImageSrc(image)"
+                alt="上传图片"
+                class="max-w-[200px] max-h-[200px] rounded-lg cursor-pointer"
+                @click="(e) => showFullImage(image, index, e)"
+            >
           </div>
         </div>
-      </div>
-      <!-- 普通消息 -->
-      <div v-if="message.type === 'text' && message.role !== 'user'" class="markdown-body break-words"
-           v-html="mdRender(message.content)"></div>
-      <div v-else-if="message.type === 'text'" class="break-words text-[15px] leading-relaxed">
-        {{ message.content }}
+        <!-- 显示上传的文件 -->
+        <div v-if="message.files && (Array.isArray(message.files) ? message.files.length > 0 : true)" class="mb-3">
+          <div v-for="(file, index) in getFilesArray(message.files)" :key="index"
+               class="mb-2 px-3 py-2 bg-gray-100 rounded-lg flex items-center hover:bg-gray-200 transition-colors">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-gray-500" fill="none" viewBox="0 0 24 24"
+                 stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+            </svg>
+            <div class="flex flex-col flex-1">
+              <span class="text-sm font-medium text-gray-600">{{ file.name || '未命名文件' }}</span>
+              <span class="text-xs text-gray-500">{{ formatFileSize(file.size || 0) }}</span>
+            </div>
+          </div>
+        </div>
+        <!-- 普通消息 -->
+        <div v-if="messages.role !== 'user'" class="markdown-body break-words"
+             v-html="mdRender(message.content)"></div>
+        <div v-else class="break-words text-[15px] leading-relaxed">
+          {{ message.content }}
+        </div>
       </div>
       <!-- 消息时间 -->
-      <div class="text-xs mt-1 opacity-60" v-if="message.timestamp">
-        {{ new Date(message.timestamp).toLocaleTimeString() }}
+      <div class="text-xs mt-1 opacity-60" v-if="messages.timestamp">
+        {{ new Date(messages.timestamp).toLocaleTimeString() }}
       </div>
+
     </div>
     <!-- 用户头像 -->
-    <div v-if="message.role === 'user'"
+    <div v-if="messages.role === 'user'"
          class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center ml-3">
       <span class="text-blue-600 text-sm">我</span>
     </div>
@@ -92,15 +91,6 @@ import "github-markdown-css";
 import 'highlight.js/styles/github.css';
 import 'katex/dist/katex.min.css';
 import VueEasyLightbox from 'vue-easy-lightbox';
-
-//  解析 <think>开始 <think/> 结束 方法
-const parseThink = (content: string) => {
-  const think = content.match(/<think>(.*?)<\/think>/s);
-  if (think) {
-    return content.replace(think[0], `<span class="text-blue-500">${think[1]}</span>`);
-  }
-  return content;
-}
 
 const props = defineProps<{
   chatMessage: ChatMessage,
@@ -135,17 +125,11 @@ const getImageSrc = (image: any): string => {
 // 显示全屏图片
 const showFullImage = (image: any, index: number, e?: Event) => {
   previewImages.value = [];
-  if (props.chatMessage.images && Array.isArray(props.chatMessage.images)) {
-    // 确保所有图片都能正确获取URL
-    previewImages.value = props.chatMessage.images.map(img => getImageSrc(img));
-  } else if (props.chatMessage.images) {
-    // 处理单个图片的情况
-    previewImages.value = [getImageSrc(image)];
-  }
-
-  // 确保预览图片数组不为空
-  if (previewImages.value.length === 0 && image) {
-    previewImages.value = [getImageSrc(image)];
+  if (Array.isArray(message.value.content)) {
+    const allImages = message.value.content
+        .filter(c => c.images)
+        .flatMap(c => Array.isArray(c.images) ? c.images : [c.images]);
+    previewImages.value = allImages.map(img => getImageSrc(img));
   }
 
   currentImgIndex.value = index;
@@ -154,7 +138,6 @@ const showFullImage = (image: any, index: number, e?: Event) => {
   // 防止事件冒泡
   e?.stopPropagation();
 };
-
 
 // 将文件转换为数组
 const getFilesArray = (files: MessageFile | MessageFile[] | File | File[] | undefined) => {
@@ -189,42 +172,65 @@ const formatFileSize = (bytes: number): string => {
   return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2))} ${sizes[i]}`;
 };
 
-const message = computed(() => {
-  // console.log(props.index);
-  const chatMessage = props.chatMessage;
-  let content = chatMessage?.content?.trim() ?? ''
-
+const parseTextContent = (text = '') => {
+  let content = text.trim();
   let thinking = ''
-
-  const startWithThink = content?.startsWith('<think>')
+  const startWithThink = content?.startsWith('<think>');
   if (startWithThink) {
-    content = content.replace('<think>', '')
+    content = content.replace('<think>', '');
     const endThinkIndex = content.indexOf('</think>');
     if (endThinkIndex === -1) {
-      thinking = content
-      content = ''
+      thinking = content;
+      content = '';
     } else {
-      thinking = content.substring(0, endThinkIndex)
-      content = content.substring(endThinkIndex).replace(/<\/think>/g, '')
+      thinking = content.substring(0, endThinkIndex);
+      content = content.substring(endThinkIndex).replace(/<\/think>/g, '');
     }
   }
-
-  // 确保images和files属性正确传递
-  const images = chatMessage.images || [];
-  const files = chatMessage.files || [];
-
+  return {content, thinking};
+};
+const messages = computed(() => {
+  let chatMessage = props.chatMessage;
+  if (typeof chatMessage.content === 'string') {
+    const {content, thinking} = parseTextContent(chatMessage.content)
+    return {
+      role: chatMessage.role,
+      content: [{
+        content: content,
+        thinking: thinking.trim(),
+        images: undefined,
+        files: undefined,
+      }],
+      timestamp: chatMessage.timestamp,
+    };
+  }
+  const content = chatMessage.content.map(messageContent => {
+    const images = Array.isArray(messageContent.images) ? messageContent.images : [messageContent.images];
+    const files = Array.isArray(messageContent.images) ? messageContent.files : [messageContent.files];
+    const {content, thinking} = parseTextContent(messageContent.text)
+    return {
+      content: content,
+      thinking: thinking.trim(),
+      images: images,
+      files: files,
+    }
+  })
   return {
     role: chatMessage.role,
     content: content,
     timestamp: chatMessage.timestamp,
-    type: chatMessage.type || 'text',
-    // imageUrl: chatMessage.imageUrl,
-    thinking: thinking.trim(),
-    images: images,
-    files: files
   }
-})
+});
 
+const getMessageContent = () => {
+  if (typeof message.value.content === 'string') {
+    return message.value.content;
+  }
+  if (Array.isArray(message.value.content)) {
+    return message.value.content.map(c => c.text).join('\n');
+  }
+  return '';
+};
 
 </script>
 

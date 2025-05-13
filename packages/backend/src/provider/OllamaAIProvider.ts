@@ -17,34 +17,43 @@ export class OllamaAIProvider implements LLMProvider {
   }
 
   private formatMessage(messages: ChatMessage[]): Message[] {
-    return messages.map((msg) => {
-      if (msg.role === 'user') {
-        // 处理imgs
-        const images = msg.images?.map((img) => {
-          if (img instanceof Uint8Array || typeof img === 'string') {
-            return ''
-          }
-          return (img as MessageFile).url?.split(',')[1];
-        }).filter(Boolean);
-
-        const files = Array.isArray(msg.files) ? msg.files
-          : msg.files ? [msg.files] : [];
-
-        const fileContent = files.map((messageFile) => {
-          return messageFile.metadata.originalname + '\n' +messageFile.content
-        }).filter(Boolean).join('\n');
-
-
+    return messages.map((chatMessage) => {
+      // if(msg.role === 'system')
+      if (typeof chatMessage.content === 'string') {
         return {
-          role: msg.role,
-          content: (fileContent ?? '') +  msg.content,
-          images,
-        } as Message
+          role: chatMessage.role,
+          content: chatMessage.content
+        }
       }
 
-      return {role: msg.role, content: msg.content as string};
+      // 处理imgs
+      const images = chatMessage.content
+        ?.filter(messageContent => messageContent.type === 'image')
+        .map(messageContent => messageContent.images)
+        .flat().filter(Boolean).map(image => image.url?.split(',')[1]);
 
-    })
+      const textContent = chatMessage.content.map(messageContent => {
+        if (messageContent.type === 'file') {
+          const files = Array.isArray(messageContent.files) ? messageContent.files : [messageContent.files]
+          files.map(messageFile => {
+            if (messageFile.content) {
+              return messageFile.metadata.originalname ?? '' + '\n' + messageFile.content;
+            }
+            return ''
+          }).filter(Boolean).join('\n')
+        }
+        if (messageContent.type === 'text') {
+          return messageContent.text
+        }
+      }).filter(Boolean).join('\n');
+
+
+      return {
+        role: chatMessage.role,
+        content: textContent,
+        images,
+      } as Message
+    });
   }
 
   async chat(messages: ChatMessage[], modelId: string, signal?: AbortSignal) {

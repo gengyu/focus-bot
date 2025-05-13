@@ -41,10 +41,10 @@
             </label>
             <Combobox v-model="currentProvider.apiUrl">
               <div class="relative">
-                <ComboboxInput
-                    class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:border-blue-500"
-                    :placeholder="getDefaultApiUrl(currentProvider.id)"
-                    @change="query = $event.target.value"
+                <ComboboxInput autocomplete="off"
+                               class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:border-blue-500"
+                               :placeholder="getDefaultApiUrl(currentProvider.id)"
+                               @change="query = $event.target.value"
                 />
                 <ComboboxButton class="absolute inset-y-0 right-0 flex items-center pr-2">
                   <ChevronUpDownIcon class="h-5 w-5 text-gray-400" aria-hidden="true"/>
@@ -73,6 +73,7 @@
                   :type="showPassword ? 'text' : 'password'"
                   v-model="currentProvider.apiKey"
                   placeholder="输入 API 密钥"
+                  autocomplete="off"
                   class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:border-blue-500"/>
               <button
                   type="button"
@@ -107,7 +108,7 @@
             <div v-for="model in currentProvider.models" :key="model.id"
                  class="flex items-center justify-between p-2 bg-base-200 rounded-lg">
               <div class="flex items-center space-x-4">
-                <input type="checkbox" v-model="model.enabled" class="checkbox checkbox-sm"/>
+                <input type="checkbox"          autocomplete="off" v-model="model.enabled" class="checkbox checkbox-sm"/>
                 <div>
                   <div class="font-medium">{{ model.name }}</div>
                   <div class="text-sm text-gray-500">{{ model.description }}</div>
@@ -151,7 +152,6 @@ import {toast} from 'vue-sonner'
 import type {Model, ProviderConfig, ProviderId} from "../../../../../share/type.ts";
 import {useAppSettingStore} from '@/store/appSettingStore.ts';
 import log from "loglevel";
-import {chatAPI} from "@/services/chatApi.ts";
 import {configAPI} from "@/services/api.ts";
 
 
@@ -175,13 +175,13 @@ const getDefaultApiUrl = (providerId: string): string => {
     case 'doubao':
       return 'https://api.doubao.com/v1';
     case 'aliyun':
-      return 'https://dashscope.aliyuncs.com/api/v1';
+      return 'https://dashscope.aliyuncs.com/compatible-mode/v1';
     default:
       return '';
   }
 };
 
-const { appSetting, resetSettings, updateProvider} = useAppSettingStore();
+const {appSetting, resetSettings, updateProvider} = useAppSettingStore();
 
 
 const selectedProviderIdx = ref(0);
