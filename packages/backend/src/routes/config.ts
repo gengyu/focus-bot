@@ -1,7 +1,7 @@
 import {Body, Controller, Post} from '../decorators/decorators.ts';
 import {AppSettingService} from '../services/AppSettingService.ts';
 import {ResultHelper} from './routeHelper';
-import {type AppSetting, ProviderConfig} from "../../../../share/type";
+import {type AppSetting, ProviderConfig, ProviderId} from "../../../../share/type";
 import {ChatService} from "../services/ChatService.ts";
 
 // const fileConfigService = new FileConfigService();
@@ -33,8 +33,8 @@ export class ConfigController {
 	}
 
 	@Post('/getModels')
-	async getModels(@Body() providerConfig: ProviderConfig) {
- 		const models = this.chatService.getModels(providerConfig.id);
+	async getModels(@Body() id: ProviderId) {
+ 		const models = this.chatService.getModels(id);
 		return ResultHelper.success(models);
 	}
 

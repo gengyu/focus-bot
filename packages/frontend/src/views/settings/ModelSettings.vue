@@ -151,6 +151,8 @@ import {toast} from 'vue-sonner'
 import type {Model, ProviderConfig, ProviderId} from "../../../../../share/type.ts";
 import {useAppSettingStore} from '@/store/appSettingStore.ts';
 import log from "loglevel";
+import {chatAPI} from "@/services/chatApi.ts";
+import {configAPI} from "@/services/api.ts";
 
 
 const showPassword = ref(false);
@@ -332,7 +334,7 @@ const refreshModels = async () => {
   const providerId = currentProvider.value?.id;
 
   if (!providerId) return;
-  const models: Model[] = await fetchModels(providerId, currentProvider.value);
+  const models: Model[] = await configAPI.getModels(providerId);
   if (models.length > 0) {
     currentProvider.value.models = models.map(model => ({
       ...model,

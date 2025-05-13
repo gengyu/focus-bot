@@ -18,7 +18,7 @@ export const useConversationStore = defineStore<string, {
   updateModel: (model: Model) => Promise<void>,
   setActiveDialog: (dailogId: string) => Promise<void>,
 
-  createDialog: () => Promise<void>,
+  createDialog: () => Promise<DialogId>,
   deleteDialog: (dialogId: DialogId) => Promise<void>,
   updateDialog: (dialogId: DialogId, dialog: Partial<Dialog>) => Promise<void>,
 
@@ -89,7 +89,7 @@ export const useConversationStore = defineStore<string, {
    */
 
   const createDialog = async () => {
-    const dialogId = generateUUID();
+    const dialogId: DialogId = generateUUID();
     const model = appSettingStore.appSetting?.providers?.[0]?.models?.[0];
     conversation.value.dialogs.unshift({
       id: dialogId,
@@ -100,6 +100,7 @@ export const useConversationStore = defineStore<string, {
     })
     conversation.value.activeDialogId = dialogId;
     await chatAPI.saveDialogList(conversation.value);
+    return dialogId;
   }
 
   /**
@@ -113,11 +114,9 @@ export const useConversationStore = defineStore<string, {
     if (dialogId === conversation.value.activeDialogId) {
       conversation.value.activeDialogId = conversation.value.dialogs[0]?.id;
     }
-    if (!conversation.value.activeDialogId) {
-      await createDialog();
-    } else {
-      await chatAPI.saveDialogList(conversation.value);
-    }
+
+    await chatAPI.saveDialogList(conversation.value);
+
   }
 
   /**

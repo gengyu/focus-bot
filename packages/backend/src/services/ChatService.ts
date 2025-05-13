@@ -16,6 +16,7 @@ export class ChatService {
   private providerFactory: Record<string, (config: ProviderConfig) => LLMProvider> = {
     openai: (config: ProviderConfig) => new OpenAIProvider(config),
     ollama: (config: ProviderConfig) => new OllamaAIProvider(config),
+    aliyun: (config: ProviderConfig) => new OllamaAIProvider(config),
     // 如需支持 GeminiProvider，请实现对应 Provider 并在 providerFactory 注册
     // gemini: (config: ProviderConfig) => new GeminiProvider(config), // 需要实现 GeminiProvider
   };
@@ -101,6 +102,6 @@ export class ChatService {
 
   async getModels(providerId: string) {
     const llmProvider = await this.getLLmIntance(providerId);
-    return llmProvider.getModels();
+    return await llmProvider.getModels();
   }
 }

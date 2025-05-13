@@ -1,6 +1,6 @@
 import type {MCPConfig} from '../types/config';
 import {TransportAdapter, TransportType} from "../transports";
-import type {AppSetting} from "../../../../share/type.ts";
+import {type AppSetting,type ProviderId} from "../../../../share/type.ts";
 
 export const API_BASE_URL = 'http://localhost:3001';
 
@@ -24,6 +24,12 @@ const transport = new TransportAdapter(TransportType.HTTP, {
 export class ConfigAPI {
     async getModelConfig(): Promise<AppSetting> {
         const req = {method: 'getAppSetting', payload: {}};
+        const res = await transport.invokeDirect(req);
+        if (!res.success) throw new Error(`获取模型配置失败: ${res.error}`);
+        return res.data;
+    }
+    async getModels(providerId: ProviderId): Promise<AppSetting> {
+        const req = {method: 'getModels', payload: {providerId}};
         const res = await transport.invokeDirect(req);
         if (!res.success) throw new Error(`获取模型配置失败: ${res.error}`);
         return res.data;

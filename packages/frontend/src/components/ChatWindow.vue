@@ -314,13 +314,20 @@ const sendMessage = async () => {
   if (isLoading.value) {// 如果正在发送消息，则不允许再次发送
     return
   }
-  const dialog = dialogStore.conversation.dialogs.find(dialog => dialog.id === props.activeDialogId);
+
+  let activeDialogId = props.activeDialogId;
+  if(!activeDialogId){
+    activeDialogId = await dialogStore.createDialog();
+  }
+
+  //  初始化会话框
+  const dialog = dialogStore.conversation.dialogs.find(dialog => dialog.id === activeDialogId);
   if(dialog?.title.startsWith('新会话')){
     dialogStore.updateDialog(props.activeDialogId as DialogId, {title: messageInput.value.trim()});
   }
 
   // 设置loading状态
-  loadingMap.value[props.activeDialogId as DialogId]=  true;
+  loadingMap.value[activeDialogId]=  true;
 
   try {
     // 发送消息到服务器
@@ -328,10 +335,9 @@ const sendMessage = async () => {
     if (!model) {
       console.error('未选择模型');
       toast.warning('未选择模型');
-      loadingMap.value[props.activeDialogId as DialogId] = false;
+      loadingMap.value[activeDialogId] = false;
       return;
     }
-    const chatId = props.activeDialogId || '';
 
     // 创建用户消息
     const userMessage: ChatMessage = {
@@ -360,7 +366,7 @@ const sendMessage = async () => {
     nextTick(()=> scrollToBottom({force: true}));
     // 使用对话管理器发送消息
     // 确保在发送消息前已经将用户消息添加到消息列表中
-    const readableStream = await messageStore.sendMessage(userMessage, model, chatId);
+    const readableStream = await messageStore.sendMessage(userMessage, model, activeDialogId);
 
     const reader = readableStream.getReader();
     while (true) {
