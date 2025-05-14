@@ -144,8 +144,9 @@ export class OllamaAIProvider implements LLMProvider {
 
   async getModels() {
     try {
-      console.log('📦 Local model list:');
-      return this.ollama.list()
+      const list = await this.ollama.list()
+      console.log('📦 Local model list:', list?.models);
+      return list?.models;
     } catch (error) {
       console.error('Ollama API Error:', error);
       throw new Error('Failed to get models from Ollama');

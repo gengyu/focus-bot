@@ -2,7 +2,7 @@ import {API_BASE_URL} from './api';
 import {TransportAdapter, type TransportRequest, TransportType} from "../transports";
 import {type ChatMessage, type Conversation, type DialogId, type Model} from "../../../../share/type.ts";
 import log from "loglevel";
-import type {ChatOptions} from "../../../../share/chat.ts";
+import type {ChatOptions} from "../../../../share/type.ts";
 
 
 export class ChatAPI {

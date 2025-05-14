@@ -33,9 +33,13 @@ export class ConfigController {
 	}
 
 	@Post('/getModels')
-	async getModels(@Body() id: ProviderId) {
- 		const models = this.chatService.getModels(id);
-		return ResultHelper.success(models);
+	async getModels(@Body('providerId') id: ProviderId) {
+		try {
+			const models = await this.chatService.getModels(id);
+			return ResultHelper.success(models);
+		}catch (err) {
+			return ResultHelper.fail(err, null);
+		}
 	}
 
 

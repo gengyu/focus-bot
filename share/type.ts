@@ -30,8 +30,20 @@ export interface ProviderConfig {
 //   baseURL?: string;
 // }
 
+export interface SearchEngineConfig {
+  id: string;
+  name: string;
+  type: 'web' | 'academic';
+  apiKey: string;
+  engineId?: string;
+  enabled: boolean;
+  description: string;
+  prompt: string;
+}
+
 export interface AppSetting {
   providers: ProviderConfig[];
+  searchEngines: SearchEngineConfig[];
 }
 
 
@@ -125,4 +137,13 @@ export interface FileMetadata {
   additionalInfo?: Record<string, any>; // 其他自定义元数据（可选）
 }
 
+
+export interface ChatOptions {
+  useKnowledgeBase?: boolean;
+  useSearchEngine?: boolean;
+  knowledgeBaseId?: string;
+  dialogId?: DialogId;
+  model: Model;
+  stream?: boolean
+}
 

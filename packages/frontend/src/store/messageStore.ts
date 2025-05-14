@@ -3,7 +3,7 @@ import {reactive, type Ref, ref} from "vue";
 import {type ChatMessage, type DialogId} from "../../../../share/type.ts";
 import {chatAPI} from "../services/chatApi.ts";
 import {generateUUID4} from "../utils/uuid.ts";
-import type {ChatOptions} from "../../../../share/chat.ts";
+import type {ChatOptions} from "../../../../share/type.ts";
 
 // 创建单例实例
 // const contextManager = new ContextManager();

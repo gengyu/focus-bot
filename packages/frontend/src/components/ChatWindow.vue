@@ -155,7 +155,7 @@
                       d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"/>
               </svg>
             </button>
-            <button @click="isLoading ? stopMessage() : sendMessageHandler()"
+            <button @click="isLoading ? stopMessage() : sendMessage()"
                     class="px-6 py-2.5 rounded-lg focus:outline-none transition-colors self-end"
                     :class="[isLoading ? 'bg-gray-400' : 'bg-blue-500 hover:bg-blue-600 text-white']"
             >
@@ -199,6 +199,7 @@ import {toast} from "vue3-toastify";
 import VueEasyLightbox from 'vue-easy-lightbox';
 import {chatAPI} from "../services/chatApi.ts";
 import {v4 as uuidv4} from 'uuid';
+import type {ChatOptions} from "../../../../share/type.ts";
 
 // 使用对话管理Store
 const dialogStore = useConversationStore();
@@ -254,7 +255,7 @@ const handleEnterKey = (event: KeyboardEvent) => {
     return;
   }
   // 单独按下Enter键且不在输入法编辑状态时，发送消息
-  sendMessageHandler();
+  sendMessage();
 };
 
 // 处理粘贴事件
@@ -361,33 +362,16 @@ const generateChatMessage = (): ChatMessage => {
   return userMessage;
 };
 
-
-// 发送消息
-const sendMessageHandler = async () => {
-
-  // 检查是否有内容可发送
-  if (!messageInput.value.trim()) return;
-  if (isLoading.value) {// 如果正在发送消息，则不允许再次发送
-    return
+// 发送消息到服务器的通用方法
+const sendMessageToServer = async (message: ChatMessage, messageId?: string) => {
+  if (isLoading.value) {
+    return;
   }
 
-  let activeDialogId = props.activeDialogId;
-  if (!activeDialogId) {
-    activeDialogId = await dialogStore.createDialog();
-  }
-
-  //  初始化会话框
-  const dialog = dialogStore.conversation.dialogs.find(dialog => dialog.id === activeDialogId);
-  if (dialog?.title.startsWith('新会话')) {
-    dialogStore.updateDialog(props.activeDialogId as DialogId, {title: messageInput.value.trim()});
-  }
-
-  // 设置loading状态
+  const activeDialogId = props.activeDialogId!;
   loadingMap.value[activeDialogId] = true;
 
-
   try {
-    // 发送消息到服务器
     const model = props.model;
     if (!model) {
       console.error('未选择模型');
@@ -396,34 +380,58 @@ const sendMessageHandler = async () => {
       return;
     }
 
-
-    const userMessage = generateChatMessage();
-
     nextTick(() => scrollToBottom({force: true}));
-    // 使用对话管理器发送消息
-    // 确保在发送消息前已经将用户消息添加到消息列表中
-    const readableStream = await messageStore.sendMessage(userMessage, {model, dialogId: activeDialogId},);
 
+    const chatOptions: ChatOptions = {
+      model,
+      dialogId: activeDialogId,
+      stream: true,
+      useSearchEngine: isSearchActive.value
+    };
+
+    const readableStream = await messageStore.sendMessage(message, chatOptions, messageId);
     const reader = readableStream.getReader();
+    
     while (true) {
-      const {done,} = await reader.read();
+      const {done} = await reader.read();
       if (done) {
         break;
       }
       nextTick(scrollToBottom);
     }
-    console.log('done')
-
+    console.log('done');
   } catch (error) {
     console.error('发送消息失败:', error);
     toast.error('发送消息失败: ' + (error instanceof Error ? error.message : String(error)));
   } finally {
-    // 无论成功还是失败，都重置loading状态
-    loadingMap.value[props.activeDialogId as DialogId] = false;
+    loadingMap.value[activeDialogId] = false;
   }
-
 };
 
+// 发送消息
+const sendMessage = async () => {
+  // 检查是否有内容可发送
+  if (!messageInput.value.trim()) return;
+
+  let activeDialogId = props.activeDialogId;
+  if (!activeDialogId) {
+    activeDialogId = await dialogStore.createDialog();
+  }
+
+  // 初始化会话框
+  const dialog = dialogStore.conversation.dialogs.find(dialog => dialog.id === activeDialogId);
+  if (dialog?.title.startsWith('新会话')) {
+    dialogStore.updateDialog(props.activeDialogId as DialogId, {title: messageInput.value.trim()});
+  }
+
+  const userMessage = generateChatMessage();
+  await sendMessageToServer(userMessage);
+};
+
+// 处理重发消息
+const handleResend = async (message: ChatMessage) => {
+  await sendMessageToServer(message, message.id);
+};
 
 // 检查文件大小
 // if (file.size > maxFileSize) {
@@ -569,49 +577,6 @@ const cancelImageUpload = () => {
   imageFiles.value = [];
   previewImages.value = [];
   isImageUploadActive.value = false;
-};
-
-// 处理重发消息
-const handleResend = async (message: ChatMessage) => {
-  if (isLoading.value) {// 如果正在发送消息，则不允许再次发送
-    return
-  }
-  const activeDialogId = props.activeDialogId!;
-  // 设置loading状态
-  loadingMap.value[activeDialogId] = true;
-
-  try {
-    // 发送消息到服务器
-    const model = props.model;
-    if (!model) {
-      console.error('未选择模型');
-      toast.warning('未选择模型');
-      loadingMap.value[activeDialogId] = false;
-      return;
-    }
-
-    nextTick(() => scrollToBottom({force: true}));
-    // 使用对话管理器发送消息
-    // 确保在发送消息前已经将用户消息添加到消息列表中
-    const readableStream = await messageStore.sendMessage(message, {model, dialogId: activeDialogId}, message.id);
-
-    const reader = readableStream.getReader();
-    while (true) {
-      const {done,} = await reader.read();
-      if (done) {
-        break;
-      }
-      nextTick(scrollToBottom);
-    }
-    console.log('done')
-
-  } catch (error) {
-    console.error('发送消息失败:', error);
-    toast.error('发送消息失败: ' + (error instanceof Error ? error.message : String(error)));
-  } finally {
-    // 无论成功还是失败，都重置loading状态
-    loadingMap.value[props.activeDialogId as DialogId] = false;
-  }
 };
 
 // 定义emit事件
