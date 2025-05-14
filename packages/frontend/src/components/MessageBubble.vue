@@ -36,7 +36,7 @@
                 :src="getImageSrc(image)"
                 alt="上传图片"
                 class="max-w-[200px] max-h-[200px] rounded-lg cursor-pointer"
-                @click="(e) => showFullImage(image, index, e)"
+                @click="(e) => showFullImage(image, e)"
             >
           </div>
         </div>
@@ -147,16 +147,11 @@ const getImageSrc = (image: any): string => {
 };
 
 // 显示全屏图片
-const showFullImage = (image: any, index: number, e?: Event) => {
-  previewImages.value = [];
-  if (Array.isArray(message.value.content)) {
-    const allImages = message.value.content
-        .filter(c => c.images)
-        .flatMap(c => Array.isArray(c.images) ? c.images : [c.images]);
-    previewImages.value = allImages.map(img => getImageSrc(img));
-  }
-
-  currentImgIndex.value = index;
+const showFullImage = (image: any, e?: Event) => {
+  previewImages.value = [
+    getImageSrc(image)
+  ];
+  currentImgIndex.value = 0;
   showLightbox.value = true;
 
   // 防止事件冒泡

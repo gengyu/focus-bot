@@ -60,11 +60,12 @@ export class ChatService {
   async streamChat(
     chatId: string,
     message: ChatMessage,
-    model: Model
+    model: Model,
+    resendMessageId?: string
   ) {
 
     const llmProvider = await this.getLLmIntance(model.providerId);
-    await this.chatHistoryService.pushMessage(chatId, message);
+    await this.chatHistoryService.pushMessage(chatId, message, resendMessageId);
 
     const controller: AbortController = new AbortController();
     const signal = controller.signal;

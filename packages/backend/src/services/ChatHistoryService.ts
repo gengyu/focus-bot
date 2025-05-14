@@ -64,15 +64,18 @@ export class ChatHistoryService {
     });
   }
 
-  async pushMessage(chatId: string, message: ChatMessage): Promise<void> {
-    let chatHistory = await this.loadChatHistory(chatId);
-    if (chatHistory) {
-      chatHistory.push(message);
-    } else {
-      chatHistory = [message];
+  async pushMessage(chatId: string, message: ChatMessage, messageId?: string): Promise<void> {
+    let chatHistory = await this.loadChatHistory(chatId) || [];
+    if (messageId ) {
+      const findIndex = chatHistory.findIndex(item => item.id === messageId);
+      if (findIndex > -1) {
+        chatHistory = chatHistory.slice(0, findIndex)
+      }
     }
+    chatHistory.push(message);
     await this.saveChatHistory(chatHistory, chatId);
   }
+
 
   async getMessages(chatId: string): Promise<ChatMessage[]> {
     const data = await this.loadChatHistory(chatId);

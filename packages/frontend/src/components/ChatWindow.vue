@@ -155,7 +155,7 @@
                       d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"/>
               </svg>
             </button>
-            <button @click="isLoading ? stopMessage() : sendMessage()"
+            <button @click="isLoading ? stopMessage() : sendMessageHandler()"
                     class="px-6 py-2.5 rounded-lg focus:outline-none transition-colors self-end"
                     :class="[isLoading ? 'bg-gray-400' : 'bg-blue-500 hover:bg-blue-600 text-white']"
             >
@@ -198,7 +198,7 @@ import MessageBubble from './MessageBubble.vue';
 import {toast} from "vue3-toastify";
 import VueEasyLightbox from 'vue-easy-lightbox';
 import {chatAPI} from "../services/chatApi.ts";
-import { v4 as uuidv4 } from 'uuid';
+import {v4 as uuidv4} from 'uuid';
 
 // 使用对话管理Store
 const dialogStore = useConversationStore();
@@ -254,7 +254,7 @@ const handleEnterKey = (event: KeyboardEvent) => {
     return;
   }
   // 单独按下Enter键且不在输入法编辑状态时，发送消息
-  sendMessage();
+  sendMessageHandler();
 };
 
 // 处理粘贴事件
@@ -302,28 +302,8 @@ const isLoading = computed(() => {
   return loadingMap.value[props.activeDialogId as DialogId] || false;
 });
 
-// 发送消息
-const sendMessage = async () => {
-
-  // 检查是否有内容可发送
-  if (!messageInput.value.trim()) return;
-  if (isLoading.value) {// 如果正在发送消息，则不允许再次发送
-    return
-  }
-
-  let activeDialogId = props.activeDialogId;
-  if (!activeDialogId) {
-    activeDialogId = await dialogStore.createDialog();
-  }
-
-  //  初始化会话框
-  const dialog = dialogStore.conversation.dialogs.find(dialog => dialog.id === activeDialogId);
-  if (dialog?.title.startsWith('新会话')) {
-    dialogStore.updateDialog(props.activeDialogId as DialogId, {title: messageInput.value.trim()});
-  }
-
-  // 设置loading状态
-  loadingMap.value[activeDialogId] = true;
+// 构造消息
+const generateChatMessage = (): ChatMessage => {
 
   const content: ChatMessageContent[] = [];
 
@@ -357,6 +337,55 @@ const sendMessage = async () => {
     });
   }
 
+  // 创建用户消息
+  const userMessage: ChatMessage =   {
+    id: uuidv4(),
+    role: 'user',
+    type: 'text',
+    timestamp: Date.now(),
+    content: content
+  };
+  // 清空输入框、图片和文件
+  if (editableDiv.value) {
+    editableDiv.value.innerText = '';
+  }
+  messageInput.value = '';
+  imageFiles.value = [];
+  previewImages.value = [];
+  isImageUploadActive.value = false;
+  fileFiles.value = [];
+
+  isFileUploadActive.value = false;
+  fileUploadProgress.value = 0;
+
+  return userMessage;
+};
+
+
+// 发送消息
+const sendMessageHandler = async () => {
+
+  // 检查是否有内容可发送
+  if (!messageInput.value.trim()) return;
+  if (isLoading.value) {// 如果正在发送消息，则不允许再次发送
+    return
+  }
+
+  let activeDialogId = props.activeDialogId;
+  if (!activeDialogId) {
+    activeDialogId = await dialogStore.createDialog();
+  }
+
+  //  初始化会话框
+  const dialog = dialogStore.conversation.dialogs.find(dialog => dialog.id === activeDialogId);
+  if (dialog?.title.startsWith('新会话')) {
+    dialogStore.updateDialog(props.activeDialogId as DialogId, {title: messageInput.value.trim()});
+  }
+
+  // 设置loading状态
+  loadingMap.value[activeDialogId] = true;
+
+
   try {
     // 发送消息到服务器
     const model = props.model;
@@ -367,28 +396,8 @@ const sendMessage = async () => {
       return;
     }
 
-    // 创建用户消息
-    const userMessage: ChatMessage = {
-      id: uuidv4(),
-      role: 'user',
-      type: 'text',
-      timestamp: Date.now(),
-      content: content
-    };
 
-
-    // 清空输入框、图片和文件
-    if (editableDiv.value) {
-      editableDiv.value.innerText = '';
-    }
-    messageInput.value = '';
-    imageFiles.value = [];
-    previewImages.value = [];
-    isImageUploadActive.value = false;
-    fileFiles.value = [];
-
-    isFileUploadActive.value = false;
-    fileUploadProgress.value = 0;
+    const userMessage = generateChatMessage();
 
     nextTick(() => scrollToBottom({force: true}));
     // 使用对话管理器发送消息
@@ -421,7 +430,7 @@ const sendMessage = async () => {
 //   toast.error(`文件 ${file.name} 超过10MB限制`);
 //   return;
 // }
-const maxFileSize = 10 * 1024 * 1024; // 10MB限制
+// const maxFileSize = 10 * 1024 * 1024; // 10MB限制
 
 // 处理图片上传
 const handleImageUpload = async (event: Event) => {
@@ -494,14 +503,6 @@ const handleFileUpload = async (event: Event) => {
     fileUploadProgress.value = 0;
   }, 1000);
 
-  // 显示上传的文件名到输入框
-  // if (fileNames.value.length > 0) {
-  //   const fileText = `已选择文件: ${fileNames.value.join(', ')}`;
-  //   if (editableDiv.value) {
-  //     editableDiv.value.innerText = fileText;
-  //     messageInput.value = fileText;
-  //   }
-  // }
 
 };
 
@@ -555,7 +556,7 @@ const handleImageMessage = async () => {
   if (!imageFiles.value || imageFiles.value.length === 0) return;
 
   try {
-    // 图片已经在sendMessage函数中处理，这里只需要滚动到底部
+    // 图片已经在sendMessageHandler函数中处理，这里只需要滚动到底部
     scrollToBottom();
   } catch (error) {
     log.error("处理图片消息失败:", error);
@@ -572,11 +573,45 @@ const cancelImageUpload = () => {
 
 // 处理重发消息
 const handleResend = async (message: ChatMessage) => {
-  if (isLoading.value) return;
-  
-  // 如果是用户消息，直接设置到输入框
-  if (message.role === 'user') {}
+  if (isLoading.value) {// 如果正在发送消息，则不允许再次发送
+    return
+  }
+  const activeDialogId = props.activeDialogId!;
+  // 设置loading状态
+  loadingMap.value[activeDialogId] = true;
 
+  try {
+    // 发送消息到服务器
+    const model = props.model;
+    if (!model) {
+      console.error('未选择模型');
+      toast.warning('未选择模型');
+      loadingMap.value[activeDialogId] = false;
+      return;
+    }
+
+    nextTick(() => scrollToBottom({force: true}));
+    // 使用对话管理器发送消息
+    // 确保在发送消息前已经将用户消息添加到消息列表中
+    const readableStream = await messageStore.sendMessage(message, model, activeDialogId, message.id);
+
+    const reader = readableStream.getReader();
+    while (true) {
+      const {done,} = await reader.read();
+      if (done) {
+        break;
+      }
+      nextTick(scrollToBottom);
+    }
+    console.log('done')
+
+  } catch (error) {
+    console.error('发送消息失败:', error);
+    toast.error('发送消息失败: ' + (error instanceof Error ? error.message : String(error)));
+  } finally {
+    // 无论成功还是失败，都重置loading状态
+    loadingMap.value[props.activeDialogId as DialogId] = false;
+  }
 };
 
 // 定义emit事件

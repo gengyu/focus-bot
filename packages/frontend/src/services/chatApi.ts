@@ -17,8 +17,8 @@ export class ChatAPI {
   });
 
 
-  sendMessage(message: ChatMessage, model: Model, chatId: string): [abort: (reason?: any) => void, ReadableStream<ChatMessage>] {
-    const req: TransportRequest = {method: 'sendMessage', payload: {message, model, chatId}};
+  sendMessage(message: ChatMessage, model: Model, chatId: string, resendMessageId?: string): [abort: (reason?: any) => void, ReadableStream<ChatMessage>] {
+    const req: TransportRequest = {method: 'sendMessage', payload: {message, model, chatId, resendMessageId}};
     const controller = new AbortController();
     return [
       (reason?: any) => controller.abort(reason),

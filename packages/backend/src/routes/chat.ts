@@ -27,9 +27,14 @@ export class ChatController {
   }
 
   @SSE('/sendMessage')
-  async postMessage(@Body('message') userMessage: ChatMessage, @Body('chatId') chatId: string, @Body('model') model: Model) {
+  async postMessage(@Body('message') userMessage: ChatMessage,
+                    @Body('chatId') chatId: string,
+                    @Body('model') model: Model,
+                    @Body('resendMessageId') resendMessageId?: string
+  ) {
     try {
-      return this.chatService.streamChat(chatId, userMessage, model);
+
+      return this.chatService.streamChat(chatId, userMessage, model, resendMessageId);
     } catch (err: any) {
       console.error('Error in postMessage:', err);
       return ResultHelper.fail(err.message, null);
