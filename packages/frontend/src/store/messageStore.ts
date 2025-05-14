@@ -74,6 +74,19 @@ export const useMessageStore = defineStore<string, {
 
   const messageReaders = new Map<DialogId, (reson?: any) => void>();
 
+
+  /**
+   * 删除指定对话中的某条消息
+   * @param dialogId 对话ID
+   * @param messageIndex 消息索引
+   */
+  const deleteMessage = (dialogId: DialogId, messageiId: number) => {
+    const dialogMessages = messages.value[dialogId];
+    if (dialogMessages && dialogMessages[messageIndex]) {
+      dialogMessages.splice(messageIndex, 1);
+    }
+  };
+
   /**
    * 停止指定对话的消息流
    * @param dialogId 对话ID

@@ -69,18 +69,6 @@
 
       <!-- 输入框区域 -->
       <div>
-        <!-- 服务商选择 -->
-        <!--        <select v-model="selectedProvider" class="px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm w-32 focus:outline-none focus:border-blue-500">-->
-        <!--          <option v-for="provider in providers" :key="provider.id" :value="provider.id">{{ provider.name }}</option>-->
-        <!--        </select>-->
-        <!-- 模型选择 -->
-        <!--        <select v-if="!props.model" v-model="selectedModel" class="px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm w-32 focus:outline-none focus:border-blue-500">-->
-        <!--          <option v-for="model in availableModels" :key="model" :value="model">{{ model }}</option>-->
-        <!--        </select>-->
-        <!-- 文本输入框 -->
-
-
-        <!--          bg-gray-50 rounded-lg border border-gray-200 focus:outline-none focus:border-blue-500 focus:bg-white transition-colors overflow-y-auto-->
         <div ref="editableDiv"
              contenteditable="true"
              class="editableDiv min-h-[72px] max-h-[200px] w-full px-2 py-2  focus:outline-none"
@@ -587,32 +575,8 @@ const handleResend = async (message: ChatMessage) => {
   if (isLoading.value) return;
   
   // 如果是用户消息，直接设置到输入框
-  if (message.role === 'user') {
-    const textContent = message.content
-      .filter(content => content.type === 'text')
-      .map(content => content.text)
-      .join('\n');
-    
-    if (editableDiv.value) {
-      editableDiv.value.innerText = textContent;
-      messageInput.value = textContent;
-    }
-    
-    // 处理图片内容
-    const images = message.content
-      .filter(content => content.type === 'image')
-      .flatMap(content => content.images || []);
-    imageFiles.value = images;
-    previewImages.value = images.map(img => img.url || '');
-    isImageUploadActive.value = images.length > 0;
-    
-    // 处理文件内容
-    const files = message.content
-      .filter(content => content.type === 'file')
-      .flatMap(content => content.files || []);
-    fileFiles.value = files;
-    isFileUploadActive.value = files.length > 0;
-  }
+  if (message.role === 'user') {}
+
 };
 
 // 定义emit事件

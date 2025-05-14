@@ -118,7 +118,7 @@ export class OllamaAIProvider implements LLMProvider {
 
 
       const messageId = uuidv4();
-      
+
 
       for await (const part of stream) {
         let content = part.message.content;
