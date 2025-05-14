@@ -25,13 +25,26 @@
     "debugging",
     "typescript"
   ],
-  "author": "",
-  "license": "Apache-2.0",
-  "publishConfig": {
-    "access": "public",
-    "registry": "https://registry.npmjs.org/"
+  "author": "FocusBot Contributors <focusbot@example.com>",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/gengyu/focus-bot.git"
   },
-  "dependencies": {
-
-  }
+  "homepage": "https://github.com/gengyu/focus-bot#readme",
+  "bugs": {
+    "url": "https://github.com/gengyu/focus-bot/issues"
+  },
+  "engines": {
+    "node": ">=16.0.0",
+    "pnpm": ">=7.0.0"
+  },
+  "contributors": [
+    "FocusBot Team"
+  ],
+  "funding": {
+    "type": "github",
+    "url": "https://github.com/sponsors/gengyu"
+  },
+  "dependencies": {},
+  "devDependencies": {}
 }
