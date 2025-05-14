@@ -22,6 +22,9 @@ importers:
       '@modelcontextprotocol/sdk':
         specifier: ^1.11.1
         version: 1.11.1
+      '@pinecone-database/pinecone':
+        specifier: ^6.0.0
+        version: 6.0.0
       axios:
         specifier: ^1.9.0
         version: 1.9.0
@@ -933,6 +936,10 @@ packages:
   '@modelcontextprotocol/sdk@1.11.1':
     resolution: {integrity: sha512-9LfmxKTb1v+vUS1/emSk1f5ePmTLkb9Le9AxOB5T0XM59EUumwcS45z05h7aiZx3GI0Bl7mjb3FMEglYj+acuQ==}
     engines: {node: '>=18'}
+
+  '@pinecone-database/pinecone@6.0.0':
+    resolution: {integrity: sha512-Qicqb5G7g01vMqm/gPdB8mW/6HmNb87NWz5M4TMtyLAMHxTjbnm8sgnUL2/eCyY1Th55oobjpM65exTatFMQvA==}
+    engines: {node: '>=18.0.0'}
 
   '@radix-ui/colors@3.0.0':
     resolution: {integrity: sha512-FUOsGBkHrYJwCSEtWRCIfQbZG7q1e6DgxCIOe1SUQzDe/7rXXeA47s8yCn6fuTNQAj1Zq4oTFi9Yjp3wzElcxg==}
@@ -4891,6 +4898,8 @@ snapshots:
       zod-to-json-schema: 3.24.5(zod@3.24.4)
     transitivePeerDependencies:
       - supports-color
+
+  '@pinecone-database/pinecone@6.0.0': {}
 
   '@radix-ui/colors@3.0.0': {}
 

@@ -7,10 +7,9 @@ import { router as decoratorRouter, registerControllers } from './decorators/dec
 import { ChatController } from './routes/chat';
 import { ConfigController } from './routes/config';
 import { FileParserController } from './routes/fileParser';
-
+import ragRouter from './routes/rag.routes';
 
 const app = new Koa();
-
 
 // 中间件配置
 app.use(cors({
@@ -26,10 +25,12 @@ const healthRouter = new Router();
 healthRouter.get('/health', (ctx) => {
   ctx.body = { status: 'ok', timestamp: new Date().toISOString() };
 });
+
 // 注册路由
 registerControllers([ChatController, ConfigController, FileParserController]);
 app.use(healthRouter.routes()).use(healthRouter.allowedMethods());
 app.use(decoratorRouter.routes()).use(decoratorRouter.allowedMethods());
+app.use(ragRouter.routes()).use(ragRouter.allowedMethods());
 
 // 静态文件服务
 // app.use(require('koa-static')(path.join(process.cwd(), 'data')));
@@ -37,8 +38,7 @@ app.use(decoratorRouter.routes()).use(decoratorRouter.allowedMethods());
 // 启动服务器
 console.log('running on import.meta.env.PROD', process.env.PROD);
 
-  app.listen(process.env.PROD || 3001);
-  console.log('running on http://localhost:3001');
-
+app.listen(process.env.PROD || 3001);
+console.log('running on http://localhost:3001');
 
 export const viteNodeApp = app;
