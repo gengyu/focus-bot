@@ -35,9 +35,9 @@ export class OllamaAIProvider implements LLMProvider {
       const textContent = chatMessage.content.map(messageContent => {
         if (messageContent.type === 'file') {
           const files = Array.isArray(messageContent.files) ? messageContent.files : [messageContent.files]
-          files.map(messageFile => {
+          return files.map(messageFile => {
             if (messageFile.content) {
-              return messageFile.metadata.originalname ?? '' + '\n' + messageFile.content;
+              return (messageFile.metadata.originalname ?? '') + '\n' + messageFile.content;
             }
             return ''
           }).filter(Boolean).join('\n')
