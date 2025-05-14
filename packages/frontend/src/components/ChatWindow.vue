@@ -338,7 +338,7 @@ const generateChatMessage = (): ChatMessage => {
   }
 
   // 创建用户消息
-  const userMessage: ChatMessage =   {
+  const userMessage: ChatMessage = {
     id: uuidv4(),
     role: 'user',
     type: 'text',
@@ -402,7 +402,7 @@ const sendMessageHandler = async () => {
     nextTick(() => scrollToBottom({force: true}));
     // 使用对话管理器发送消息
     // 确保在发送消息前已经将用户消息添加到消息列表中
-    const readableStream = await messageStore.sendMessage(userMessage, model, activeDialogId);
+    const readableStream = await messageStore.sendMessage(userMessage, {model, dialogId: activeDialogId},);
 
     const reader = readableStream.getReader();
     while (true) {
@@ -593,7 +593,7 @@ const handleResend = async (message: ChatMessage) => {
     nextTick(() => scrollToBottom({force: true}));
     // 使用对话管理器发送消息
     // 确保在发送消息前已经将用户消息添加到消息列表中
-    const readableStream = await messageStore.sendMessage(message, model, activeDialogId, message.id);
+    const readableStream = await messageStore.sendMessage(message, {model, dialogId: activeDialogId}, message.id);
 
     const reader = readableStream.getReader();
     while (true) {

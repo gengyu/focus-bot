@@ -5,6 +5,7 @@ import {ChatMessage, type Conversation, Model} from "../../../../share/type";
 import {ChatService} from "../services/ChatService";
 import {ChatHistoryService} from "../services/ChatHistoryService";
 import {DialogStateService} from "../services/DialogStateService";
+import {ChatOptions} from "../../../../share/chat.ts";
 
 @Controller('/invoke/chat')
 export class ChatController {
@@ -28,42 +29,27 @@ export class ChatController {
 
   @SSE('/sendMessage')
   async postMessage(@Body('message') userMessage: ChatMessage,
-                    @Body('chatId') chatId: string,
-                    @Body('model') model: Model,
-                    @Body('resendMessageId') resendMessageId?: string
+                    @Body('chatOptions') chatOptions: ChatOptions,
+                    @Body('resendId') resendId?: string
   ) {
     try {
+      const chatId = chatOptions.dialogId!;
+      // todo 重新发送逻辑变更，可以查看多条记录
+      await this.chatHistoryService.pushMessage(chatId, userMessage, resendId);
+      const historyMessages = await this.chatHistoryService.getMessages(chatId);
 
-      return this.chatService.streamChat(chatId, userMessage, model, resendMessageId);
+      const [abort, readableStream] = await this.chatService.chat(historyMessages, {...chatOptions, stream: true});
+      const [stream1, stream2] = readableStream.tee();
+      stream2.pipeTo(this.chatHistoryService.getWriteStorageStream(chatId)).catch(error => {
+        console.error('Error writing to storage:', error);
+      });
+
+      return [abort, stream1];
     } catch (err: any) {
       console.error('Error in postMessage:', err);
       return ResultHelper.fail(err.message, null);
     }
   }
-
-  // @Post('/image')
-  // async uploadImage(  body: any) {
-  //   // 注意：图片上传接口如需支持自动注入需配合中间件处理，这里暂保留body参数
-  //   // 实际项目中建议将文件上传逻辑迁移到专用中间件或服务
-  //   // 这里假设body.image为图片文件名
-  //   try {
-  //     const file = body.file;
-  //     if (!file) {
-  //       return ResultHelper.fail('No image file uploaded', null);
-  //     }
-  //     const imageUrl = `/images/${file.filename}`;
-  //     await chatService.pushMessage({
-  //       role: 'user',
-  //       content: '',
-  //       timestamp: Date.now(),
-  //       type: 'image',
-  //       imageUrl
-  //     });
-  //     return ResultHelper.success({ imageUrl });
-  //   } catch (error: any) {
-  //     return ResultHelper.fail(error.message || 'Failed to upload image', null);
-  //   }
-  // }
 
   @Post('/saveDialogList')
   async saveDialogConfig(@Body() config: Conversation) {

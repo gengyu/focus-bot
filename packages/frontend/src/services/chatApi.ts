@@ -2,6 +2,7 @@ import {API_BASE_URL} from './api';
 import {TransportAdapter, type TransportRequest, TransportType} from "../transports";
 import {type ChatMessage, type Conversation, type DialogId, type Model} from "../../../../share/type.ts";
 import log from "loglevel";
+import type {ChatOptions} from "../../../../share/chat.ts";
 
 
 export class ChatAPI {
@@ -17,22 +18,13 @@ export class ChatAPI {
   });
 
 
-  sendMessage(message: ChatMessage, model: Model, chatId: string, resendMessageId?: string): [abort: (reason?: any) => void, ReadableStream<ChatMessage>] {
-    const req: TransportRequest = {method: 'sendMessage', payload: {message, model, chatId, resendMessageId}};
+  sendMessage(message: ChatMessage,  chatOptions: ChatOptions, resendId?: string): [abort: (reason?: any) => void, ReadableStream<ChatMessage>] {
+    const req: TransportRequest = {method: 'sendMessage', payload: {message, chatOptions, resendId}};
     const controller = new AbortController();
     return [
       (reason?: any) => controller.abort(reason),
       this.transport.invokeStream(req, controller.signal)
     ];
-
-    // const res = await transport.invokeStream(req);
-    // if (!res.success) throw new Error(`发送消息失败: ${res.error}`);
-    // return  await {
-    //   role: 'assistant',
-    //   content: 'Hello World',
-    //   timestamp: Date.now(),
-    //   type: 'text',
-    // };
   }
 
   async sendImage(imageFile: File): Promise<ChatMessage> {

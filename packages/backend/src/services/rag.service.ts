@@ -1,147 +1,145 @@
 import { Pinecone } from '@pinecone-database/pinecone';
-import { Document } from 'langchain/document';
-import { RecursiveCharacterTextSplitter } from 'langchain/text_splitter';
 import { LLMProvider } from '../provider/LLMProvider';
 import { ChatMessage } from '../../../../share/type';
-import { v4 as uuidv4 } from 'uuid';
-import dotenv from 'dotenv';
+import { SearchService } from './SearchService';
 
-dotenv.config();
+interface Document {
+  pageContent: string;
+  metadata: {
+    id: string;
+    source: string;
+    [key: string]: any;
+  };
+}
+
+interface RelevantDoc {
+  content: string;
+  score: number;
+}
 
 export class RAGService {
+  private readonly llmProvider: LLMProvider;
+  private readonly searchService: SearchService;
   private pinecone: Pinecone | null = null;
-  private llmProvider: LLMProvider;
-  private index: any;
-  private modelId: string;
+  private readonly modelId: string = 'gpt-3.5-turbo';
 
-  constructor(llmProvider: LLMProvider, modelId: string = 'gpt-3.5-turbo') {
+  constructor(llmProvider: LLMProvider) {
     this.llmProvider = llmProvider;
-    this.modelId = modelId;
-  }
-
-  async initialize() {
-    try {
-      this.pinecone = new Pinecone({
-        apiKey: process.env.PINECONE_API_KEY!,
-      });
-      
-      this.index = this.pinecone.Index(process.env.PINECONE_INDEX!);
-      console.log('RAG service initialized successfully');
-    } catch (error) {
-      console.error('Failed to initialize RAG service:', error);
-      throw error;
-    }
-  }
-
-  private createChatMessage(role: 'user' | 'system', content: string): ChatMessage {
-    return {
-      id: uuidv4(),
-      timestamp: Date.now(),
-      type: 'text',
-      role,
-      content,
-    };
+    this.searchService = new SearchService();
   }
 
   async prepareKnowledgeBase(documents: Document[]) {
-    try {
-      if (!this.pinecone) {
-        throw new Error('Pinecone client not initialized');
-      }
-
-      const textSplitter = new RecursiveCharacterTextSplitter({
-        chunkSize: 1000,
-        chunkOverlap: 200,
+    if (!this.pinecone) {
+      this.pinecone = new Pinecone({
+        apiKey: process.env.PINECONE_API_KEY || '',
       });
+    }
 
-      const chunks = await textSplitter.splitDocuments(documents);
+    const index = this.pinecone.Index(process.env.PINECONE_INDEX || '');
+    
+    // 将文档分块
+    const chunks = this.splitDocuments(documents);
+    
+    // 为每个块生成嵌入向量
+    for (const chunk of chunks) {
+      const embedding = await this.generateEmbedding(chunk.pageContent);
       
-      for (const chunk of chunks) {
-        // 使用 LLM Provider 生成嵌入
-        const embeddingResponse = await this.llmProvider.chat([
-          this.createChatMessage('user', `Generate an embedding for the following text: ${chunk.pageContent}`)
-        ], this.modelId);
+      // 存储到 Pinecone
+      await index.upsert([{
+        id: chunk.metadata.id,
+        values: embedding,
+        metadata: chunk.metadata
+      }]);
+    }
+  }
 
-        const embedding = JSON.parse(embeddingResponse.content || '[]');
-        
-        await this.index.upsert({
-          vectors: [{
-            id: chunk.metadata.id || uuidv4(),
-            values: embedding,
+  private splitDocuments(documents: Document[]): Document[] {
+    const chunks: Document[] = [];
+    
+    for (const doc of documents) {
+      // 简单的按段落分割
+      const paragraphs = doc.pageContent.split('\n\n');
+      
+      for (const paragraph of paragraphs) {
+        if (paragraph.trim()) {
+          chunks.push({
+            pageContent: paragraph,
             metadata: {
-              text: chunk.pageContent,
-              source: chunk.metadata.source,
-            },
-          }],
-        });
+              ...doc.metadata,
+              id: `${doc.metadata.id}-${chunks.length}`
+            }
+          });
+        }
       }
-      
-      console.log('Knowledge base prepared successfully');
-    } catch (error) {
-      console.error('Failed to prepare knowledge base:', error);
-      throw error;
     }
+    
+    return chunks;
   }
 
-  async retrieveRelevantDocs(query: string, topK: number = 5) {
-    try {
-      if (!this.pinecone) {
-        throw new Error('Pinecone client not initialized');
+  private async generateEmbedding(text: string): Promise<number[]> {
+    const response = await this.llmProvider.chat([
+      {
+        id: Date.now().toString(),
+        role: 'user',
+        content: `Generate an embedding for the following text: ${text}`,
+        timestamp: Date.now(),
+        type: 'text'
       }
-
-      // 使用 LLM Provider 生成查询嵌入
-      const embeddingResponse = await this.llmProvider.chat([
-        this.createChatMessage('user', `Generate an embedding for the following query: ${query}`)
-      ], this.modelId);
-
-      const queryEmbedding = JSON.parse(embeddingResponse.content || '[]');
-      
-      const results = await this.index.query({
-        vector: queryEmbedding,
-        topK,
-        includeMetadata: true,
-      });
-
-      return results.matches.map((match: any) => ({
-        text: match.metadata.text,
-        source: match.metadata.source,
-        score: match.score,
-      }));
-    } catch (error) {
-      console.error('Failed to retrieve documents:', error);
-      throw error;
-    }
+    ], this.modelId);
+    
+    return JSON.parse(response.content || '[]');
   }
 
-  async generateAnswer(query: string, relevantDocs: any[]) {
-    try {
-      const context = relevantDocs.map(doc => doc.text).join('\n');
-      
-      const messages: ChatMessage[] = [
-        this.createChatMessage('system', '你是一个基于知识库的问答助手。请根据提供的上下文回答问题，并引用信息来源。'),
-        this.createChatMessage('user', `用户查询: ${query}\n相关上下文: ${context}`)
-      ];
-
-      const response = await this.llmProvider.chat(messages, this.modelId);
-      
-      return {
-        answer: response.content,
-        sources: relevantDocs.map(doc => doc.source),
-      };
-    } catch (error) {
-      console.error('Failed to generate answer:', error);
-      throw error;
+  private async retrieveRelevantDocs(query: string): Promise<RelevantDoc[]> {
+    if (!this.pinecone) {
+      throw new Error('Pinecone client not initialized');
     }
+
+    const index = this.pinecone.Index(process.env.PINECONE_INDEX || '');
+    
+    // 生成查询的嵌入向量
+    const queryEmbedding = await this.generateEmbedding(query);
+    
+    // 在 Pinecone 中搜索相似文档
+    const results = await index.query({
+      vector: queryEmbedding,
+      topK: 3,
+      includeMetadata: true
+    });
+    
+    return results.matches.map(match => ({
+      content: match.metadata?.content as string,
+      score: match.score || 0
+    }));
   }
 
-  async ragPipeline(query: string) {
-    try {
-      const relevantDocs = await this.retrieveRelevantDocs(query);
-      const result = await this.generateAnswer(query, relevantDocs);
-      return result;
-    } catch (error) {
-      console.error('RAG pipeline failed:', error);
-      throw error;
-    }
+  async ragPipeline(query: string): Promise<{ answer: string; sources: string[] }> {
+    // 1. 获取相关文档
+    const relevantDocs = await this.retrieveRelevantDocs(query);
+    
+    // 2. 构建提示
+    const context = relevantDocs.map(doc => doc.content).join('\n\n');
+    const prompt = `基于以下上下文回答问题。如果上下文中没有相关信息，请说明无法回答。\n\n上下文：\n${context}\n\n问题：${query}`;
+    
+    // 3. 使用搜索服务增强上下文
+    const messages: ChatMessage[] = [
+      {
+        id: Date.now().toString(),
+        role: 'user',
+        content: prompt,
+        timestamp: Date.now(),
+        type: 'text'
+      }
+    ];
+    
+    const enhancedMessages = await this.searchService.enhanceWithSearch(query, messages);
+    
+    // 4. 调用 LLM 生成回答
+    const response = await this.llmProvider.chat(enhancedMessages, this.modelId);
+    
+    return {
+      answer: response.content,
+      sources: relevantDocs.map(doc => doc.content)
+    };
   }
 } 

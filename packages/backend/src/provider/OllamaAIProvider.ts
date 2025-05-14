@@ -26,7 +26,8 @@ export class OllamaAIProvider implements LLMProvider {
         }
       }
 
-      // 处理imgs
+      // msg.role === 'user' #todo 处理大模型返回的images
+      // 处理img
       const images = chatMessage.content
         ?.filter(messageContent => messageContent.type === 'image')
         .map(messageContent => messageContent.images)
