@@ -8,6 +8,7 @@ import { ChatController } from './routes/chat';
 import { ConfigController } from './routes/config';
 import { FileParserController } from './routes/fileParser';
 import ragRouter from './routes/rag.routes';
+import knowledgeRouter from './routes/knowledge.routes';
 
 const app = new Koa();
 
@@ -31,6 +32,7 @@ registerControllers([ChatController, ConfigController, FileParserController]);
 app.use(healthRouter.routes()).use(healthRouter.allowedMethods());
 app.use(decoratorRouter.routes()).use(decoratorRouter.allowedMethods());
 app.use(ragRouter.routes()).use(ragRouter.allowedMethods());
+app.use(knowledgeRouter.routes()).use(knowledgeRouter.allowedMethods());
 
 // 静态文件服务
 // app.use(require('koa-static')(path.join(process.cwd(), 'data')));
