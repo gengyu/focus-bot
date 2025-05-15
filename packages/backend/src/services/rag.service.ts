@@ -2,7 +2,7 @@ import { Pinecone } from '@pinecone-database/pinecone';
 import { LLMProvider } from '../provider/LLMProvider';
 import { ChatMessage } from '../../../../share/type';
 import { SearchService } from './SearchService';
-
+// faiss-node 、 ANN 、nedb、lowdb
 interface Document {
   pageContent: string;
   metadata: {
