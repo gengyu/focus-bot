@@ -306,7 +306,8 @@ const isLoading = computed(() => {
 // 构造消息
 const generateChatMessage = (): ChatMessage => {
 
-  const content: ChatMessageContent[] = [];
+  let content: string | ChatMessageContent[] = [];
+
 
   // 添加图片内容
   if (imageFiles.value.length > 0) {
@@ -329,13 +330,18 @@ const generateChatMessage = (): ChatMessage => {
   }
 
   // 添加文本内容
+
   if (messageInput.value.trim()) {
-    content.push({
-      type: 'text',
-      text: messageInput.value.trim(),
-      images: [],
-      files: []
-    });
+    if (content.length == 0) {
+      content = messageInput.value.trim();
+    } else {
+      content.push({
+        type: 'text',
+        text: messageInput.value.trim(),
+        images: [],
+        files: []
+      });
+    }
   }
 
   // 创建用户消息
@@ -391,7 +397,7 @@ const sendMessageToServer = async (message: ChatMessage, messageId?: string) => 
 
     const readableStream = await messageStore.sendMessage(message, chatOptions, messageId);
     const reader = readableStream.getReader();
-    
+
     while (true) {
       const {done} = await reader.read();
       if (done) {
