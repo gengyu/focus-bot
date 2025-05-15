@@ -1,7 +1,7 @@
 <template>
   <div class="flex h-screen">
     <SideBar />
-    <main class="flex-1 bg-gray-50">
+    <main class="flex-1 h-screen overflow-y-auto bg-gray-50">
       <router-view />
     </main>
   </div>

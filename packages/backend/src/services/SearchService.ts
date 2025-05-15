@@ -72,7 +72,7 @@ export class SearchService {
 	private async searchBing(query: string, config: SearchEngineConfig): Promise<SearchResult[]> {
 		try {
 			// const response = await axios.get('https://api.bing.microsoft.com/v7.0/search', {
-			const response = await axios.get('https://cn.bing.com/search?q=' + query, {
+        const response = await axios.get('https://cn.bing.com/search?q=' + query, {
 
 				headers: {
 					'Ocp-Apim-Subscription-Key': config.apiKey
