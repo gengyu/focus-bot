@@ -101,7 +101,7 @@
               accept=".pdf,.doc,.docx,.txt"
             >
             <button 
-              @click="$refs.fileInput.click()"
+              @click="() => fileInput?.click()"
               class="text-blue-500 hover:text-blue-600"
             >
               选择文件
@@ -187,15 +187,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
-import axios from 'axios';
-
-interface KnowledgeBase {
-  id: string;
-  name: string;
-  description: string;
-  documentCount: number;
-  createdAt: string;
-}
+import { knowledgeAPI, type KnowledgeBase } from '../services/knowledgeApi';
 
 interface ChatMessage {
   role: 'user' | 'assistant';
@@ -211,6 +203,7 @@ const currentKnowledgeBase = ref<KnowledgeBase | null>(null);
 const uploadedFiles = ref<File[]>([]);
 const chatMessages = ref<ChatMessage[]>([]);
 const userInput = ref('');
+const fileInput = ref<HTMLInputElement | null>(null);
 
 // 新建知识库表单
 const newKnowledgeBase = ref({
@@ -226,8 +219,7 @@ onMounted(async () => {
 // 获取知识库列表
 const fetchKnowledgeBases = async () => {
   try {
-    const response = await axios.get('/api/knowledge-bases');
-    knowledgeBases.value = response.data;
+    knowledgeBases.value = await knowledgeAPI.getKnowledgeBases();
   } catch (error) {
     console.error('获取知识库列表失败:', error);
   }
@@ -236,7 +228,7 @@ const fetchKnowledgeBases = async () => {
 // 创建知识库
 const createKnowledgeBase = async () => {
   try {
-    await axios.post('/api/knowledge-bases', newKnowledgeBase.value);
+    await knowledgeAPI.createKnowledgeBase(newKnowledgeBase.value);
     showCreateModal.value = false;
     newKnowledgeBase.value = { name: '', description: '' };
     await fetchKnowledgeBases();
@@ -250,7 +242,7 @@ const deleteKnowledgeBase = async (kb: KnowledgeBase) => {
   if (!confirm('确定要删除这个知识库吗？')) return;
   
   try {
-    await axios.delete(`/api/knowledge-bases/${kb.id}`);
+    await knowledgeAPI.deleteKnowledgeBase(kb.id);
     await fetchKnowledgeBases();
   } catch (error) {
     console.error('删除知识库失败:', error);
@@ -281,17 +273,8 @@ const removeFile = (file: File) => {
 const uploadFiles = async () => {
   if (!currentKnowledgeBase.value) return;
 
-  const formData = new FormData();
-  uploadedFiles.value.forEach(file => {
-    formData.append('files', file);
-  });
-
   try {
-    await axios.post(`/api/knowledge-bases/${currentKnowledgeBase.value.id}/documents`, formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data'
-      }
-    });
+    await knowledgeAPI.uploadDocuments(currentKnowledgeBase.value.id, uploadedFiles.value);
     showUploadModal.value = false;
     await fetchKnowledgeBases();
   } catch (error) {
@@ -316,10 +299,8 @@ const sendMessage = async () => {
   userInput.value = '';
 
   try {
-    const response = await axios.post(`/api/knowledge-bases/${currentKnowledgeBase.value.id}/chat`, {
-      query: message
-    });
-    chatMessages.value.push({ role: 'assistant', content: response.data.answer });
+    const response = await knowledgeAPI.chat(currentKnowledgeBase.value.id, message);
+    chatMessages.value.push({ role: 'assistant', content: response.answer });
   } catch (error) {
     console.error('发送消息失败:', error);
     chatMessages.value.push({ 

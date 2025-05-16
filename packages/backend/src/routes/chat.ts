@@ -5,7 +5,7 @@ import {ChatMessage, type Conversation, Model} from "../../../../share/type";
 import {ChatService} from "../services/ChatService";
 import {ChatHistoryService} from "../services/ChatHistoryService";
 import {DialogStateService} from "../services/DialogStateService";
-import {ChatOptions} from "../../../../share/chat.ts";
+import {ChatOptions} from "../../../../share/type.ts";
 
 @Controller('/invoke/chat')
 export class ChatController {

@@ -7,8 +7,8 @@ import { router as decoratorRouter, registerControllers } from './decorators/dec
 import { ChatController } from './routes/chat';
 import { ConfigController } from './routes/config';
 import { FileParserController } from './routes/fileParser';
-import ragRouter from './routes/rag.routes';
-import knowledgeRouter from './routes/knowledge.routes';
+import {RAGController} from './routes/rag.routes';
+import {KnowledgeController} from './routes/knowledge.routes';
 
 const app = new Koa();
 
@@ -28,11 +28,11 @@ healthRouter.get('/health', (ctx) => {
 });
 
 // 注册路由
-registerControllers([ChatController, ConfigController, FileParserController]);
+registerControllers([ChatController, ConfigController, FileParserController, RAGController, KnowledgeController]);
 app.use(healthRouter.routes()).use(healthRouter.allowedMethods());
 app.use(decoratorRouter.routes()).use(decoratorRouter.allowedMethods());
-app.use(ragRouter.routes()).use(ragRouter.allowedMethods());
-app.use(knowledgeRouter.routes()).use(knowledgeRouter.allowedMethods());
+// app.use(ragRouter.routes()).use(ragRouter.allowedMethods());
+// app.use(knowledgeRouter.routes()).use(knowledgeRouter.allowedMethods());
 
 // 静态文件服务
 // app.use(require('koa-static')(path.join(process.cwd(), 'data')));
