@@ -1,63 +1,102 @@
-import { Pinecone } from '@pinecone-database/pinecone';
+import { IndexFlatL2 } from 'faiss-node';
+import { pipeline } from '@xenova/transformers';
 import { LLMProvider } from '../provider/LLMProvider';
 import { ChatMessage } from '../../../../share/type';
 import { SearchService } from './SearchService';
-// faiss-node 、 ANN 、nedb、lowdb
+
+
+// 实现向量存储、索引和检索的逻辑
+// 核心思路：使用 faiss-node 进行向量相似性搜索，采用 ANN（近似最近邻）算法，结合 nedb/lowdb 进行本地数据持久化
+// 
+// 存储向量嵌入：选择本地数据存储方案保存文档的向量嵌入及元数据
+// 索引向量：对存储的向量创建 FAISS 索引以提高搜索效率
+// 相似性搜索：实现查询向量与知识库中向量的相似度计算并返回最相关结果
+
 interface Document {
-  pageContent: string;
-  metadata: {
-    id: string;
-    source: string;
-    [key: string]: any;
+  pageContent: string; // 文档的主要内容文本
+  metadata: { // 文档的元数据信息
+    id: string; // 文档唯一标识符
+    source: string; // 文档来源信息
+    [key: string]: any; // 其他任意扩展元数据字段
   };
 }
 
 interface RelevantDoc {
-  content: string;
-  score: number;
+  content: string; // 匹配到的相关文档内容
+  score: number; // 相关性评分（分数越高越相关）
 }
 
+/**
+ * 基于检索增强生成(RAG)的服务类，实现了以下核心功能：
+ * 1. 使用 Transformers.js 创建文本嵌入表示
+ * 2. 利用 FAISS 进行高效向量相似性搜索
+ * 3. 整合 LLMProvider 提供的语言模型能力
+ * 4. 结合 SearchService 进行上下文增强
+ */
 export class RAGService {
-  private readonly llmProvider: LLMProvider;
-  private readonly searchService: SearchService;
-  private pinecone: Pinecone | null = null;
-  private readonly modelId: string = 'gpt-3.5-turbo';
+  private readonly llmProvider: LLMProvider; // 大语言模型提供者
+  private readonly searchService: SearchService; // 搜索服务用于上下文增强
+  private index: IndexFlatL2 | null = null; // FAISS 向量索引实例
+  private documents: Document[] = []; // 存储文档块的数组
+  private readonly modelId: string = 'gpt-3.5-turbo'; // 使用的 LLM 模型 ID
+  private embeddingPipeline: any = null; // 文本嵌入生成管道
 
+  /**
+   * 构造函数初始化必要的依赖服务
+   * @param llmProvider 大语言模型提供者实例
+   */
   constructor(llmProvider: LLMProvider) {
     this.llmProvider = llmProvider;
     this.searchService = new SearchService();
   }
 
-  async prepareKnowledgeBase(documents: Document[]) {
-    if (!this.pinecone) {
-      this.pinecone = new Pinecone({
-        apiKey: process.env.PINECONE_API_KEY || '',
-      });
-    }
-
-    const index = this.pinecone.Index(process.env.PINECONE_INDEX || '');
-    
-    // 将文档分块
-    const chunks = this.splitDocuments(documents);
-    
-    // 为每个块生成嵌入向量
-    for (const chunk of chunks) {
-      const embedding = await this.generateEmbedding(chunk.pageContent);
-      
-      // 存储到 Pinecone
-      await index.upsert([{
-        id: chunk.metadata.id,
-        values: embedding,
-        metadata: chunk.metadata
-      }]);
+  /**
+   * 初始化文本嵌入模型管道
+   * 使用 Xenova/all-MiniLM-L6-v2 模型进行文本特征提取
+   */
+  private async initEmbeddingPipeline() {
+    if (!this.embeddingPipeline) {
+      this.embeddingPipeline = await pipeline('feature-extraction', 'Xenova/all-MiniLM-L6-v2');
     }
   }
 
+  /**
+   * 准备知识库索引的主方法
+   * 执行完整流程：文档分块 -> 生成嵌入 -> 创建并填充 FAISS 索引
+   * @param documents 需要处理的原始文档数组
+   */
+  async prepareKnowledgeBase(documents: Document[]) {
+    // 初始化 embedding pipeline
+    await this.initEmbeddingPipeline();
+    
+    // 将文档分块以便进行向量化处理
+    const chunks = this.splitDocuments(documents);
+    this.documents = chunks;
+    
+    // 为每个文档块生成嵌入向量
+    const embeddings = await Promise.all(
+      chunks.map(chunk => this.generateEmbedding(chunk.pageContent))
+    );
+    
+    // 创建 FAISS 索引
+    const dimension = embeddings[0].length;
+    this.index = new IndexFlatL2(dimension);
+    
+    // 将向量添加到索引
+    const vectors = new Float32Array(embeddings.flat());
+    this.index.add(vectors);
+  }
+
+  /**
+   * 将文档按段落分割为更小的文本块
+   * @param documents 需要分割的原始文档数组
+   * @returns 分割后的文档块数组
+   */
   private splitDocuments(documents: Document[]): Document[] {
     const chunks: Document[] = [];
     
     for (const doc of documents) {
-      // 简单的按段落分割
+      // 简单的按段落分割（两个换行符）
       const paragraphs = doc.pageContent.split('\n\n');
       
       for (const paragraph of paragraphs) {
@@ -66,7 +105,7 @@ export class RAGService {
             pageContent: paragraph,
             metadata: {
               ...doc.metadata,
-              id: `${doc.metadata.id}-${chunks.length}`
+              id: `${doc.metadata.id}-${chunks.length}` // 为每个块生成唯一 ID
             }
           });
         }
@@ -76,48 +115,50 @@ export class RAGService {
     return chunks;
   }
 
+  /**
+   * 为给定文本生成嵌入向量
+   * @param text 需要生成嵌入的文本内容
+   * @returns 数值化的向量表示（浮点数数组）
+   */
   private async generateEmbedding(text: string): Promise<number[]> {
-    const response = await this.llmProvider.chat([
-      {
-        id: Date.now().toString(),
-        role: 'user',
-        content: `Generate an embedding for the following text: ${text}`,
-        timestamp: Date.now(),
-        type: 'text'
-      }
-    ], this.modelId);
-    
-    return JSON.parse(response.content || '[]');
+    await this.initEmbeddingPipeline();
+    const result = await this.embeddingPipeline(text, { pooling: 'mean', normalize: true });
+    return Array.from(result.data);
   }
 
+  /**
+   * 检索与查询最相关的文档
+   * @param query 用户的查询语句
+   * @returns 包含相关内容和相关性分数的结果数组
+   */
   private async retrieveRelevantDocs(query: string): Promise<RelevantDoc[]> {
-    if (!this.pinecone) {
-      throw new Error('Pinecone client not initialized');
+    if (!this.index) {
+      throw new Error('FAISS 索引未初始化');
     }
 
-    const index = this.pinecone.Index(process.env.PINECONE_INDEX || '');
-    
     // 生成查询的嵌入向量
     const queryEmbedding = await this.generateEmbedding(query);
     
-    // 在 Pinecone 中搜索相似文档
-    const results = await index.query({
-      vector: queryEmbedding,
-      topK: 3,
-      includeMetadata: true
-    });
+    // 在 FAISS 中搜索相似文档
+    const { distances, labels } = this.index.search(new Float32Array(queryEmbedding), 3);
     
-    return results.matches.map(match => ({
-      content: match.metadata?.content as string,
-      score: match.score || 0
+    return labels.map((label: number, i: number) => ({
+      content: this.documents[label].pageContent,
+      score: 1 - distances[i] // 将距离转换为相似度分数
     }));
   }
 
+  /**
+   * 完整的 RAG 流水线执行方法
+   * 执行从检索到生成回答的完整流程
+   * @param query 用户的查询语句
+   * @returns 包含回答和引用来源的结果对象
+   */
   async ragPipeline(query: string): Promise<{ answer: string; sources: string[] }> {
     // 1. 获取相关文档
     const relevantDocs = await this.retrieveRelevantDocs(query);
     
-    // 2. 构建提示
+    // 2. 构建提示词
     const context = relevantDocs.map(doc => doc.content).join('\n\n');
     const prompt = `基于以下上下文回答问题。如果上下文中没有相关信息，请说明无法回答。\n\n上下文：\n${context}\n\n问题：${query}`;
     
@@ -134,12 +175,12 @@ export class RAGService {
     
     const enhancedMessages = await this.searchService.enhanceWithSearch(query, messages);
     
-    // 4. 调用 LLM 生成回答
+    // 4. 调用 LLM 生成最终回答
     const response = await this.llmProvider.chat(enhancedMessages, this.modelId);
     
     return {
       answer: response.content,
-      sources: relevantDocs.map(doc => doc.content)
+      sources: relevantDocs.map(doc => doc.content) // 返回引用的文档内容
     };
   }
-} 
+}
