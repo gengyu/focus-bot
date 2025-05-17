@@ -134,27 +134,27 @@ export class KnowledgeController {
       return ResultHelper.fail(err.message, null);
     }
   }
-
-  @Post('/:id/chat')
-  async chat(@Body('id') id: string, @Body('query') query: string) {
-    try {
-      if (!query) {
-        return ResultHelper.fail('查询不能为空', null);
-      }
-
-      const kb = this.knowledgeBases.get(id);
-      if (!kb) {
-        return ResultHelper.fail('知识库不存在', null);
-      }
-
-      // 加载知识库
-      await this.ragService.loadKnowledgeBase(id);
-
-      // 执行 RAG 查询
-      const result = await this.ragService.ragPipeline(query);
-      return ResultHelper.success(result);
-    } catch (err: any) {
-      return ResultHelper.fail(err.message, null);
-    }
-  }
+  //
+  // @Post('/:id/chat')
+  // async chat(@Body('id') id: string, @Body('query') query: string) {
+  //   try {
+  //     if (!query) {
+  //       return ResultHelper.fail('查询不能为空', null);
+  //     }
+  //
+  //     const kb = this.knowledgeBases.get(id);
+  //     if (!kb) {
+  //       return ResultHelper.fail('知识库不存在', null);
+  //     }
+  //
+  //     // 加载知识库
+  //     await this.ragService.loadKnowledgeBase(id);
+  //
+  //     // 执行 RAG 查询
+  //     const result = await this.ragService.ragPipeline(query);
+  //     return ResultHelper.success(result);
+  //   } catch (err: any) {
+  //     return ResultHelper.fail(err.message, null);
+  //   }
+  // }
 }

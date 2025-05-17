@@ -3,27 +3,9 @@ import { pipeline } from '@xenova/transformers';
 import { LLMProvider } from '../provider/LLMProvider';
 import { ChatMessage } from '../../../../share/type';
 import { SearchService } from './SearchService';
-import fs from 'fs/promises';
-import path from 'path';
-// faiss-node 、 ANN 、nedb、lowdb
+import { Document } from '../types/rag.types';
 
-
-// 实现向量存储、索引和检索的逻辑
-// 核心思路：使用 faiss-node 进行向量相似性搜索，采用 ANN（近似最近邻）算法，结合 nedb/lowdb 进行本地数据持久化
-//
-// 存储向量嵌入：选择本地数据存储方案保存文档的向量嵌入及元数据
-// 索引向量：对存储的向量创建 FAISS 索引以提高搜索效率
-// 相似性搜索：实现查询向量与知识库中向量的相似度计算并返回最相关结果
-
-
-interface Document {
-  pageContent: string;
-  metadata: {
-    id: string;
-    source: string;
-    [key: string]: any;
-  };
-}
+// Document 接口已移至 rag.types.ts
 
 interface RelevantDoc {
   content: string;
@@ -40,20 +22,18 @@ interface RelevantDoc {
 export class RAGService {
   private readonly llmProvider: LLMProvider;
   private readonly searchService: SearchService;
-  private index: IndexFlatL2 | null = null;
-  private documents: Document[] = [];
+  private indexes: Map<string, IndexFlatL2> = new Map();
+  private documents: Map<string, Document[]> = new Map();
   private readonly modelId: string = 'gpt-3.5-turbo';
   private embeddingPipeline: any = null;
-  private readonly baseDir: string;
 
   /**
    * 构造函数初始化必要的依赖服务
    * @param llmProvider 大语言模型提供者实例
    */
-  constructor(llmProvider: LLMProvider, baseDir: string = 'knowledge_bases') {
+  constructor(llmProvider: LLMProvider) {
     this.llmProvider = llmProvider;
     this.searchService = new SearchService();
-    this.baseDir = baseDir;
   }
 
   /**
@@ -67,18 +47,26 @@ export class RAGService {
   }
 
   /**
+   * 初始化RAG服务
+   */
+  async initialize() {
+    await this.initEmbeddingPipeline();
+    return true;
+  }
+
+  /**
    * 准备知识库索引的主方法
    * 执行完整流程：文档分块 -> 生成嵌入 -> 创建并填充 FAISS 索引
-   * @param kbId 知识库唯一标识符
+   * @param knowledgeBaseId 知识库ID
    * @param documents 需要处理的原始文档数组
    */
-  async prepareKnowledgeBase(kbId: string, documents: Document[]) {
+  async prepareKnowledgeBase(knowledgeBaseId: string, documents: Document[]) {
     // 初始化 embedding pipeline
     await this.initEmbeddingPipeline();
 
     // 将文档分块
     const chunks = this.splitDocuments(documents);
-    this.documents = chunks;
+    this.documents.set(knowledgeBaseId, chunks);
 
     // 为每个块生成嵌入向量
     const embeddings = await Promise.all(
@@ -86,15 +74,21 @@ export class RAGService {
     );
 
     // 创建 FAISS 索引
-    const dimension = embeddings[0].length;
-    this.index = new IndexFlatL2(dimension);
+    if (embeddings.length > 0) {
+      const dimension = embeddings[0].length;
+      const index = new IndexFlatL2(dimension);
 
-    // 将向量添加到索引
-    const vectors = embeddings.flat();
-    this.index.add(vectors);
+      // 将向量添加到索引
+      const vectors = embeddings.flat();
+      index.add(vectors);
 
-    // 保存知识库
-    await this.saveKnowledgeBase(kbId);
+      this.indexes.set(knowledgeBaseId, index);
+    } else {
+      // 创建空索引
+      const dimension = 384; // MiniLM-L6-v2 的维度
+      const index = new IndexFlatL2(dimension);
+      this.indexes.set(knowledgeBaseId, index);
+    }
   }
 
   /**
@@ -137,23 +131,41 @@ export class RAGService {
   }
 
   /**
+   * 加载知识库
+   * @param knowledgeBaseId 知识库ID
+   */
+  async loadKnowledgeBase(knowledgeBaseId: string): Promise<boolean> {
+    // 检查知识库是否存在
+    if (!this.indexes.has(knowledgeBaseId)) {
+      throw new Error(`知识库 ${knowledgeBaseId} 不存在`);
+    }
+    return true;
+  }
+
+
+
+  /**
    * 检索与查询最相关的文档
+   * @param knowledgeBaseId 知识库ID
    * @param query 用户的查询语句
    * @returns 包含相关内容和相关性分数的结果数组
    */
-  private async retrieveRelevantDocs(query: string): Promise<RelevantDoc[]> {
-    if (!this.index) {
-      throw new Error('FAISS 索引未初始化');
+  private async retrieveRelevantDocs(knowledgeBaseId: string, query: string): Promise<RelevantDoc[]> {
+    const index = this.indexes.get(knowledgeBaseId);
+    const docs = this.documents.get(knowledgeBaseId);
+
+    if (!index || !docs) {
+      throw new Error(`知识库 ${knowledgeBaseId} 未初始化`);
     }
 
     // 生成查询的嵌入向量
     const queryEmbedding = await this.generateEmbedding(query);
 
     // 在 FAISS 中搜索相似文档
-    const { distances, labels } = this.index.search(queryEmbedding, 3);
+    const { distances, labels } = index.search(queryEmbedding, 3);
 
     return labels.map((label: number, i: number) => ({
-      content: this.documents[label].pageContent,
+      content: docs[label].pageContent,
       score: 1 - distances[i] // 将距离转换为相似度分数
     }));
   }
@@ -161,12 +173,13 @@ export class RAGService {
   /**
    * 完整的 RAG 流水线执行方法
    * 执行从检索到生成回答的完整流程
+   * @param knowledgeBaseId 知识库ID
    * @param query 用户的查询语句
    * @returns 包含回答和引用来源的结果对象
    */
-  async ragPipeline(query: string): Promise<{ answer: string; sources: string[] }> {
+  async ragPipeline(knowledgeBaseId: string, query: string): Promise<{ answer: string; sources: string[] }> {
     // 1. 获取相关文档
-    const relevantDocs = await this.retrieveRelevantDocs(query);
+    const relevantDocs = await this.retrieveRelevantDocs(knowledgeBaseId, query);
 
     // 2. 构建提示词
     const context = relevantDocs.map(doc => doc.content).join('\n\n');
@@ -192,70 +205,5 @@ export class RAGService {
       answer: response.content,
       sources: relevantDocs.map(doc => doc.content) // 返回引用的文档内容
     };
-  }
-
-  private async ensureDir(dir: string) {
-    try {
-      await fs.access(dir);
-    } catch {
-      await fs.mkdir(dir, { recursive: true });
-    }
-  }
-
-  /**
-   * 将 FAISS 索引保存到磁盘文件
-   * @param kbId 知识库唯一标识符
-   */
-  async saveKnowledgeBase(kbId: string): Promise<void> {
-    const kbDir = path.join(this.baseDir, kbId);
-    await this.ensureDir(kbDir);
-
-    if (this.index) {
-      await this.index.write(path.join(kbDir, 'index.faiss'));
-    }
-    await fs.writeFile(
-      path.join(kbDir, 'documents.json'),
-      JSON.stringify(this.documents, null, 2)
-    );
-  }
-
-  /**
-   * 加载完整的知识库（索引 + 文档数据）
-   * @param kbId 知识库唯一标识符
-   */
-  async loadKnowledgeBase(kbId: string): Promise<void> {
-    const kbDir = path.join(this.baseDir, kbId);
-
-    try {
-      // 加载索引
-      const indexPath = path.join(kbDir, 'index.faiss');
-      if (await fs.access(indexPath).then(() => true).catch(() => false)) {
-        this.index = await IndexFlatL2.read(indexPath);
-      }
-
-      // 加载文档
-      const docsPath = path.join(kbDir, 'documents.json');
-      if (await fs.access(docsPath).then(() => true).catch(() => false)) {
-        const data = await fs.readFile(docsPath, 'utf-8');
-        this.documents = JSON.parse(data);
-      }
-    } catch (error) {
-      console.error('加载知识库失败:', error);
-      throw new Error('加载知识库失败');
-    }
-  }
-
-  /**
-   * 删除知识库
-   * @param kbId 知识库唯一标识符
-   */
-  async deleteKnowledgeBase(kbId: string): Promise<void> {
-    const kbDir = path.join(this.baseDir, kbId);
-    try {
-      await fs.rm(kbDir, { recursive: true, force: true });
-    } catch (error) {
-      console.error('删除知识库失败:', error);
-      throw new Error('删除知识库失败');
-    }
   }
 } // end of RAGService class

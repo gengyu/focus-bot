@@ -72,6 +72,7 @@ export class KnowledgeService {
   
   /**
    * 初始化服务
+   * 从持久化存储中加载知识库数据
    */
   private async initialize() {
     // 加载持久化的知识库数据
@@ -81,13 +82,25 @@ export class KnowledgeService {
     }
   }
 
+  /**
+   * 文本预处理
+   * 将文本转换为小写，去除标点符号，并拆分为单词数组
+   * @param text 需要预处理的文本
+   * @returns 处理后的单词数组
+   */
   private preprocessText(text: string): string[] {
     return text.toLowerCase()
-      .replace(/[^\w\s]/g, '')
+      .replace(/[^w\s]/g, '')
       .split(/\s+/)
       .filter(word => word.length > 0);
   }
 
+  /**
+   * 生成文本嵌入向量
+   * 使用TF-IDF算法将文本转换为数值向量
+   * @param text 需要生成嵌入的文本
+   * @returns 生成的数值向量
+   */
   private async generateEmbedding(text: string): Promise<number[]> {
     const words = this.preprocessText(text);
     const wordFreq = new Map<string, number>();
@@ -108,7 +121,7 @@ export class KnowledgeService {
     }
 
     // 归一化向量
-    const magnitude = Math  .sqrt(vector.reduce((sum, val) => sum + val * val, 0));
+    const magnitude = Math.sqrt(vector.reduce((sum, val) => sum + val * val, 0));
     if (magnitude > 0) {
       for (let i = 0; i < vector.length; i++) {
         vector[i] /= magnitude;
@@ -118,6 +131,11 @@ export class KnowledgeService {
     return vector;
   }
 
+  /**
+   * 更新词汇表和IDF值
+   * 根据提供的文档集合更新词汇表和逆文档频率统计
+   * @param documents 包含文本内容的文档数组
+   */
   private updateVocabulary(documents: Document[]) {
     // 更新词汇表
     documents.forEach(doc => {
@@ -170,16 +188,26 @@ export class KnowledgeService {
 
   /**
    * 保存知识库数据
+   * 将当前内存中的知识库数据持久化存储
    */
   private async saveKnowledgeBases() {
     const data = Object.fromEntries(this.knowledgeBases);
     await this.persistenceService.saveData(data);
   }
 
+  /**
+   * 获取所有知识库
+   * @returns 包含所有知识库信息的数组
+   */
   async getKnowledgeBases(): Promise<KnowledgeBase[]> {
     return Array.from(this.knowledgeBases.values());
   }
 
+  /**
+   * 创建新的知识库
+   * @param request 包含创建知识库所需参数的对象
+   * @returns 创建成功的知识库对象
+   */
   async createKnowledgeBase(request: CreateKnowledgeBaseRequest): Promise<KnowledgeBase> {
     const { name, description } = request;
     
@@ -206,8 +234,9 @@ export class KnowledgeService {
   }
   
   /**
-   * 获取单个知识库
+   * 获取单个知识库的详细信息
    * @param id 知识库ID
+   * @returns 知识库对象
    */
   async getKnowledgeBase(id: string): Promise<KnowledgeBase> {
     const kb = this.knowledgeBases.get(id);
@@ -217,6 +246,10 @@ export class KnowledgeService {
     return kb;
   }
 
+  /**
+   * 删除指定的知识库
+   * @param id 知识库ID
+   */
   async deleteKnowledgeBase(id: string): Promise<void> {
     const kb = this.knowledgeBases.get(id);
     if (!kb) {
@@ -240,6 +273,11 @@ export class KnowledgeService {
     await this.saveKnowledgeBases();
   }
 
+  /**
+   * 上传文档到指定知识库
+   * @param id 知识库ID
+   * @param files 需要上传的文件数组
+   */
   async uploadDocuments(id: string, files: Array<{ originalname: string; path: string }>): Promise<void> {
     const kb = this.knowledgeBases.get(id);
     if (!kb) {
@@ -258,7 +296,7 @@ export class KnowledgeService {
 
       // // 确保文件保存在上传目录中
       // const targetPath = path.join(this.uploadDir, `${docId}-${docName}`);
-      //
+      // 
       // // 如果文件不在上传目录中，复制到上传目录
       // if (file.path !== targetPath) {
       //   const content = await fs.readFile(file.path, 'utf-8');
@@ -293,7 +331,7 @@ export class KnowledgeService {
   }
   
   /**
-   * 从知识库中删除文档
+   * 从知识库中删除指定文档
    * @param knowledgeBaseId 知识库ID
    * @param documentId 文档ID
    */
