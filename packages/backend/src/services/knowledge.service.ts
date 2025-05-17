@@ -5,6 +5,7 @@ import {Document} from '../types/rag.types';
 import {PersistenceService} from './PersistenceService';
 import {SearchService} from './SearchService';
 import {FileParserService} from "./FileParserService.ts";
+import {Singleton} from "../decorators/Singleton.ts";
 
 
 
@@ -38,6 +39,7 @@ interface RelevantDoc {
   score: number;
 }
 
+@Singleton()
 export class KnowledgeService {
   private knowledgeBases: Map<string, KnowledgeBase>;
   private indexes: Map<string, IndexFlatL2> = new Map();
@@ -66,19 +68,40 @@ export class KnowledgeService {
 
     this.fileParserService = FileParserService.getInstance();
     
-    // 确保上传目录存在并加载数据
+    // 加载数据
     this.initialize();
   }
   
   /**
    * 初始化服务
-   * 从持久化存储中加载知识库数据
+   * 从持久化存储中加载知识库数据，并初始化索引和文档
    */
   private async initialize() {
     // 加载持久化的知识库数据
     const data = await this.persistenceService.loadData();
     if (data) {
       this.knowledgeBases = new Map(Object.entries(data));
+      
+      // 初始化每个知识库的索引和文档
+      for (const [id, kb] of this.knowledgeBases) {
+        try {
+          // 读取所有文档内容
+          const documents = await Promise.all(
+            kb.documents.map(async doc => ({
+              pageContent: await this.fileParserService.parseFile(doc.path),
+              metadata: {
+                id: doc.id,
+                source: doc.name
+              }
+            }))
+          );
+          
+          // 准备知识库索引
+          await this.prepareKnowledgeBase(id, documents);
+        } catch (error) {
+          console.error(`初始化知识库 ${kb.name} 失败:`, error);
+        }
+      }
     }
   }
 
@@ -375,6 +398,34 @@ export class KnowledgeService {
     
     await this.prepareKnowledgeBase(knowledgeBaseId, documents);
   }
+
+
+  /**
+   * 检索与查询最相关的文档
+   * @param knowledgeBaseId 知识库ID
+   * @param query 用户的查询语句
+   * @returns 包含相关内容和相关性分数的结果数组
+   */
+  public async retrieveRelevantDocs(knowledgeBaseId: string, query: string): Promise<RelevantDoc[]> {
+    const index = this.indexes.get(knowledgeBaseId);
+    const docs = this.documents.get(knowledgeBaseId);
+
+    if (!index || !docs) {
+      throw new Error(`知识库 ${knowledgeBaseId} 未初始化`);
+    }
+
+    // 生成查询的嵌入向量
+    const queryEmbedding = await this.generateEmbedding(query);
+
+    // 在 FAISS 中搜索相似文档
+    const { distances, labels } = index.search(queryEmbedding, 3);
+
+    return labels.map((label: number, i: number) => ({
+      content: docs[label].pageContent,
+      score: 1 - distances[i] // 将距离转换为相似度分数
+    }));
+  }
+
 
   // async chat(id: string, query: string): Promise<{ answer: string; sources: string[] }> {
   //   if (!query) {

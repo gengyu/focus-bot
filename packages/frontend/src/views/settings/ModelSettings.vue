@@ -338,6 +338,7 @@ const refreshModels = async () => {
   if (models.length > 0) {
     currentProvider.value.models = models.map(model => ({
       ...model,
+      providerId:  providerId,
       enabled: true
     }));
     // await saveSettings();

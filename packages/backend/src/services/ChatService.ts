@@ -33,7 +33,7 @@ export class ChatService {
   constructor() {
     this.appSettingService = new AppSettingService();
     this.chatHistoryService = new ChatHistoryService();
-    this.ragService = new RAGService(this.llmProvider!);
+    this.ragService = new RAGService();
     this.searchService = new SearchService();
   }
 
@@ -59,9 +59,10 @@ export class ChatService {
   async chat(messages: ChatMessage[], options: ChatOptions & { stream?: false }): Promise<ChatMessage>
   async chat(messages: ChatMessage[], options: ChatOptions): Promise<ChatMessage | [() => void, ReadableStream<ProviderResponseChunk>]> {
     const {
-      useKnowledgeBase = false,
+      useKnowledgeBase = true,
       useSearchEngine = false,
-      knowledgeBaseId, model,
+      knowledgeBaseId = '77584235-251e-4f4c-9d8e-a7eedc43d133',
+      model,
       stream = false,
     } = options;
 
@@ -73,10 +74,12 @@ export class ChatService {
     const lastMessage = messages[messages.length - 1];
     let enhancedMessages = [...messages];
 
+
     // 1. 是否检索本地知识库
-    if (useKnowledgeBase && knowledgeBaseId) {
+    if (true || useKnowledgeBase && knowledgeBaseId) {
       try {
-        const ragResult = await this.ragService.ragPipeline(lastMessage.content as string);
+        // const ragResult = await this.ragService.ragPipeline(knowledgeBaseId,lastMessage.content as string);
+        const ragResult = await this.ragService.ragPipeline('77584235-251e-4f4c-9d8e-a7eedc43d133',lastMessage.content as string);
         const knowledgeContext = `以下是来自知识库的相关信息：\n\n${ragResult.sources.join('\n\n')}`;
 
         enhancedMessages = [
