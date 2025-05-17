@@ -1,4 +1,11 @@
-import { Document } from 'langchain/document';
+export interface Document {
+  pageContent: string;
+  metadata: {
+    id: string;
+    source: string;
+    [key: string]: any;
+  };
+}
 
 export interface RAGRequest {
   query: string;
@@ -23,4 +30,4 @@ export interface InitResponse {
 
 export interface ErrorResponse {
   error: string;
-} 
+}

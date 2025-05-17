@@ -5,6 +5,16 @@ import { ChatMessage } from '../../../../share/type';
 import { SearchService } from './SearchService';
 import fs from 'fs/promises';
 import path from 'path';
+// faiss-node 、 ANN 、nedb、lowdb
+
+
+// 实现向量存储、索引和检索的逻辑
+// 核心思路：使用 faiss-node 进行向量相似性搜索，采用 ANN（近似最近邻）算法，结合 nedb/lowdb 进行本地数据持久化
+//
+// 存储向量嵌入：选择本地数据存储方案保存文档的向量嵌入及元数据
+// 索引向量：对存储的向量创建 FAISS 索引以提高搜索效率
+// 相似性搜索：实现查询向量与知识库中向量的相似度计算并返回最相关结果
+
 
 interface Document {
   pageContent: string;
@@ -65,20 +75,20 @@ export class RAGService {
   async prepareKnowledgeBase(kbId: string, documents: Document[]) {
     // 初始化 embedding pipeline
     await this.initEmbeddingPipeline();
-    
+
     // 将文档分块
     const chunks = this.splitDocuments(documents);
     this.documents = chunks;
-    
+
     // 为每个块生成嵌入向量
     const embeddings = await Promise.all(
       chunks.map(chunk => this.generateEmbedding(chunk.pageContent))
     );
-    
+
     // 创建 FAISS 索引
     const dimension = embeddings[0].length;
     this.index = new IndexFlatL2(dimension);
-    
+
     // 将向量添加到索引
     const vectors = embeddings.flat();
     this.index.add(vectors);
@@ -94,11 +104,11 @@ export class RAGService {
    */
   private splitDocuments(documents: Document[]): Document[] {
     const chunks: Document[] = [];
-    
+
     for (const doc of documents) {
       // 简单的按段落分割
       const paragraphs = doc.pageContent.split('\n\n');
-      
+
       for (const paragraph of paragraphs) {
         if (paragraph.trim()) {
           chunks.push({
@@ -111,7 +121,7 @@ export class RAGService {
         }
       }
     }
-    
+
     return chunks;
   }
 
@@ -138,10 +148,10 @@ export class RAGService {
 
     // 生成查询的嵌入向量
     const queryEmbedding = await this.generateEmbedding(query);
-    
+
     // 在 FAISS 中搜索相似文档
     const { distances, labels } = this.index.search(queryEmbedding, 3);
-    
+
     return labels.map((label: number, i: number) => ({
       content: this.documents[label].pageContent,
       score: 1 - distances[i] // 将距离转换为相似度分数
@@ -157,11 +167,11 @@ export class RAGService {
   async ragPipeline(query: string): Promise<{ answer: string; sources: string[] }> {
     // 1. 获取相关文档
     const relevantDocs = await this.retrieveRelevantDocs(query);
-    
+
     // 2. 构建提示词
     const context = relevantDocs.map(doc => doc.content).join('\n\n');
     const prompt = `基于以下上下文回答问题。如果上下文中没有相关信息，请说明无法回答。\n\n上下文：\n${context}\n\n问题：${query}`;
-    
+
     // 3. 使用搜索服务增强上下文
     const messages: ChatMessage[] = [
       {
@@ -172,12 +182,12 @@ export class RAGService {
         type: 'text'
       }
     ];
-    
+
     const enhancedMessages = await this.searchService.enhanceWithSearch(query, messages);
-    
+
     // 4. 调用 LLM 生成最终回答
     const response = await this.llmProvider.chat(enhancedMessages, this.modelId);
-    
+
     return {
       answer: response.content,
       sources: relevantDocs.map(doc => doc.content) // 返回引用的文档内容
@@ -208,14 +218,14 @@ export class RAGService {
       JSON.stringify(this.documents, null, 2)
     );
   }
-  
+
   /**
    * 加载完整的知识库（索引 + 文档数据）
    * @param kbId 知识库唯一标识符
    */
   async loadKnowledgeBase(kbId: string): Promise<void> {
     const kbDir = path.join(this.baseDir, kbId);
-    
+
     try {
       // 加载索引
       const indexPath = path.join(kbDir, 'index.faiss');

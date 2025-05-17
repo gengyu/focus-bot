@@ -186,7 +186,7 @@ const newMap = new Map();
 
 // 修改registerControllers以支持参数注入
 export function registerControllers(controllers: any[]) {
-  controllers.forEach(ControllerClass => {
+  controllers.filter(Boolean).forEach(ControllerClass => {
     const prefix = Reflect.getMetadata('prefix', ControllerClass) || '';
     const routes = Reflect.getMetadata('routes', ControllerClass) || [];
     const uploadConfig = Reflect.getMetadata('upload_config', ControllerClass) || {};
@@ -346,6 +346,15 @@ export function registerControllers(controllers: any[]) {
             const bodyParams = Reflect.getMetadata('body_params', instance, route.handler) || [];
             const routeParams = Reflect.getMetadata('route_params', instance, route.handler) || [];
 
+            // 将上传的文件信息添加到ctx.request.body中
+            if (isMultiple && ctx.request.files) {
+              ctx.request.body = ctx.request.body || {};
+              ctx.request.body[fieldName] = ctx.request.files;
+            } else if (ctx.request.file) {
+              ctx.request.body = ctx.request.body || {};
+              ctx.request.body[fieldName] = ctx.request.file;
+            }
+
             const args = [];
             for (let i = 0; i < handler.length; i++) {
               // 优先级：路由参数 > Query > Body > ctx
@@ -367,16 +376,7 @@ export function registerControllers(controllers: any[]) {
               // 默认注入ctx
               args[i] = ctx;
             }
-            
-            // 将上传的文件信息添加到ctx.request.body中
-            if (isMultiple && ctx.request.files) {
-              ctx.request.body = ctx.request.body || {};
-              ctx.request.body[fieldName] = ctx.request.files;
-            } else if (ctx.request.file) {
-              ctx.request.body = ctx.request.body || {};
-              ctx.request.body[fieldName] = ctx.request.file;
-            }
-            
+
             const result = await handler.apply(instance, args);
             if (result !== undefined) {
               ctx.body = result;

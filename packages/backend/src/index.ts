@@ -7,7 +7,7 @@ import { router as decoratorRouter, registerControllers } from './decorators/dec
 import { ChatController } from './routes/chat';
 import { ConfigController } from './routes/config';
 import { FileParserController } from './routes/fileParser';
-import {RAGController} from './routes/rag.routes';
+// import {RAGController} from './routes/rag.routes';
 import {KnowledgeController} from './routes/knowledge.routes';
 
 const app = new Koa();
@@ -28,7 +28,7 @@ healthRouter.get('/health', (ctx) => {
 });
 
 // 注册路由
-registerControllers([ChatController, ConfigController, FileParserController, RAGController, KnowledgeController]);
+registerControllers([ChatController, ConfigController, FileParserController, KnowledgeController]);
 app.use(healthRouter.routes()).use(healthRouter.allowedMethods());
 app.use(decoratorRouter.routes()).use(decoratorRouter.allowedMethods());
 // app.use(ragRouter.routes()).use(ragRouter.allowedMethods());
