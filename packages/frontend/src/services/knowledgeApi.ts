@@ -1,13 +1,21 @@
 import { API_BASE_URL } from './api';
 import { TransportAdapter, type TransportRequest, TransportType } from "../transports";
 
-export interface KnowledgeBase {
-  id: string;
-  name: string;
-  description: string;
-  documentCount: number;
-  createdAt: string;
-}
+// export interface Document {
+//   id: string;
+//   name: string;
+//   size: number;
+//   type: string;
+//   createdAt: string;
+// }
+
+// export interface KnowledgeBase {
+//   id: string;
+//   name: string;
+//   description: string;
+//   documentCount: number;
+//   createdAt: string;
+// }
 
 export interface CreateKnowledgeBaseRequest {
   name: string;
@@ -24,6 +32,20 @@ export class KnowledgeAPI {
     serverUrl: API_BASE_URL,
     prefix: 'knowledge-bases'
   });
+
+  async getDocuments(kbId: string): Promise<Document[]> {
+    const req: TransportRequest = { method: 'getDocuments', payload: { id: kbId } };
+    const res = await this.transport.invokeDirect(req);
+    if (!res.success) throw new Error(`获取文档列表失败: ${res.error}`);
+    return res.data;
+  }
+
+  async searchDocuments(kbId: string, query: string): Promise<Document[]> {
+    const req: TransportRequest = { method: 'searchDocuments', payload: { id: kbId, query } };
+    const res = await this.transport.invokeDirect(req);
+    if (!res.success) throw new Error(`搜索文档失败: ${res.error}`);
+    return res.data;
+  }
 
   async getKnowledgeBases(): Promise<KnowledgeBase[]> {
     const req: TransportRequest = { method: 'getKnowledgeBases', payload: {} };
@@ -81,4 +103,4 @@ export class KnowledgeAPI {
   }
 }
 
-export const knowledgeAPI = new KnowledgeAPI(); 
+export const knowledgeAPI = new KnowledgeAPI();

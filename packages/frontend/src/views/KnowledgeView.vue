@@ -13,7 +13,7 @@
     <!-- 知识库列表 -->
     <div class="space-y-4">
       <div v-for="kb in knowledgeBases" :key="kb.id" class="bg-white rounded-lg shadow-md p-6">
-        <div class="flex justify-between items-center">
+        <div class="flex justify-between items-center mb-4">
           <div>
             <h2 class="text-xl font-semibold mb-2">{{ kb.name }}</h2>
             <p class="text-gray-600">{{ kb.description }}</p>
@@ -24,6 +24,12 @@
             </div>
           </div>
           <div class="flex space-x-2">
+            <button 
+              @click="openDocumentsModal(kb)"
+              class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition-colors"
+            >
+              查看文档
+            </button>
             <button 
               @click="openUploadModal(kb)"
               class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 transition-colors"
@@ -42,6 +48,41 @@
             >
               删除
             </button>
+          </div>
+        </div>
+
+        <!-- 文档搜索和列表 -->
+        <div class="mt-4">
+          <div class="flex space-x-2 mb-4">
+            <input
+              v-model="kb.searchQuery"
+              type="text"
+              placeholder="搜索文档..."
+              class="flex-1 rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+              @keyup.enter="searchDocuments(kb)"
+            >
+            <button
+              @click="searchDocuments(kb)"
+              class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition-colors"
+            >
+              搜索
+            </button>
+            <button
+              @click="loadDocuments(kb)"
+              class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600 transition-colors"
+            >
+              重置
+            </button>
+          </div>
+
+          <div class="space-y-2">
+            <div v-for="doc in kb.documents" :key="doc.id" class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+              <div class="flex items-center space-x-4">
+                <span class="text-gray-600">{{ doc.name }}</span>
+                <span class="text-sm text-gray-500">{{ formatFileSize(doc.size) }}</span>
+                <span class="text-sm text-gray-500">{{ formatDate(doc.createdAt) }}</span>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -182,16 +223,73 @@
         </div>
       </div>
     </div>
+
+    <!-- 文档列表模态框 -->
+    <div v-if="showDocumentsModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+      <div class="bg-white rounded-lg p-6 w-[800px] h-[600px] flex flex-col">
+        <div class="flex justify-between items-center mb-4">
+          <h2 class="text-xl font-bold">文档列表</h2>
+          <button 
+            @click="showDocumentsModal = false"
+            class="text-gray-500 hover:text-gray-600"
+          >
+            关闭
+          </button>
+        </div>
+
+        <div class="mb-4">
+          <div class="flex space-x-2">
+            <input
+              v-model="currentKnowledgeBase.searchQuery"
+              type="text"
+              placeholder="搜索文档..."
+              class="flex-1 rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+              @keyup.enter="searchDocuments(currentKnowledgeBase)"
+            >
+            <button
+              @click="searchDocuments(currentKnowledgeBase)"
+              class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition-colors"
+            >
+              搜索
+            </button>
+            <button
+              @click="loadDocuments(currentKnowledgeBase)"
+              class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600 transition-colors"
+            >
+              重置
+            </button>
+          </div>
+        </div>
+
+        <div class="flex-1 overflow-y-auto">
+          <div class="space-y-2">
+            <div v-for="doc in currentKnowledgeBase.documents" :key="doc.id" class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+              <div class="flex items-center space-x-4">
+                <span class="text-gray-600">{{ doc.name }}</span>
+                <span class="text-sm text-gray-500">{{ formatFileSize(doc.size) }}</span>
+                <span class="text-sm text-gray-500">{{ formatDate(doc.createdAt) }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
-import { knowledgeAPI, type KnowledgeBase } from '../services/knowledgeApi';
+import { knowledgeAPI } from '../services/knowledgeApi';
+import type {KnowledgeBase} from "../../../../share/knowledge.ts";
 
 interface ChatMessage {
   role: 'user' | 'assistant';
   content: string;
+}
+
+// 扩展 KnowledgeBase 类型
+interface ExtendedKnowledgeBase extends KnowledgeBase {
+  searchQuery?: string;
 }
 
 // 状态
@@ -199,7 +297,16 @@ const knowledgeBases = ref<KnowledgeBase[]>([]);
 const showCreateModal = ref(false);
 const showUploadModal = ref(false);
 const showChatModal = ref(false);
-const currentKnowledgeBase = ref<KnowledgeBase | null>(null);
+const showDocumentsModal = ref(false);
+const currentKnowledgeBase = ref<ExtendedKnowledgeBase >({
+  id: '',
+  name: '',
+  description: '',
+  documentCount: 0,
+  createdAt: '',
+  documents: [],
+  searchQuery: ''
+});
 const uploadedFiles = ref<File[]>([]);
 const chatMessages = ref<ChatMessage[]>([]);
 const userInput = ref('');
@@ -219,10 +326,48 @@ onMounted(async () => {
 // 获取知识库列表
 const fetchKnowledgeBases = async () => {
   try {
-    knowledgeBases.value = await knowledgeAPI.getKnowledgeBases();
+    const kbs = await knowledgeAPI.getKnowledgeBases();
+    knowledgeBases.value = kbs;
+    // 加载每个知识库的文档
+    // for (const kb of knowledgeBases.value) {
+    //   await loadDocuments(kb);
+    // }
   } catch (error) {
     console.error('获取知识库列表失败:', error);
   }
+};
+
+// 加载文档列表
+const loadDocuments = async (kb: ExtendedKnowledgeBase) => {
+  try {
+    // const curKb = knowledgeBases.value.find(item => item.id === kb.id);
+
+    // kb.documentsdocuments = await knowledgeAPI.getDocuments(kb.id);
+  } catch (error) {
+    console.error('获取文档列表失败:', error);
+  }
+};
+
+// 搜索文档
+const searchDocuments = async (kb: ExtendedKnowledgeBase) => {
+  if (!kb.searchQuery.trim()) {
+    await loadDocuments(kb);
+    return;
+  }
+
+  try {
+    kb.documents = await knowledgeAPI.searchDocuments(kb.id, kb.searchQuery);
+  } catch (error) {
+    console.error('搜索文档失败:', error);
+  }
+};
+
+// 格式化文件大小
+const formatFileSize = (size: number) => {
+  if (size < 1024) return size + ' B';
+  if (size < 1024 * 1024) return (size / 1024).toFixed(2) + ' KB';
+  if (size < 1024 * 1024 * 1024) return (size / (1024 * 1024)).toFixed(2) + ' MB';
+  return (size / (1024 * 1024 * 1024)).toFixed(2) + ' GB';
 };
 
 // 创建知识库
@@ -282,8 +427,15 @@ const uploadFiles = async () => {
   }
 };
 
+// 打开文档列表模态框
+const openDocumentsModal = async (kb: ExtendedKnowledgeBase) => {
+  currentKnowledgeBase.value = kb;
+  showDocumentsModal.value = true;
+  await loadDocuments(kb);
+};
+
 // 打开对话模态框
-const openChatModal = (kb: KnowledgeBase) => {
+const openChatModal = (kb: ExtendedKnowledgeBase) => {
   currentKnowledgeBase.value = kb;
   showChatModal.value = true;
   chatMessages.value = [];
