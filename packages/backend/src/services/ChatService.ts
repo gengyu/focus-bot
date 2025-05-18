@@ -1,7 +1,7 @@
 import {OpenAIProvider} from "../provider/OpenAIProvider";
 import {LLMProvider, ProviderResponseChunk} from "../provider/LLMProvider";
 import {AppSettingService} from "./AppSettingService";
-import {type ChatMessage, Model, ProviderConfig} from "../../../../share/type";
+import {type ChatMessage, Model, ProviderConfig, ProviderId} from "../../../../share/type";
 import {ChatHistoryService} from "./ChatHistoryService";
 import {ReadableStream} from "node:stream/web";
 import {Singleton} from "../decorators/Singleton";
@@ -16,7 +16,7 @@ import {ChatOptions} from "../../../../share/chat.ts";
 @Singleton()
 export class ChatService {
   private providerCache: Map<string, LLMProvider> = new Map();
-  private providerFactory: Record<string, (config: ProviderConfig) => LLMProvider> = {
+  private providerFactory: Record<ProviderId, (config: ProviderConfig) => LLMProvider> = {
     openai: (config: ProviderConfig) => new OpenAIProvider(config),
     ollama: (config: ProviderConfig) => new OllamaAIProvider(config),
     aliyun: (config: ProviderConfig) => new OllamaAIProvider(config),
@@ -76,10 +76,10 @@ export class ChatService {
 
 
     // 1. 是否检索本地知识库
-    if (true || useKnowledgeBase && knowledgeBaseId) {
+    if ( useKnowledgeBase && knowledgeBaseId) {
       try {
-        // const ragResult = await this.ragService.ragPipeline(knowledgeBaseId,lastMessage.content as string);
-        const ragResult = await this.ragService.ragPipeline('77584235-251e-4f4c-9d8e-a7eedc43d133',lastMessage.content as string);
+        const ragResult = await this.ragService.ragPipeline(knowledgeBaseId,lastMessage.content as string);
+        // const ragResult = await this.ragService.ragPipeline('77584235-251e-4f4c-9d8e-a7eedc43d133',lastMessage.content as string);
         const knowledgeContext = `以下是来自知识库的相关信息：\n\n${ragResult.sources.join('\n\n')}`;
 
         enhancedMessages = [

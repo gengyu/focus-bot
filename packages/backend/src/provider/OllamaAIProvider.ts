@@ -1,11 +1,12 @@
 import {LLMProvider, ProviderResponseChunk} from "./LLMProvider";
-import {type ChatMessage, ProviderConfig} from "../../../../share/type";
+import {type ChatMessage, Model, ModelId, ProviderConfig, ProviderId, ProviderIdEnum} from "../../../../share/type";
 import { v4 as uuidv4 } from 'uuid';
 import {type Message, Ollama} from "ollama";
 
 export class OllamaAIProvider implements LLMProvider {
   private ollama: Ollama;
   private config: ProviderConfig;
+  private providerId: ProviderIdEnum = ProviderIdEnum.Ollama
 
   constructor(config: ProviderConfig) {
     this.config = config;
@@ -146,7 +147,17 @@ export class OllamaAIProvider implements LLMProvider {
     try {
       const list = await this.ollama.list()
       console.log('📦 Local model list:', list?.models);
-      return list?.models;
+
+      return list?.models.map((model) => {
+        return {
+          providerId: this.providerId as any,
+          id: model.model as any,
+          name: model.name,
+          description: model.details.parent_model,
+          size: model.size,
+          enabled: true,
+        } as Model;
+      });
     } catch (error) {
       console.error('Ollama API Error:', error);
       throw new Error('Failed to get models from Ollama');

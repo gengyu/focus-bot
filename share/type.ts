@@ -1,12 +1,19 @@
 export type ModelId = string;
 export type ProviderId = string;
 
+export enum ProviderIdEnum{
+  OpenAI = 'openai',
+  Aliyun = 'aliyun',
+  Gemini = 'gemini',
+  Ollama = 'ollama',
+}
+
 export interface Model {
   id: ModelId;
   providerId: ProviderId;
   name: string;
   description: string;
-  size: string;
+  size: number;
   enabled: boolean;
 }
 
