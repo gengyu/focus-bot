@@ -64,6 +64,9 @@ importers:
       file-type:
         specifier: ^16.5.4
         version: 16.5.4
+      flexsearch:
+        specifier: ^0.8.167
+        version: 0.8.167
       iconv-lite:
         specifier: ^0.6.3
         version: 0.6.3
@@ -2416,6 +2419,9 @@ packages:
 
   flatbuffers@1.12.0:
     resolution: {integrity: sha512-c7CZADjRcl6j0PlvFy0ZqXQ67qSEZfrVPynmnL+2zPc+NtMvrF8Y0QceMo7QqnSPc7+uWjUIAbvCQ5WIKlMVdQ==}
+
+  flexsearch@0.8.167:
+    resolution: {integrity: sha512-iCBbY9npWhNlTCiHha2pwGqtbhpSEHx8+m5FJab+DLr/IKMneLNDgWbu2+IOvsAHo/Euo2Fu/5awrAEhN4q8Jw==}
 
   fn.name@1.1.0:
     resolution: {integrity: sha512-GRnmB5gPyJpAhTQdSZTSp9uaPSvl09KoYcMQtsB9rQoOmzs9dH6ffeccH+Z+cv6P68Hu5bC6JjRh4Ah/mHSNRw==}
@@ -6922,6 +6928,8 @@ snapshots:
       path-exists: 4.0.0
 
   flatbuffers@1.12.0: {}
+
+  flexsearch@0.8.167: {}
 
   fn.name@1.1.0: {}
 

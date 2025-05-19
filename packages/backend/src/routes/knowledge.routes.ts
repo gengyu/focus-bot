@@ -33,28 +33,13 @@ interface ChatRequest {
 
 @Controller('/invoke/knowledge-bases')
 export class KnowledgeController {
-  // private ragService: RAGService;
+
   private knowledgeBases: Map<string, KnowledgeBase>;
   private knowledgeService: KnowledgeService;
-  private upload: multer.Multer;
 
   constructor() {
-    // 创建 LLM Provider
-    const providerConfig: ProviderConfig = {
-      id: 'openai',
-      name: 'OpenAI',
-      enabled: true,
-      apiUrl: process.env.OPENAI_API_URL || 'https://api.openai.com/v1',
-      apiKey: process.env.OPENAI_API_KEY || '',
-      models: [],
-      temperature: 0.7,
-      maxTokens: 2000,
-    };
 
-    const llmProvider = new OpenAIProvider(providerConfig);
-    // this.ragService = new RAGService(llmProvider);
     this.knowledgeBases = new Map<string, KnowledgeBase>();
-    this.upload = multer({dest: 'uploads/'});
     this.knowledgeService = new KnowledgeService();
   }
 
@@ -134,27 +119,18 @@ export class KnowledgeController {
       return ResultHelper.fail(err.message, null);
     }
   }
-  //
-  // @Post('/:id/chat')
-  // async chat(@Body('id') id: string, @Body('query') query: string) {
-  //   try {
-  //     if (!query) {
-  //       return ResultHelper.fail('查询不能为空', null);
-  //     }
-  //
-  //     const kb = this.knowledgeBases.get(id);
-  //     if (!kb) {
-  //       return ResultHelper.fail('知识库不存在', null);
-  //     }
-  //
-  //     // 加载知识库
-  //     await this.ragService.loadKnowledgeBase(id);
-  //
-  //     // 执行 RAG 查询
-  //     const result = await this.ragService.ragPipeline(query);
-  //     return ResultHelper.success(result);
-  //   } catch (err: any) {
-  //     return ResultHelper.fail(err.message, null);
-  //   }
-  // }
+
+  @Post('/searchDocuments')
+   async searchDocuments(@Body('id') id: string, @Body('query') query: string) {
+    try {
+      if (!query) {
+        return ResultHelper.fail('搜索关键词不能为空', null);
+      }
+
+      const results = await this.knowledgeService.retrieveRelevantDocs(id, query);
+      return ResultHelper.success(results);
+    } catch (err: any) {
+      return ResultHelper.fail(err.message, null);
+    }
+  }
 }

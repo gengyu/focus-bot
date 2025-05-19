@@ -16,3 +16,24 @@
 
 
  文本处理库 '@xenova/transformers';   
+
+faiss-node 改为 FlexSearch
+
+##### Query Test: "Gulliver's Travels"
+
+|      |                                                              |                 |                      |                     |                  |
+| ---- | ------------------------------------------------------------ | --------------- | -------------------- | ------------------- |------------------|
+| Rank | Library Name                                                 | Library Version | Single Phrase (op/s) | Multi Phrase (op/s) | Not Found (op/s) |
+| 1    | FlexSearch [*](https://www.npmjs.com/package/flexsearch/v/0.6.22#notes) | 0.3.6           | **363757**           | **182603**          | **1627219**      |
+| 2    | Wade                                                         | 0.3.3           | **899**              | **6098**            | **214286**       |
+| 3    | JS Search                                                    | 1.4.2           | **735**              | **8889**            | **800000**       |
+| 4    | JSii                                                         | 1.0             | **551**              | **9970**            | **75000**        |
+| 5    | Lunr.js                                                      | 2.3.5           | **355**              | **1051**            | **25000**        |
+| 6    | Elasticlunr.js                                               | 0.9.6           | **327**              | **781**             | **6667**         |
+| 7    | BulkSearch                                                   | 0.1.3           | **265**              | **535**             | **2778**         |
+| 8    | bm25                                                         | 0.2             | **71**               | **116**             | **2065**         |
+| 9    | Fuse                                                         | 3.3.0           | **0.5**              | **0.4**             | **0.7**          |
+参考：
+https://www.npmjs.com/package/flexsearch/v/0.6.22?activeTab=readme
+
+
