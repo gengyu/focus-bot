@@ -1,21 +1,32 @@
 @import "reset.css";
 @import "tailwindcss";
+
 @plugin "@tailwindcss/typography";
 
 /* 定义主题颜色 */
 @theme {
-    --color-primary: red; /* 亮色主题下的主要背景色，例如白色 */
-    --color-secondary: 240 240 240;
-    --color-accent: 59 130 246;
-    --color-text: 51 51 51;
-    --color-background: 255 255 255;
+    /* 浅色模式 */
+    --color-primary: #2D3748; /* 深灰，用于主要文本 */
+    --color-secondary: #E2E8F0; /* 浅灰，用于次要元素和背景 */
+    --color-accent: #68D391; /* 柔和绿，用于交互元素 */
+    --color-background: #F7FAFC; /* 极浅灰背景，干净柔和 */
+    --color-neutral: #FFFFFF; /* 纯白，用于卡片或对话框 */
+}
 
+/*跟随系统主题*/
+/*  if (window.matchMedia('(prefers-color-scheme: dark)').matches) {*/
+/*document.documentElement.setAttribute('data-theme', 'dark');*/
+/*}*/
+
+@layer base {
+
+    [data-theme="dark"] {
+        --color-primary: #E2E8F0; /* 浅灰，用于深色模式文本 */
+        --color-secondary: #4A5568; /* 深灰，用于次要元素 */
+        --color-accent: #9AE6B4; /* 稍亮的柔和绿，保持交互活力 */
+        --color-background: #1A202C; /* 深灰背景，简洁低调 */
+        --color-neutral: #2D3748; /* 深灰，用于卡片或对话框 */
+    }
 }
-/* 暗色主题变量 */
-.dark {
-    --color-primary:  blue;
-    --color-secondary: 45 55 72;
-    --color-accent: 99 179 237;
-    --color-text: 226 232 240;
-    --color-background: 26 32 44;
-}
+
+

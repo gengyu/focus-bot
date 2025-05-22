@@ -1,6 +1,6 @@
 <template>
   <div class="p-6">
-    <h1 class="text-2xl font-bold mb-4 bg-primary-1/2">MCP连接管理平台</h1>
+    <h1 class="text-2xl font-bold mb-4 bg-background text-secondary">MCP连接管理平台</h1>
     <div class="stats shadow">
       <div class="stat">
         <div class="stat-title">当前运行配置</div>
