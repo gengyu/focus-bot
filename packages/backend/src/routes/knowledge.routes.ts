@@ -8,19 +8,9 @@ import {v4 as uuidv4} from 'uuid';
 import fs from 'fs/promises';
 import path from 'path';
 import {KnowledgeService} from "../services/knowledge.service.ts";
+import {KnowledgeBase} from "../../../../share/knowledge.ts";
 
-interface KnowledgeBase {
-  id: string;
-  name: string;
-  description: string;
-  documentCount: number;
-  createdAt: string;
-  documents: Array<{
-    id: string;
-    name: string;
-    path: string;
-  }>;
-}
+
 
 interface CreateKnowledgeBaseRequest {
   name: string;
@@ -34,17 +24,25 @@ interface ChatRequest {
 @Controller('/invoke/knowledge-bases')
 export class KnowledgeController {
 
-  private knowledgeBases: Map<string, KnowledgeBase>;
   private knowledgeService: KnowledgeService;
 
   constructor() {
 
-    this.knowledgeBases = new Map<string, KnowledgeBase>();
     this.knowledgeService = new KnowledgeService();
   }
 
   @Post('/getKnowledgeBases')
   async getKnowledgeBases() {
+    try {
+      const knowledgeBases = await this.knowledgeService.getKnowledgeBases();
+      return ResultHelper.success(knowledgeBases);
+    } catch (err: any) {
+      return ResultHelper.fail(err.message, null);
+    }
+  }
+
+  @Post('/saveKnowledgeBases')
+  async saveKnowledgeBases(@Body() request: Partial<KnowledgeBase>[]) {
     try {
       const knowledgeBases = await this.knowledgeService.getKnowledgeBases();
       return ResultHelper.success(knowledgeBases);
@@ -71,32 +69,6 @@ export class KnowledgeController {
       await this.knowledgeService.createKnowledgeBase(knowledgeBase)
 
       return ResultHelper.success(knowledgeBase);
-    } catch (err: any) {
-      return ResultHelper.fail(err.message, null);
-    }
-  }
-
-  @Delete('/:id')
-  async deleteKnowledgeBase(@Body('id') id: string) {
-    try {
-      const kb = this.knowledgeBases.get(id);
-      if (!kb) {
-        return ResultHelper.fail('知识库不存在', null);
-      }
-
-      // 删除相关文件
-      for (const doc of kb.documents) {
-        try {
-          await fs.unlink(doc.path);
-        } catch (error) {
-          console.error('删除文件失败:', error);
-        }
-      }
-
-      // 删除知识库索引和文档
-      // await this.ragService.deleteKnowledgeBase(id);
-      this.knowledgeBases.delete(id);
-      return ResultHelper.success(null);
     } catch (err: any) {
       return ResultHelper.fail(err.message, null);
     }
