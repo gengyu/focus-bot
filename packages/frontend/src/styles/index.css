@@ -6,27 +6,45 @@
 /* 定义主题颜色 */
 @theme {
     /* 浅色模式 */
-    --color-primary: #2D3748; /* 深灰，用于主要文本 */
-    --color-secondary: #E2E8F0; /* 浅灰，用于次要元素和背景 */
-    --color-accent: #68D391; /* 柔和绿，用于交互元素 */
-    --color-background: #F7FAFC; /* 极浅灰背景，干净柔和 */
-    --color-neutral: #FFFFFF; /* 纯白，用于卡片或对话框 */
+    --color-primary: #2D3748; /* 深灰，用于主要文本，如标题、正文 */
+    --color-secondary: #E2E8F0; /* 浅灰，用于次要元素和背景，如边框、分割线、禁用状态背景 */
+    --color-accent: #68D391; /* 柔和绿，用于交互元素，如按钮、链接、高亮状态 */
+    --color-background: #F7FAFC; /* 极浅灰背景，干净柔和，用于整体页面背景 */
+    --color-neutral: #FFFFFF; /* 纯白，用于卡片、对话框、表单背景 */
+
+    /* 扩展颜色 - 浅色模式 */
+    --color-text-light: #718096; /* 较浅的文本颜色，用于辅助信息、提示文本 */
+    --color-border: #CBD5E0; /* 边框颜色 */
+    --color-success: #48BB78; /* 成功状态颜色 */
+    --color-warning: #ECC94B; /* 警告状态颜色 */
+    --color-error: #FC8181; /* 错误状态颜色 */
+    --color-info: #63B3ED; /* 信息提示颜色 */
+    --color-hover: #5ACD8A; /* 交互元素悬停状态 */
+    --color-active: #4FBA7A; /* 交互元素点击/激活状态 */
+    --color-disabled-text: #A0AEC0; /* 禁用状态下的文本颜色 */
+    --color-disabled-background: #EDF2F7; /* 禁用状态下的背景颜色 */
+    --color-overlay: rgba(0, 0, 0, 0.5); /* 遮罩层颜色 */
 }
 
-/*跟随系统主题*/
-/*  if (window.matchMedia('(prefers-color-scheme: dark)').matches) {*/
-/*document.documentElement.setAttribute('data-theme', 'dark');*/
-/*}*/
-
 @layer base {
+    --color-primary: #E2E8F0; /* 浅灰，用于深色模式文本，如标题、正文 */
+    --color-secondary: #4A5568; /* 深灰，用于次要元素，如边框、分割线、禁用状态背景 */
+    --color-accent: #9AE6B4; /* 稍亮的柔和绿，保持交互活力，用于按钮、链接、高亮状态 */
+    --color-background: #1A202C; /* 深灰背景，简洁低调，用于整体页面背景 */
+    --color-neutral: #2D3748; /* 深灰，用于卡片、对话框、表单背景 */
 
-    [data-theme="dark"] {
-        --color-primary: #E2E8F0; /* 浅灰，用于深色模式文本 */
-        --color-secondary: #4A5568; /* 深灰，用于次要元素 */
-        --color-accent: #9AE6B4; /* 稍亮的柔和绿，保持交互活力 */
-        --color-background: #1A202C; /* 深灰背景，简洁低调 */
-        --color-neutral: #2D3748; /* 深灰，用于卡片或对话框 */
-    }
+    /* 扩展颜色 - 深色模式 */
+    --color-text-light: #A0AEC0; /* 较浅的文本颜色，用于辅助信息、提示文本 */
+    --color-border: #4A5568; /* 边框颜色 */
+    --color-success: #68D391; /* 成功状态颜色 */
+    --color-warning: #F6E05E; /* 警告状态颜色 */
+    --color-error: #FEB2B2; /* 错误状态颜色 */
+    --color-info: #9FD5F8; /* 信息提示颜色 */
+    --color-hover: #8AE0A9; /* 交互元素悬停状态 */
+    --color-active: #7AD9A0; /* 交互元素点击/激活状态 */
+    --color-disabled-text: #718096; /* 禁用状态下的文本颜色 */
+    --color-disabled-background: #2D3748; /* 禁用状态下的背景颜色 */
+    --color-overlay: rgba(0, 0, 0, 0.7); /* 遮罩层颜色 */
 }
 
 
