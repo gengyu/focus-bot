@@ -8,7 +8,7 @@ export default {
   theme: {
     extend: {
       colors: {
-        primary: 'var(--color-primary)',
+        primary: 'oklch(var(--color-primary))',
         success: 'var(--color-success)',
         error: 'var(--color-error)',
       },
