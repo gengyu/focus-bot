@@ -5,14 +5,9 @@ export default {
     "./index.html",
     "./src/**/*.{vue,js,ts,jsx,tsx}",
   ],
+  darkMode: 'class',
   theme: {
-    extend: {
-      colors: {
-        primary: 'var(--color-primary)',
-        success: 'var(--color-success)',
-        error: 'var(--color-error)',
-      },
-    },
+
   },
   plugins: [],
 }
