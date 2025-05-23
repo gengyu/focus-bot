@@ -46,12 +46,20 @@ const props = defineProps({
   size: {
     type: String,
     default: 'md',
-    validator: (value: string) => ['sm', 'md', 'lg'].includes(value)
+    validator: (value: string) => ['xs', 'sm', 'md', 'lg', 'xl'].includes(value)
   },
   color: {
     type: String,
     default: 'accent',
-    validator: (value: string) => ['accent', 'success', 'info', 'warning', 'error'].includes(value)
+    validator: (value: string) => ['accent', 'primary', 'secondary', 'success', 'info', 'warning', 'error'].includes(value)
+  },
+  name: {
+    type: String,
+    default: ''
+  },
+  required: {
+    type: Boolean,
+    default: false
   }
 });
 
@@ -103,11 +111,16 @@ const switchClasses = computed(() => {
   display: inline-flex;
   align-items: center;
   border: none;
-  border-radius: 999px;
+  border-radius: var(--radius-full);
   background-color: var(--color-secondary);
-  transition: all 0.2s ease-in-out;
+  transition: all var(--transition-normal);
   cursor: pointer;
   padding: 0;
+}
+
+.focus-switch--xs {
+  width: 1.5rem;
+  height: 0.75rem;
 }
 
 .focus-switch--sm {
@@ -125,12 +138,24 @@ const switchClasses = computed(() => {
   height: 1.5rem;
 }
 
+.focus-switch--xl {
+  width: 3.5rem;
+  height: 1.75rem;
+}
+
 .focus-switch-thumb {
   position: absolute;
   background-color: white;
-  border-radius: 50%;
-  transition: transform 0.2s ease-in-out;
-  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  border-radius: var(--radius-full);
+  transition: transform var(--transition-normal);
+  box-shadow: var(--shadow-sm);
+}
+
+.focus-switch--xs .focus-switch-thumb {
+  width: 0.625rem;
+  height: 0.625rem;
+  left: 0.0625rem;
+  transform: translateX(0);
 }
 
 .focus-switch--sm .focus-switch-thumb {
@@ -154,6 +179,17 @@ const switchClasses = computed(() => {
   transform: translateX(0);
 }
 
+.focus-switch--xl .focus-switch-thumb {
+  width: 1.5rem;
+  height: 1.5rem;
+  left: 0.125rem;
+  transform: translateX(0);
+}
+
+.focus-switch--checked.focus-switch--xs .focus-switch-thumb {
+  transform: translateX(0.75rem);
+}
+
 .focus-switch--checked.focus-switch--sm .focus-switch-thumb {
   transform: translateX(1rem);
 }
@@ -166,8 +202,20 @@ const switchClasses = computed(() => {
   transform: translateX(1.5rem);
 }
 
+.focus-switch--checked.focus-switch--xl .focus-switch-thumb {
+  transform: translateX(1.75rem);
+}
+
 .focus-switch--checked {
   background-color: var(--color-accent);
+}
+
+.focus-switch--checked.focus-switch--primary {
+  background-color: var(--color-primary);
+}
+
+.focus-switch--checked.focus-switch--secondary {
+  background-color: var(--color-secondary);
 }
 
 .focus-switch--checked.focus-switch--success {
@@ -194,16 +242,5 @@ const switchClasses = computed(() => {
 .focus-switch-description {
   font-size: 0.875rem;
   color: var(--color-text-light);
-}
-
-/* 深色模式适配 */
-@media (prefers-color-scheme: dark) {
-  .focus-switch-label {
-    color: var(--color-text-light);
-  }
-  
-  .focus-switch-thumb {
-    background-color: var(--color-neutral);
-  }
 }
 </style>

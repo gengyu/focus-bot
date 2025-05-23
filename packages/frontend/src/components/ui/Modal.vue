@@ -70,7 +70,7 @@ const props = defineProps({
   size: {
     type: String,
     default: 'md',
-    validator: (value: string) => ['sm', 'md', 'lg', 'xl', 'full'].includes(value)
+    validator: (value: string) => ['xs', 'sm', 'md', 'lg', 'xl', 'full'].includes(value)
   },
   closable: {
     type: Boolean,
@@ -81,6 +81,25 @@ const props = defineProps({
     default: true
   },
   closeOnEsc: {
+    type: Boolean,
+    default: true
+  },
+  borderRadius: {
+    type: String,
+    default: 'md',
+    validator: (value: string) => ['none', 'sm', 'md', 'lg', 'xl', 'full'].includes(value)
+  },
+  shadow: {
+    type: String,
+    default: 'lg',
+    validator: (value: string) => ['none', 'sm', 'md', 'lg', 'xl'].includes(value)
+  },
+  position: {
+    type: String,
+    default: 'center',
+    validator: (value: string) => ['center', 'top', 'right', 'bottom', 'left'].includes(value)
+  },
+  preventScroll: {
     type: Boolean,
     default: true
   }
@@ -103,12 +122,15 @@ const handleEsc = (event: KeyboardEvent) => {
 
 const modalClasses = computed(() => {
   return {
-    [`focus-modal--${props.size}`]: true
+    [`focus-modal--${props.size}`]: true,
+    [`focus-modal--radius-${props.borderRadius}`]: true,
+    [`focus-modal--shadow-${props.shadow}`]: props.shadow !== 'none',
+    [`focus-modal--position-${props.position}`]: props.position !== 'center'
   };
 });
 
 watch(() => props.modelValue, (value) => {
-  if (value) {
+  if (value && props.preventScroll) {
     document.body.style.overflow = 'hidden';
   } else {
     document.body.style.overflow = '';
@@ -117,7 +139,7 @@ watch(() => props.modelValue, (value) => {
 
 onMounted(() => {
   document.addEventListener('keydown', handleEsc);
-  if (props.modelValue) {
+  if (props.modelValue && props.preventScroll) {
     document.body.style.overflow = 'hidden';
   }
 });
@@ -145,14 +167,57 @@ onUnmounted(() => {
 
 .focus-modal {
   background-color: var(--color-neutral);
-  border-radius: 0.5rem;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
   display: flex;
   flex-direction: column;
   max-height: calc(100vh - 2rem);
   overflow: hidden;
   position: relative;
   width: 100%;
+  transition: all var(--transition-normal);
+}
+
+.focus-modal--radius-none {
+  border-radius: 0;
+}
+
+.focus-modal--radius-sm {
+  border-radius: var(--radius-sm);
+}
+
+.focus-modal--radius-md {
+  border-radius: var(--radius-md);
+}
+
+.focus-modal--radius-lg {
+  border-radius: var(--radius-lg);
+}
+
+.focus-modal--radius-xl {
+  border-radius: var(--radius-xl);
+}
+
+.focus-modal--radius-full {
+  border-radius: var(--radius-full);
+}
+
+.focus-modal--shadow-sm {
+  box-shadow: var(--shadow-sm);
+}
+
+.focus-modal--shadow-md {
+  box-shadow: var(--shadow-md);
+}
+
+.focus-modal--shadow-lg {
+  box-shadow: var(--shadow-lg);
+}
+
+.focus-modal--shadow-xl {
+  box-shadow: var(--shadow-xl);
+}
+
+.focus-modal--xs {
+  max-width: 20rem;
 }
 
 .focus-modal--sm {
@@ -173,6 +238,28 @@ onUnmounted(() => {
 
 .focus-modal--full {
   max-width: calc(100vw - 2rem);
+  height: calc(100vh - 2rem);
+}
+
+.focus-modal--position-top {
+  margin-top: 2rem;
+  margin-bottom: auto;
+}
+
+.focus-modal--position-right {
+  margin-left: auto;
+  margin-right: 2rem;
+  height: calc(100vh - 2rem);
+}
+
+.focus-modal--position-bottom {
+  margin-top: auto;
+  margin-bottom: 2rem;
+}
+
+.focus-modal--position-left {
+  margin-left: 2rem;
+  margin-right: auto;
   height: calc(100vh - 2rem);
 }
 
@@ -197,7 +284,7 @@ onUnmounted(() => {
   cursor: pointer;
   padding: 0.25rem;
   color: var(--color-text-light);
-  transition: color 0.2s ease-in-out;
+  transition: color var(--transition-fast);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -220,16 +307,5 @@ onUnmounted(() => {
   gap: 0.75rem;
   padding: 1rem 1.5rem;
   border-top: 1px solid var(--color-border);
-}
-
-/* 深色模式适配 */
-@media (prefers-color-scheme: dark) {
-  .focus-modal {
-    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2), 0 10px 10px -5px rgba(0, 0, 0, 0.1);
-  }
-  
-  .focus-modal-title {
-    color: var(--color-text-light);
-  }
 }
 </style>

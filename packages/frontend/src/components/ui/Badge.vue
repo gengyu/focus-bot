@@ -26,21 +26,39 @@ const props = defineProps({
   size: {
     type: String,
     default: 'md',
-    validator: (value: string) => ['sm', 'md', 'lg'].includes(value)
+    validator: (value: string) => ['xs', 'sm', 'md', 'lg', 'xl'].includes(value)
   },
-  rounded: {
+  borderRadius: {
+    type: String,
+    default: 'md',
+    validator: (value: string) => ['none', 'sm', 'md', 'lg', 'xl', 'full'].includes(value)
+  },
+  dot: {
+    type: Boolean,
+    default: false
+  },
+  removable: {
     type: Boolean,
     default: false
   }
 });
 
+const emit = defineEmits(['remove']);
+
 const badgeClasses = computed(() => {
   return {
     [`focus-badge--${props.variant}`]: true,
     [`focus-badge--${props.size}`]: true,
-    'focus-badge--rounded': props.rounded
+    [`focus-badge--radius-${props.borderRadius}`]: true,
+    'focus-badge--dot': props.dot,
+    'focus-badge--removable': props.removable
   };
 });
+
+const handleRemove = (event: Event) => {
+  event.stopPropagation();
+  emit('remove');
+};
 </script>
 
 <style scoped>
@@ -48,14 +66,40 @@ const badgeClasses = computed(() => {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border-radius: 0.25rem;
   font-weight: 500;
   line-height: 1;
   white-space: nowrap;
+  transition: all var(--transition-fast);
+  position: relative;
 }
 
-.focus-badge--rounded {
-  border-radius: 9999px;
+.focus-badge--radius-none {
+  border-radius: 0;
+}
+
+.focus-badge--radius-sm {
+  border-radius: var(--radius-sm);
+}
+
+.focus-badge--radius-md {
+  border-radius: var(--radius-md);
+}
+
+.focus-badge--radius-lg {
+  border-radius: var(--radius-lg);
+}
+
+.focus-badge--radius-xl {
+  border-radius: var(--radius-xl);
+}
+
+.focus-badge--radius-full {
+  border-radius: var(--radius-full);
+}
+
+.focus-badge--xs {
+  padding: 0.0625rem 0.25rem;
+  font-size: 0.625rem;
 }
 
 .focus-badge--sm {
@@ -71,6 +115,42 @@ const badgeClasses = computed(() => {
 .focus-badge--lg {
   padding: 0.375rem 0.75rem;
   font-size: 1rem;
+}
+
+.focus-badge--xl {
+  padding: 0.5rem 1rem;
+  font-size: 1.125rem;
+}
+
+.focus-badge--dot::before {
+  content: '';
+  display: inline-block;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: var(--radius-full);
+  margin-right: 0.375rem;
+  background-color: currentColor;
+}
+
+.focus-badge--removable {
+  padding-right: 1.5rem;
+}
+
+.focus-badge--removable::after {
+  content: '×';
+  position: absolute;
+  right: 0.375rem;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 1em;
+  line-height: 1;
+  cursor: pointer;
+  opacity: 0.7;
+  transition: opacity var(--transition-fast);
+}
+
+.focus-badge--removable::after:hover {
+  opacity: 1;
 }
 
 .focus-badge--default {
@@ -117,28 +197,5 @@ const badgeClasses = computed(() => {
   background-color: transparent;
   color: var(--color-primary);
   border: 1px solid var(--color-border);
-}
-
-/* 深色模式适配 */
-@media (prefers-color-scheme: dark) {
-  .focus-badge--default {
-    color: var(--color-text-light);
-  }
-  
-  .focus-badge--primary {
-    color: var(--color-neutral);
-  }
-  
-  .focus-badge--secondary {
-    color: var(--color-text-light);
-  }
-  
-  .focus-badge--warning {
-    color: var(--color-neutral);
-  }
-  
-  .focus-badge--outline {
-    color: var(--color-text-light);
-  }
 }
 </style>

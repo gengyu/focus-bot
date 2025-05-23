@@ -27,7 +27,7 @@
           :style="tooltipStyle"
           role="tooltip"
         >
-          {{ content }}
+          <slot name="content">{{ content }}</slot>
           <div class="focus-tooltip-arrow" :style="arrowStyle"></div>
         </div>
       </Transition>
@@ -41,7 +41,7 @@ import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue';
 const props = defineProps({
   content: {
     type: String,
-    required: true
+    default: ''
   },
   position: {
     type: String,
@@ -51,7 +51,7 @@ const props = defineProps({
   variant: {
     type: String,
     default: 'dark',
-    validator: (value: string) => ['dark', 'light'].includes(value)
+    validator: (value: string) => ['dark', 'light', 'primary', 'secondary', 'accent', 'success', 'info', 'warning', 'error'].includes(value)
   },
   delay: {
     type: Number,
@@ -60,6 +60,19 @@ const props = defineProps({
   offset: {
     type: Number,
     default: 8
+  },
+  borderRadius: {
+    type: String,
+    default: 'md',
+    validator: (value: string) => ['none', 'sm', 'md', 'lg', 'xl', 'full'].includes(value)
+  },
+  maxWidth: {
+    type: String,
+    default: '250px'
+  },
+  interactive: {
+    type: Boolean,
+    default: false
   }
 });
 
@@ -71,13 +84,16 @@ const timeout = ref<number | null>(null);
 const tooltipClasses = computed(() => {
   return {
     [`focus-tooltip--${props.variant}`]: true,
-    [`focus-tooltip--${props.position}`]: true
+    [`focus-tooltip--${props.position}`]: true,
+    [`focus-tooltip--radius-${props.borderRadius}`]: true,
+    'focus-tooltip--interactive': props.interactive
   };
 });
 
 const tooltipStyle = ref({
   top: '0px',
-  left: '0px'
+  left: '0px',
+  maxWidth: props.maxWidth
 });
 
 const arrowStyle = ref({
@@ -147,7 +163,8 @@ const updatePosition = () => {
   
   tooltipStyle.value = {
     top: `${top}px`,
-    left: `${left}px`
+    left: `${left}px`,
+    maxWidth: props.maxWidth
   };
 };
 
@@ -185,6 +202,10 @@ watch(() => props.content, () => {
   }
 });
 
+watch(() => props.maxWidth, (newValue) => {
+  tooltipStyle.value.maxWidth = newValue;
+});
+
 onMounted(() => {
   window.addEventListener('scroll', handleScroll, true);
   window.addEventListener('resize', handleResize);
@@ -213,10 +234,41 @@ onBeforeUnmount(() => {
   padding: 0.5rem 0.75rem;
   font-size: 0.75rem;
   line-height: 1.4;
-  border-radius: 0.25rem;
   max-width: 250px;
   word-wrap: break-word;
+  transition: all var(--transition-fast);
+}
+
+.focus-tooltip--interactive {
+  pointer-events: auto;
+}
+
+.focus-tooltip:not(.focus-tooltip--interactive) {
   pointer-events: none;
+}
+
+.focus-tooltip--radius-none {
+  border-radius: 0;
+}
+
+.focus-tooltip--radius-sm {
+  border-radius: var(--radius-sm);
+}
+
+.focus-tooltip--radius-md {
+  border-radius: var(--radius-md);
+}
+
+.focus-tooltip--radius-lg {
+  border-radius: var(--radius-lg);
+}
+
+.focus-tooltip--radius-xl {
+  border-radius: var(--radius-xl);
+}
+
+.focus-tooltip--radius-full {
+  border-radius: var(--radius-full);
 }
 
 .focus-tooltip--dark {
@@ -228,6 +280,41 @@ onBeforeUnmount(() => {
   background-color: var(--color-neutral);
   color: var(--color-primary);
   border: 1px solid var(--color-border);
+}
+
+.focus-tooltip--primary {
+  background-color: var(--color-primary);
+  color: white;
+}
+
+.focus-tooltip--secondary {
+  background-color: var(--color-secondary);
+  color: white;
+}
+
+.focus-tooltip--accent {
+  background-color: var(--color-accent);
+  color: white;
+}
+
+.focus-tooltip--success {
+  background-color: var(--color-success);
+  color: white;
+}
+
+.focus-tooltip--info {
+  background-color: var(--color-info);
+  color: white;
+}
+
+.focus-tooltip--warning {
+  background-color: var(--color-warning);
+  color: white;
+}
+
+.focus-tooltip--error {
+  background-color: var(--color-error);
+  color: white;
 }
 
 .focus-tooltip-arrow {
@@ -250,15 +337,31 @@ onBeforeUnmount(() => {
   border-width: inherit;
 }
 
-/* 深色模式适配 */
-@media (prefers-color-scheme: dark) {
-  .focus-tooltip--light {
-    background-color: var(--color-neutral);
-    color: var(--color-text-light);
-  }
-  
-  .focus-tooltip--light .focus-tooltip-arrow {
-    background-color: var(--color-neutral);
-  }
+.focus-tooltip--primary .focus-tooltip-arrow {
+  background-color: var(--color-primary);
+}
+
+.focus-tooltip--secondary .focus-tooltip-arrow {
+  background-color: var(--color-secondary);
+}
+
+.focus-tooltip--accent .focus-tooltip-arrow {
+  background-color: var(--color-accent);
+}
+
+.focus-tooltip--success .focus-tooltip-arrow {
+  background-color: var(--color-success);
+}
+
+.focus-tooltip--info .focus-tooltip-arrow {
+  background-color: var(--color-info);
+}
+
+.focus-tooltip--warning .focus-tooltip-arrow {
+  background-color: var(--color-warning);
+}
+
+.focus-tooltip--error .focus-tooltip-arrow {
+  background-color: var(--color-error);
 }
 </style>

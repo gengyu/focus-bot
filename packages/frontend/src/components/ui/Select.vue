@@ -6,6 +6,9 @@
         :id="id"
         :value="modelValue"
         :disabled="disabled"
+        :required="required"
+        :multiple="multiple"
+        :name="name"
         class="focus-select"
         :class="selectClasses"
         @change="onChange"
@@ -41,7 +44,7 @@ import { computed, ref } from 'vue';
 
 const props = defineProps({
   modelValue: {
-    type: [String, Number],
+    type: [String, Number, Array],
     default: ''
   },
   id: {
@@ -59,6 +62,18 @@ const props = defineProps({
   disabled: {
     type: Boolean,
     default: false
+  },
+  required: {
+    type: Boolean,
+    default: false
+  },
+  multiple: {
+    type: Boolean,
+    default: false
+  },
+  name: {
+    type: String,
+    default: ''
   },
   error: {
     type: String,
@@ -81,6 +96,11 @@ const props = defineProps({
     type: String,
     default: 'md',
     validator: (value: string) => ['sm', 'md', 'lg'].includes(value)
+  },
+  borderRadius: {
+    type: String,
+    default: 'md',
+    validator: (value: string) => ['none', 'sm', 'md', 'lg', 'xl', 'full'].includes(value)
   }
 });
 
@@ -90,8 +110,15 @@ const focused = ref(false);
 
 const onChange = (event: Event) => {
   const target = event.target as HTMLSelectElement;
-  emit('update:modelValue', target.value);
-  emit('change', target.value);
+  let value: string | string[] = target.value;
+  
+  if (props.multiple) {
+    const options = Array.from(target.selectedOptions);
+    value = options.map(option => option.value);
+  }
+  
+  emit('update:modelValue', value);
+  emit('change', value);
 };
 
 const selectContainerClasses = computed(() => {
@@ -100,6 +127,8 @@ const selectContainerClasses = computed(() => {
     'focus-select-container--error': !!props.error,
     'focus-select-container--disabled': props.disabled,
     [`focus-select-container--${props.variant}`]: true,
+    [`focus-select-container--radius-${props.borderRadius}`]: true,
+    'focus-select-container--multiple': props.multiple,
   };
 });
 
@@ -133,9 +162,32 @@ const selectClasses = computed(() => {
   align-items: center;
   position: relative;
   border: 1px solid var(--color-border);
-  border-radius: 0.375rem;
   background-color: var(--color-neutral);
-  transition: all 0.2s ease-in-out;
+  transition: all var(--transition-normal);
+}
+
+.focus-select-container--radius-none {
+  border-radius: 0;
+}
+
+.focus-select-container--radius-sm {
+  border-radius: var(--radius-sm);
+}
+
+.focus-select-container--radius-md {
+  border-radius: var(--radius-md);
+}
+
+.focus-select-container--radius-lg {
+  border-radius: var(--radius-lg);
+}
+
+.focus-select-container--radius-xl {
+  border-radius: var(--radius-xl);
+}
+
+.focus-select-container--radius-full {
+  border-radius: var(--radius-full);
 }
 
 .focus-select-container--default {
@@ -152,7 +204,7 @@ const selectClasses = computed(() => {
 
 .focus-select-container--focused {
   border-color: var(--color-accent);
-  box-shadow: 0 0 0 2px rgba(104, 211, 145, 0.2);
+  box-shadow: 0 0 0 2px rgba(var(--color-accent-rgb, 104, 211, 145), 0.2);
 }
 
 .focus-select-container--error {
@@ -162,6 +214,11 @@ const selectClasses = computed(() => {
 .focus-select-container--disabled {
   background-color: var(--color-disabled-background);
   cursor: not-allowed;
+}
+
+.focus-select-container--multiple .focus-select {
+  height: auto;
+  min-height: 2.5rem;
 }
 
 .focus-select {
@@ -206,6 +263,10 @@ const selectClasses = computed(() => {
   color: var(--color-text-light);
 }
 
+.focus-select-container--multiple .focus-select-icon {
+  display: none;
+}
+
 .focus-select-error {
   font-size: 0.75rem;
   color: var(--color-error);
@@ -216,20 +277,5 @@ const selectClasses = computed(() => {
   font-size: 0.75rem;
   color: var(--color-text-light);
   margin-top: 0.25rem;
-}
-
-/* 深色模式适配 */
-@media (prefers-color-scheme: dark) {
-  .focus-select-label {
-    color: var(--color-text-light);
-  }
-  
-  .focus-select {
-    color: var(--color-text-light);
-  }
-  
-  .focus-select-container--focused {
-    box-shadow: 0 0 0 2px rgba(154, 230, 180, 0.2);
-  }
 }
 </style>
