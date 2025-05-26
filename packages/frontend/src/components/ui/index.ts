@@ -1,63 +1,15 @@
-import { App } from 'vue';
-
-// 导入所有组件
-import Alert from './Alert.vue';
-import Avatar from './Avatar.vue';
-import Badge from './Badge.vue';
-import Button from './Button.vue';
-import Card from './Card.vue';
-import Checkbox from './Checkbox.vue';
-import Input from './Input.vue';
-import Modal from './Modal.vue';
-import Select from './Select.vue';
-import Spinner from './Spinner.vue';
-import Switch from './Switch.vue';
-import Tabs from './Tabs.vue';
-import TabPanel from './TabPanel.vue';
-import Tooltip from './Tooltip.vue';
-
-// 组件列表
-const components = {
-  Alert,
-  Avatar,
-  Badge,
-  Button,
-  Card,
-  Checkbox,
-  Input,
-  Modal,
-  Select,
-  Spinner,
-  Switch,
-  Tabs,
-  TabPanel,
-  Tooltip
-};
-
-// 安装函数
-const install = (app: App) => {
-  Object.entries(components).forEach(([name, component]) => {
-    app.component(`Focus${name}`, component);
-  });
-};
-
-// 默认导出插件
-export default { install };
-
-// 导出单个组件
-export {
-  Alert,
-  Avatar,
-  Badge,
-  Button,
-  Card,
-  Checkbox,
-  Input,
-  Modal,
-  Select,
-  Spinner,
-  Switch,
-  Tabs,
-  TabPanel,
-  Tooltip
-};
+export { default as Alert } from './Alert.vue';
+export { default as Avatar } from './Avatar.vue';
+export { default as Badge } from './Badge.vue';
+export { default as Button } from './Button.vue';
+export { default as Card } from './Card.vue';
+export { default as Checkbox } from './Checkbox.vue';
+export { default as Input } from './Input.vue';
+export { default as List } from './List.vue';
+export { default as Modal } from './Modal.vue';
+export { default as Select } from './Select.vue';
+export { default as Spinner } from './Spinner.vue';
+export { default as Switch } from './Switch.vue';
+export { default as TabPanel } from './TabPanel.vue';
+export { default as Tabs } from './Tabs.vue';
+export { default as Tooltip } from './Tooltip.vue';

@@ -8,6 +8,7 @@ import {FileParserService} from "./FileParserService.ts";
 import {Singleton} from "../decorators/Singleton.ts";
 import {KnowledgeBase} from "../../../../share/knowledge.ts";
 import multer from "@koa/multer";
+import {TestMain} from "./knowledge/RecursiveCharacterTextSplitter.ts";
 
 
 
@@ -21,6 +22,8 @@ export interface RelevantDoc {
   content: string;
   score: number;
 }
+
+TestMain();
 
 @Singleton()
 export class KnowledgeService {

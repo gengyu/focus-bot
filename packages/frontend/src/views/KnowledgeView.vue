@@ -2,9 +2,9 @@
   <div class="container mx-auto px-4 py-8">
     <div class="flex justify-between items-center mb-6">
       <h1 class="text-2xl font-bold">知识库</h1>
-      <button 
-        @click="showCreateModal = true"
-        class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition-colors"
+      <button
+          @click="showCreateModal = true"
+          class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition-colors"
       >
         创建知识库
       </button>
@@ -12,80 +12,36 @@
 
     <!-- 知识库列表 -->
     <div class="space-y-4">
-      <div v-for="kb in knowledgeBases" :key="kb.id" class="bg-white rounded-lg shadow-md p-6">
-        <div class="flex justify-between items-center mb-4">
-          <div>
-            <h2 class="text-xl font-semibold mb-2">{{ kb.name }}</h2>
-            <p class="text-gray-600">{{ kb.description }}</p>
-            <div class="mt-2 text-sm text-gray-500">
-              <span>文档数：{{ kb.documentCount }}</span>
-              <span class="mx-2">|</span>
-              <span>创建时间：{{ formatDate(kb.createdAt) }}</span>
-            </div>
-          </div>
-          <div class="flex space-x-2">
-            <button 
-              @click="openDocumentsModal(kb)"
-              class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition-colors"
-            >
-              查看文档
-            </button>
-            <button 
-              @click="openUploadModal(kb)"
-              class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 transition-colors"
-            >
-              上传文档
-            </button>
-            <button 
-              @click="openChatModal(kb)"
-              class="bg-purple-500 text-white px-4 py-2 rounded hover:bg-purple-600 transition-colors"
-            >
-              开始对话
-            </button>
-            <button 
-              @click="deleteKnowledgeBase(kb)"
-              class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition-colors"
-            >
-              删除
-            </button>
-          </div>
-        </div>
+      <List :items="knowledgeBases"
 
-        <!-- 文档搜索和列表 -->
-        <div class="mt-4">
-          <div class="flex space-x-2 mb-4">
-            <input
-              v-model="kb.searchQuery"
-              type="text"
-              placeholder="搜索文档..."
-              class="flex-1 rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500"
-              @keyup.enter="searchDocuments(kb)"
-            >
-            <button
-              @click="searchDocuments(kb)"
-              class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition-colors"
-            >
-              搜索
-            </button>
-            <button
-              @click="loadDocuments(kb)"
-              class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600 transition-colors"
-            >
-              重置
-            </button>
-          </div>
-
-          <div class="space-y-2">
-            <div v-for="doc in kb.documents" :key="doc.id" class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-              <div class="flex items-center space-x-4">
-                <span class="text-gray-600">{{ doc.name }}</span>
-                <span class="text-sm text-gray-500">{{ formatFileSize(doc.size) }}</span>
-                <span class="text-sm text-gray-500">{{ formatDate(doc.createdAt) }}</span>
+            divided
+            :empty-message="'暂无知识库'"
+      >
+        <template #item="{ item: kb }">
+          <div class="flex justify-between items-center mb-3">
+            <div>
+              <h2 class="text-lg font-semibold mb-2">{{ kb.name }}</h2>
+              <div class="mt-2 text-base text-gray-500">
+                <span>文档数：{{ kb.documentCount }}</span>
               </div>
             </div>
+            <div class="flex space-x-2">
+              <button
+                  @click="openDocumentsModal(kb)"
+                  class="opacity-80 hover:opacity-100 transition-opacity"
+              >
+                查看文档
+              </button>
+              <button
+                  @click="openUploadModal(kb)"
+                  class="opacity-80 hover:opacity-100 transition-opacity"
+              >
+                上传文档
+              </button>
+            </div>
           </div>
-        </div>
-      </div>
+        </template>
+      </List>
     </div>
 
     <!-- 创建知识库模态框 -->
@@ -95,30 +51,30 @@
         <div class="space-y-4">
           <div>
             <label class="block text-sm font-medium text-gray-700">名称</label>
-            <input 
-              v-model="newKnowledgeBase.name"
-              type="text"
-              class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+            <input
+                v-model="newKnowledgeBase.name"
+                type="text"
+                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
             >
           </div>
           <div>
             <label class="block text-sm font-medium text-gray-700">描述</label>
-            <textarea 
-              v-model="newKnowledgeBase.description"
-              class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-              rows="3"
+            <textarea
+                v-model="newKnowledgeBase.description"
+                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                rows="3"
             ></textarea>
           </div>
           <div class="flex justify-end space-x-2">
-            <button 
-              @click="showCreateModal = false"
-              class="px-4 py-2 text-gray-700 bg-gray-100 rounded hover:bg-gray-200"
+            <button
+                @click="showCreateModal = false"
+                class="px-4 py-2 text-gray-700 bg-gray-100 rounded hover:bg-gray-200"
             >
               取消
             </button>
-            <button 
-              @click="createKnowledgeBase"
-              class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+            <button
+                @click="createKnowledgeBase"
+                class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
             >
               创建
             </button>
@@ -133,17 +89,17 @@
         <h2 class="text-xl font-bold mb-4">上传文档</h2>
         <div class="space-y-4">
           <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
-            <input 
-              type="file"
-              ref="fileInput"
-              @change="handleFileUpload"
-              class="hidden"
-              multiple
-              accept=".pdf,.doc,.docx,.txt"
+            <input
+                type="file"
+                ref="fileInput"
+                @change="handleFileUpload"
+                class="hidden"
+                multiple
+                accept=".pdf,.doc,.docx,.txt"
             >
-            <button 
-              @click="() => fileInput?.click()"
-              class="text-blue-500 hover:text-blue-600"
+            <button
+                @click="() => fileInput?.click()"
+                class="text-blue-500 hover:text-blue-600"
             >
               选择文件
             </button>
@@ -154,25 +110,25 @@
           <div v-if="uploadedFiles.length > 0" class="space-y-2">
             <div v-for="file in uploadedFiles" :key="file.name" class="flex items-center justify-between">
               <span class="text-sm">{{ file.name }}</span>
-              <button 
-                @click="removeFile(file)"
-                class="text-red-500 hover:text-red-600"
+              <button
+                  @click="removeFile(file)"
+                  class="text-red-500 hover:text-red-600"
               >
                 删除
               </button>
             </div>
           </div>
           <div class="flex justify-end space-x-2">
-            <button 
-              @click="showUploadModal = false"
-              class="px-4 py-2 text-gray-700 bg-gray-100 rounded hover:bg-gray-200"
+            <button
+                @click="showUploadModal = false"
+                class="px-4 py-2 text-gray-700 bg-gray-100 rounded hover:bg-gray-200"
             >
               取消
             </button>
-            <button 
-              @click="uploadFiles"
-              class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-              :disabled="uploadedFiles.length === 0"
+            <button
+                @click="uploadFiles"
+                class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+                :disabled="uploadedFiles.length === 0"
             >
               上传
             </button>
@@ -186,17 +142,17 @@
       <div class="bg-white rounded-lg p-6 w-[800px] h-[600px] flex flex-col">
         <div class="flex justify-between items-center mb-4">
           <h2 class="text-xl font-bold">知识库对话</h2>
-          <button 
-            @click="showChatModal = false"
-            class="text-gray-500 hover:text-gray-600"
+          <button
+              @click="showChatModal = false"
+              class="text-gray-500 hover:text-gray-600"
           >
             关闭
           </button>
         </div>
         <div class="flex-1 overflow-y-auto mb-4 space-y-4">
           <div v-for="(message, index) in chatMessages" :key="index" class="flex">
-            <div 
-              :class="[
+            <div
+                :class="[
                 'max-w-[80%] rounded-lg p-3',
                 message.role === 'user' ? 'bg-blue-100 ml-auto' : 'bg-gray-100'
               ]"
@@ -206,17 +162,17 @@
           </div>
         </div>
         <div class="flex space-x-2">
-          <input 
-            v-model="userInput"
-            type="text"
-            placeholder="输入你的问题..."
-            class="flex-1 rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500"
-            @keyup.enter="sendMessage"
+          <input
+              v-model="userInput"
+              type="text"
+              placeholder="输入你的问题..."
+              class="flex-1 rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+              @keyup.enter="sendMessage"
           >
-          <button 
-            @click="sendMessage"
-            class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-            :disabled="!userInput.trim()"
+          <button
+              @click="sendMessage"
+              class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+              :disabled="!userInput.trim()"
           >
             发送
           </button>
@@ -229,9 +185,9 @@
       <div class="bg-white rounded-lg p-6 w-[800px] h-[600px] flex flex-col">
         <div class="flex justify-between items-center mb-4">
           <h2 class="text-xl font-bold">文档列表</h2>
-          <button 
-            @click="showDocumentsModal = false"
-            class="text-gray-500 hover:text-gray-600"
+          <button
+              @click="showDocumentsModal = false"
+              class="text-gray-500 hover:text-gray-600"
           >
             关闭
           </button>
@@ -240,21 +196,21 @@
         <div class="mb-4">
           <div class="flex space-x-2">
             <input
-              v-model="currentKnowledgeBase.searchQuery"
-              type="text"
-              placeholder="搜索文档..."
-              class="flex-1 rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500"
-              @keyup.enter="searchDocuments(currentKnowledgeBase)"
+                v-model="currentKnowledgeBase.searchQuery"
+                type="text"
+                placeholder="搜索文档..."
+                class="flex-1 rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                @keyup.enter="searchDocuments(currentKnowledgeBase)"
             >
             <button
-              @click="searchDocuments(currentKnowledgeBase)"
-              class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition-colors"
+                @click="searchDocuments(currentKnowledgeBase)"
+                class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition-colors"
             >
               搜索
             </button>
             <button
-              @click="loadDocuments(currentKnowledgeBase)"
-              class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600 transition-colors"
+                @click="loadDocuments(currentKnowledgeBase)"
+                class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600 transition-colors"
             >
               重置
             </button>
@@ -263,7 +219,8 @@
 
         <div class="flex-1 overflow-y-auto">
           <div class="space-y-2">
-            <div v-for="doc in currentKnowledgeBase.documents" :key="doc.id" class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+            <div v-for="doc in currentKnowledgeBase.documents" :key="doc.id"
+                 class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
               <div class="flex items-center space-x-4">
                 <span class="text-gray-600">{{ doc.name }}</span>
                 <span class="text-sm text-gray-500">{{ formatFileSize(doc.size) }}</span>
@@ -278,9 +235,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
-import { knowledgeAPI } from '../services/knowledgeApi';
+import {ref, onMounted} from 'vue';
+import {knowledgeAPI} from '../services/knowledgeApi';
 import type {KnowledgeBase} from "../../../../share/knowledge.ts";
+import {List} from "@/components/ui";
 
 interface ChatMessage {
   role: 'user' | 'assistant';
@@ -298,7 +256,7 @@ const showCreateModal = ref(false);
 const showUploadModal = ref(false);
 const showChatModal = ref(false);
 const showDocumentsModal = ref(false);
-const currentKnowledgeBase = ref<ExtendedKnowledgeBase >({
+const currentKnowledgeBase = ref<ExtendedKnowledgeBase>({
   id: '',
   name: '',
   description: '',
@@ -364,6 +322,7 @@ const searchDocuments = async (kb: ExtendedKnowledgeBase) => {
 
 // 格式化文件大小
 const formatFileSize = (size: number) => {
+  if(size === undefined) return ;
   if (size < 1024) return size + ' B';
   if (size < 1024 * 1024) return (size / 1024).toFixed(2) + ' KB';
   if (size < 1024 * 1024 * 1024) return (size / (1024 * 1024)).toFixed(2) + ' MB';
@@ -375,7 +334,7 @@ const createKnowledgeBase = async () => {
   try {
     await knowledgeAPI.createKnowledgeBase(newKnowledgeBase.value);
     showCreateModal.value = false;
-    newKnowledgeBase.value = { name: '', description: '' };
+    newKnowledgeBase.value = {name: '', description: ''};
     await fetchKnowledgeBases();
   } catch (error) {
     console.error('创建知识库失败:', error);
@@ -385,7 +344,7 @@ const createKnowledgeBase = async () => {
 // 删除知识库
 const deleteKnowledgeBase = async (kb: KnowledgeBase) => {
   if (!confirm('确定要删除这个知识库吗？')) return;
-  
+
   try {
     await knowledgeAPI.deleteKnowledgeBase(kb.id);
     await fetchKnowledgeBases();
@@ -447,23 +406,24 @@ const sendMessage = async () => {
   if (!userInput.value.trim() || !currentKnowledgeBase.value) return;
 
   const message = userInput.value;
-  chatMessages.value.push({ role: 'user', content: message });
+  chatMessages.value.push({role: 'user', content: message});
   userInput.value = '';
 
   try {
     const response = await knowledgeAPI.chat(currentKnowledgeBase.value.id, message);
-    chatMessages.value.push({ role: 'assistant', content: response.answer });
+    chatMessages.value.push({role: 'assistant', content: response.answer});
   } catch (error) {
     console.error('发送消息失败:', error);
-    chatMessages.value.push({ 
-      role: 'assistant', 
-      content: '抱歉，处理您的请求时出现错误。' 
+    chatMessages.value.push({
+      role: 'assistant',
+      content: '抱歉，处理您的请求时出现错误。'
     });
   }
 };
 
 // 格式化日期
 const formatDate = (date: string) => {
+  if(date === undefined) return;
   return new Date(date).toLocaleDateString('zh-CN', {
     year: 'numeric',
     month: 'long',
