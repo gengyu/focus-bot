@@ -4,7 +4,7 @@ import {LLMProvider} from '../provider/LLMProvider';
 import {ChatMessage} from '../../../../share/type';
 import {SearchService} from './SearchService';
 import {Document} from '../types/rag.types';
-import {KnowledgeService} from "./knowledge.service.ts";
+import {KnowledgeService} from "./knowledge/knowledge.service";
 
 // Document 接口已移至 rag.types.ts
 
@@ -46,15 +46,15 @@ export class RAGService {
    */
   async ragPipeline(knowledgeBaseId: string, query: string): Promise<{ answer: string; sources: string[] }> {
     // 1. 获取相关文档
-    const relevantDocs = await this.knowledgeService.retrieveRelevantDocs(knowledgeBaseId, query);
+    const relevantDocs = await this.knowledgeService.search(query, knowledgeBaseId, 3);
 
     // 2. 构建提示词
-    const context = relevantDocs.map(doc => doc.content).join('\n\n');
+    const context = relevantDocs.map(result => result.document.text).join('\n\n');
     const prompt = `基于以下上下文回答问题。如果上下文中没有相关信息，请说明无法回答。\n\n上下文：\n${context}\n\n问题：${query}`;
 
     return {
       answer: prompt,
-      sources: relevantDocs.map(doc => doc.content) // 返回引用的文档内容
+      sources: relevantDocs.map(result => result.document.text) // 返回引用的文档内容
     };
   }
 } // end of RAGService class
