@@ -1,6 +1,5 @@
 import {v4 as uuidv4} from 'uuid';
 import fs from 'fs/promises';
-import FlexSearch, {type Index} from 'flexsearch';
 import {Document} from '../types/rag.types';
 import {PersistenceService} from './PersistenceService';
 import {SearchService} from './SearchService';
@@ -8,9 +7,17 @@ import {FileParserService} from "./FileParserService.ts";
 import {Singleton} from "../decorators/Singleton.ts";
 import {KnowledgeBase} from "../../../../share/knowledge.ts";
 import multer from "@koa/multer";
-import {TestMain} from "./knowledge/RecursiveCharacterTextSplitter.ts";
+import {
+  vectorizeAndStore,
+  getVectors,
+  VectorDocument,
+  searchSimilarDocuments,
+  VectorizationOptions,
+  VectorizationResult,
+} from './knowledge/vectorizationService';
 
 
+// 示例使用
 
 
 export interface CreateKnowledgeBaseRequest {
@@ -23,12 +30,9 @@ export interface RelevantDoc {
   score: number;
 }
 
-TestMain();
-
 @Singleton()
 export class KnowledgeService {
   private knowledgeBases: Map<string, KnowledgeBase>;
-  private indexes: Map<string, Index> = new Map();
   private documents: Map<string, Document[]> = new Map();
 
   private readonly searchService: SearchService;
@@ -94,19 +98,12 @@ export class KnowledgeService {
   private async prepareKnowledgeBase(knowledgeBaseId: string, documents: Document[]) {
     this.documents.set(knowledgeBaseId, documents);
 
-    // 创建 FlexSearch 索引
-    const index:  Index = new FlexSearch.Index({
-      preset: 'match',
-      tokenize: 'forward',
-      cache: true
-    });
-
-    // 将文档添加到索引
-    documents.forEach((doc, idx) => {
-      index.add(idx, doc.pageContent);
-    });
-
-    this.indexes.set(knowledgeBaseId, index);
+    // 向量化文档内容
+    const texts = documents.map(doc => doc.pageContent);
+    // await vectorizeAndStore({
+    //   knowledgeBaseId,
+    //   texts
+    // });
   }
 
   /**
@@ -185,8 +182,7 @@ export class KnowledgeService {
       }
     }
 
-    // 删除知识库索引和文档
-    this.indexes.delete(id);
+    // 删除知识库和文档
     this.documents.delete(id);
     this.knowledgeBases.delete(id);
     // 持久化更新后的知识库数据
@@ -296,23 +292,45 @@ export class KnowledgeService {
    * @returns 包含相关内容和相关性分数的结果数组
    */
   public async retrieveRelevantDocs(knowledgeBaseId: string, query: string): Promise<RelevantDoc[]> {
-    const index = this.indexes.get(knowledgeBaseId);
     const docs = this.documents.get(knowledgeBaseId);
 
-    if (!index || !docs) {
+    if (!docs) {
       throw new Error(`知识库 ${knowledgeBaseId} 未初始化`);
     }
 
-    // 使用 FlexSearch 搜索相关文档
-    const results = index.search(query, 3);
-
-
-    return results.map((idx) => {
-      console.log(docs[idx as number].pageContent)
-      return {
-        content: docs[idx as number].pageContent,
-        score: 1 // FlexSearch 默认返回最相关的结果，分数统一设为1
-      };
-    });
+    // 使用向量服务搜索相似文档
+    const searchResults = await searchSimilarDocuments(query, knowledgeBaseId, 3);
+    
+    // 转换为 RelevantDoc 格式返回
+    return searchResults.map(result => ({
+      content: result.document.text,
+      score: result.score
+    }));
   }
 }
+
+export async function TestMain() {
+  const options: VectorizationOptions = {
+    knowledgeBaseId: 'kb123',
+    texts: ['这是一段很长的测试文本...', '另一段测试文本...'],
+    chunkSize: 1000,
+    chunkOverlap: 200,
+  };
+
+  const result: VectorizationResult = await vectorizeAndStore(options);
+  console.log(result);
+
+  const vectors = getVectors();
+  console.log('内存中的向量数量:', vectors.length);
+  vectors.forEach((vec, index) => {
+    console.log(`向量 ${index + 1}:`, vec.text.substring(0, 50), '向量维度:', vec.vector.length);
+  });
+
+  const knowledgeBase = new KnowledgeService();
+
+  const res  = await knowledgeBase.retrieveRelevantDocs('kb123', '测试查询')
+  console.log('查询结果==', res)
+
+}
+
+TestMain()
