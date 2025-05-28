@@ -4,7 +4,7 @@ import {LLMProvider} from '../provider/LLMProvider';
 import {ChatMessage} from '../../../../share/type';
 import {SearchService} from './SearchService';
 import {Document} from '../types/rag.types';
-import {KnowledgeService} from "./knowledge/knowledge.service";
+import {KnowledgeService} from "./knowledge.service";
 
 // Document 接口已移至 rag.types.ts
 

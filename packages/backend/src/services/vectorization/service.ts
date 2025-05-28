@@ -1,14 +1,14 @@
 import { Document } from 'langchain/document';
 import { RecursiveCharacterTextSplitter } from 'langchain/text_splitter';
-import { 
-  VectorizationService, 
-  VectorizationPlugin, 
-  EventType, 
-  EventHandler, 
+import {
+  VectorizationService,
+  VectorizationPlugin,
+  EventType,
+  EventHandler,
   EmbeddingModel,
   VectorizationOptions,
   VectorizationResult,
-  SearchResult
+  SearchResult, Namespace
 } from './types';
 import { VectorizationError } from './errors';
 import { ErrorCode } from './errors';
@@ -44,7 +44,7 @@ const vectorCache = new MemoryVectorCache();
  * @param {Namespace} namespace - 命名空间信息
  * @returns {Promise<Namespace>} 创建的命名空间
  */
-export async function createNamespace(namespace: any): Promise<any> {
+export async function createNamespace(namespace: Namespace): Promise<Namespace> {
   const existingNamespace = await storage.getNamespace(namespace.id);
   if (existingNamespace) {
     throw new VectorizationError(
@@ -176,6 +176,7 @@ export async function searchSimilarDocuments(query: string, namespaceId: string,
     if (!queryVectors || queryVectors.length === 0) {
       throw new Error('查询向量化失败');
     }
+
     const queryVector = queryVectors[0];
 
     // 获取命名空间向量

@@ -7,7 +7,7 @@
 export * from './knowledge.service';
 
 // 导出向量化服务
-export * from './vectorization';
+export * from '../vectorization';
 
 // 默认导出知识服务
 import { KnowledgeService } from './knowledge.service';

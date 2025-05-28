@@ -24,7 +24,7 @@ export interface VectorDocument {
  */
 export interface Namespace {
   id: string;
-  name: string;
+  name?: string;
   description?: string;
 }
 

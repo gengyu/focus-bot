@@ -13,9 +13,9 @@ import {
   VectorDocument,
   searchSimilarDocuments,
   VectorizationOptions,
-  VectorizationResult,
-} from './knowledge/vectorizationService';
-
+  VectorizationResult, createNamespace, getNamespace, vectorizationService,
+} from './knowledge/index';
+import vectorization from "./vectorization";
 
 // 示例使用
 
@@ -35,13 +35,13 @@ export class KnowledgeService {
   private knowledgeBases: Map<string, KnowledgeBase>;
   private documents: Map<string, Document[]> = new Map();
 
-  private readonly searchService: SearchService;
+
   private readonly persistenceService: PersistenceService<Record<string, KnowledgeBase>>;
   private fileParserService: FileParserService;
 
   constructor() {
     this.knowledgeBases = new Map<string, KnowledgeBase>();
-    this.searchService = new SearchService();
+
 
     // 初始化持久化服务
     this.persistenceService = new PersistenceService({
@@ -66,26 +66,23 @@ export class KnowledgeService {
     if (data) {
       this.knowledgeBases = new Map(Object.entries(data));
 
-      // 初始化每个知识库的索引和文档
-      for (const [id, kb] of this.knowledgeBases) {
-        try {
-          // 读取所有文档内容
-          const documents = await Promise.all(
-            kb.documents.map(async doc => ({
-              pageContent: await this.fileParserService.parseFile(doc.path),
-              metadata: {
-                id: doc.id,
-                source: doc.name
-              }
-            }))
-          );
-
-          // 准备知识库索引
-          await this.prepareKnowledgeBase(id, documents);
-        } catch (error) {
-          console.error(`初始化知识库 ${kb.name} 失败:`, error);
-        }
-      }
+      // // 初始化每个知识库的索引和文档
+      // for (const [id, kb] of this.knowledgeBases) {
+      //   try {
+      //     // 读取所有文档内容
+      //     const documents = await Promise.all(
+      //       kb.documents.map(async doc => ({
+      //         pageContent: await this.fileParserService.parseFile(doc.path),
+      //         metadata: {
+      //           id: doc.id,
+      //           source: doc.name
+      //         }
+      //       }))
+      //     );
+      //   } catch (error) {
+      //     console.error(`初始化知识库 ${kb.name} 失败:`, error);
+      //   }
+      // }
     }
   }
 
@@ -95,15 +92,37 @@ export class KnowledgeService {
    * @param knowledgeBaseId 知识库ID
    * @param documents 需要处理的原始文档数组
    */
-  private async prepareKnowledgeBase(knowledgeBaseId: string, documents: Document[]) {
-    this.documents.set(knowledgeBaseId, documents);
+  private async prepareKnowledgeBase(knowledgeBaseId: string) {
+    const exists = await getNamespace(knowledgeBaseId);
+    if (!exists) {
+      await createNamespace({id: knowledgeBaseId,});
 
-    // 向量化文档内容
-    const texts = documents.map(doc => doc.pageContent);
-    // await vectorizeAndStore({
-    //   knowledgeBaseId,
-    //   texts
-    // });
+      if (!this.documents.has(knowledgeBaseId)) {
+        const kb = this.knowledgeBases.get(knowledgeBaseId);
+        if (!kb) {
+          throw new Error(`知识库 ${knowledgeBaseId} 不存在`);
+        }
+
+        // 读取所有文档内容
+        const documents = await Promise.all(
+          kb.documents.map(async doc => ({
+            pageContent: await this.fileParserService.parseFile(doc.path),
+            metadata: {
+              id: doc.id,
+              source: doc.name
+            }
+          }))
+        );
+        this.documents.set(knowledgeBaseId, documents);
+      }
+      const docs = this.documents.get(knowledgeBaseId);
+      if (docs) {
+        await vectorizeAndStore({
+          namespaceId: knowledgeBaseId,
+          texts: docs.map(doc => doc.pageContent),
+        })
+      }
+    }
   }
 
   /**
@@ -129,7 +148,7 @@ export class KnowledgeService {
    * @returns 创建成功的知识库对象
    */
   async createKnowledgeBase(request: CreateKnowledgeBaseRequest): Promise<KnowledgeBase> {
-    const { name, description } = request;
+    const {name, description} = request;
 
     if (!name) {
       throw new Error('知识库名称不能为空');
@@ -236,7 +255,7 @@ export class KnowledgeService {
       }))
     );
 
-    await this.prepareKnowledgeBase(id, documents);
+    // await this.prepareKnowledgeBase(id, documents);
   }
 
   /**
@@ -282,8 +301,9 @@ export class KnowledgeService {
       }))
     );
 
-    await this.prepareKnowledgeBase(knowledgeBaseId, documents);
+    // await this.prepareKnowledgeBase(knowledgeBaseId, documents);
   }
+
 
   /**
    * 检索与查询最相关的文档
@@ -292,15 +312,15 @@ export class KnowledgeService {
    * @returns 包含相关内容和相关性分数的结果数组
    */
   public async retrieveRelevantDocs(knowledgeBaseId: string, query: string): Promise<RelevantDoc[]> {
-    const docs = this.documents.get(knowledgeBaseId);
 
-    if (!docs) {
-      throw new Error(`知识库 ${knowledgeBaseId} 未初始化`);
-    }
+    await this.prepareKnowledgeBase(knowledgeBaseId);
+    // if (!docs) {
+    //   throw new Error(`知识库 ${knowledgeBaseId} 未初始化`);
+    // }
 
     // 使用向量服务搜索相似文档
     const searchResults = await searchSimilarDocuments(query, knowledgeBaseId, 3);
-    
+
     // 转换为 RelevantDoc 格式返回
     return searchResults.map(result => ({
       content: result.document.text,
@@ -310,27 +330,23 @@ export class KnowledgeService {
 }
 
 export async function TestMain() {
+
+  await createNamespace({id: 'kb123'})
   const options: VectorizationOptions = {
-    knowledgeBaseId: 'kb123',
+    namespaceId: 'kb123',
     texts: ['这是一段很长的测试文本...', '另一段测试文本...'],
     chunkSize: 1000,
     chunkOverlap: 200,
   };
 
+
   const result: VectorizationResult = await vectorizeAndStore(options);
   console.log(result);
 
-  const vectors = getVectors();
-  console.log('内存中的向量数量:', vectors.length);
-  vectors.forEach((vec, index) => {
-    console.log(`向量 ${index + 1}:`, vec.text.substring(0, 50), '向量维度:', vec.vector.length);
-  });
 
-  const knowledgeBase = new KnowledgeService();
-
-  const res  = await knowledgeBase.retrieveRelevantDocs('kb123', '测试查询')
+  const res = await searchSimilarDocuments('长测试文本...', 'kb123',)
   console.log('查询结果==', res)
 
 }
 
-TestMain()
+// TestMain()

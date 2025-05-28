@@ -121,9 +121,10 @@ export async function vectorize(
           normalize: model.normalize
         });
 
+
         const vector = Array.isArray(vectors) 
           ? Array.from(vectors[0].data) as number[]
-          : Array.from(vectors.data[0]) as number[];
+          : Array.from(vectors.data) as number[];
 
         if (configManager.getConfig().cache.enabled) {
           await vectorCache.set(cacheKey, vector);
@@ -138,9 +139,11 @@ export async function vectorize(
     logManager.info('向量化完成', {
       documentCount: documents.length,
       processingTime: metrics[operationName],
-      averageTimePerDoc: metrics[operationName] / documents.length
+      averageTimePerDoc: metrics[operationName] / documents.length,
+      documents,
     });
 
+    console.log(results)
     return results;
   } catch (error) {
     performanceMonitor.endOperation(operationName);
