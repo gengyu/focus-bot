@@ -24,6 +24,16 @@ export class FileParserController {
     }
   }
 
+  @Post('/upload/documents')
+  @Upload('files', {multiple: true})
+  async uploadDocuments(
+    @Body('id') id: string,
+    @Body('files') files: Array<multer.File>,
+    @Body() filename: string
+  ){
+
+  }
+
   @Post('/upload')
   @Upload('file')
   async uploadFile(@Body() body: { file: multer.File }) {
