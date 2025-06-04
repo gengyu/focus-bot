@@ -92,7 +92,7 @@ const props = defineProps({
   },
   fullWidth: {
     type: Boolean,
-    default: false
+    default: true
   },
   clearable: {
     type: Boolean,

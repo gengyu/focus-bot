@@ -2,6 +2,7 @@ import {createRouter, createWebHistory, type RouteRecordRaw} from 'vue-router'
 import {useAppSettingStore} from "../store/appSettingStore.ts";
 import {useConversationStore} from "../store/conversationStore.ts";
 import log from "loglevel";
+import {LastVisitedRoutePlugin} from "./plugins.ts";
 
 const routes: RouteRecordRaw[] = [
     {
@@ -17,7 +18,17 @@ const routes: RouteRecordRaw[] = [
     {
         path: '/knowledge',
         name: 'Knowledge',
-        component: () => import('@/views/KnowledgeView.vue')
+        meta: {
+            rememberChildRoute: true
+        },
+        component: () => import('@/views/KnowledgeView.vue'),
+        children: [
+            {
+                path: 'docs',
+                name: 'KnowledgeDocs',
+                component: () => import('@/views/KnowledgeDocs.vue')
+            }
+        ]
     },
     {
         path: '/profile',
@@ -113,6 +124,11 @@ const router = createRouter({
     history: createWebHistory(import.meta.env.BASE_URL),
     routes
 })
+
+// 在这里使用插件，只需要调用一次
+LastVisitedRoutePlugin(router);
+
+
 
 // beforeEach  beforeResolve
 let removeOnceGuard: null |(() => void) = router.beforeEach(async () => {

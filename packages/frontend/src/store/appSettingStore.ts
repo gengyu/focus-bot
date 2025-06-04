@@ -80,14 +80,17 @@ const getDefaultProviders = (): ProviderConfig[] => {
 
 export const useAppSettingStore = defineStore<string, {
   appSetting: Ref<AppSetting>,
-  resetSettings(): Promise<void>,
-  updateProvider(providerId: string, newProvider: Partial<ProviderConfig>): Promise<void>
+
+  // updateProvider(providerId: string, newProvider: Partial<ProviderConfig>): Promise<void>
   // providerConfig: Ref<ProviderConfig>,
   // setProviders: (newProviders: Provider[]) => void,
   initialize: () => Promise<void>
+  saveSettings: () => Promise<void>
 }>('provider', () => {
   const appSettingConfig = ref<AppSetting>({
-    providers: []
+    providers: [],
+    searchEngines: [],
+    knowledgeBases: []
   });
 
   const initialize = async () => {
@@ -95,53 +98,23 @@ export const useAppSettingStore = defineStore<string, {
       // 初始化供应商列表
       const defaultProviders = getDefaultProviders();
 
-      // providerConfig.value.providers = JSON.parse(JSON.stringify(defaultProviders));
 
-      // 从后端加载用户配置
+      // 加载用户配置
       const config = await configAPI.getModelConfig();
-      if (config && config.providers) {
-        appSettingConfig.value.providers = defaultProviders.map(provider => {
-          const savedProvider = config.providers?.find(p => p.id === provider.id);
-          if (savedProvider) {
-            return {
-              ...provider,
-              enabled: savedProvider.enabled,
-              apiUrl: savedProvider.apiUrl,
-              apiKey: savedProvider.apiKey,
-              models: savedProvider.models
-            };
-          }
-          return provider;
-        });
-      }
+      appSettingConfig.value.knowledgeBases = config.knowledgeBases;
+      appSettingConfig.value.providers = config.providers && config.providers.length > 0 ? config.providers : defaultProviders;
+
     } catch (error) {
-      appSettingConfig.value.providers = getDefaultProviders()
+
       log.error("Failed to load settings:", error);
       toast.error('加载设置失败');
     }
   }
 
-
-  const resetSettings = async () => {
-    if (confirm('确定要重置所有设置吗？')) {
-      // const apiUrl = getDefaultApiUrl(modelId);
-      // const models = getDefaultModels(modelId);
-      // providers.value = providers.value.map(provider => ({
-      //   ...provider,
-      //   enabled: provider.id === 'ollama',
-      //   apiUrl: getDefaultApiUrl(provider.id),
-      //   apiKey: '',
-      //   models: provider.models.map(model => ({ ...model, enabled: true }))
-      // }));
-      await saveSettings();
-    }
-  };
-
   // 保存模型
   const saveSettings = async () => {
     try {
-
-      await configAPI.saveModelConfig(appSettingConfig.value);
+      await configAPI.saveAppSetting(appSettingConfig.value);
       toast.success('设置已保存');
     } catch (error) {
       log.error("Failed to save settings:", error);
@@ -149,24 +122,10 @@ export const useAppSettingStore = defineStore<string, {
     }
   };
 
-  const updateProvider = async (providerId: string, newProvider: ProviderConfig) => {
-    appSettingConfig.value.providers = appSettingConfig.value.providers?.map(provider => {
-      if (provider.id === providerId) {
-        return {
-          ...provider,
-          ...newProvider,
-          providerId,
-        };
-      }
-      return provider;
-    });
-    await saveSettings();
-  };
 
   return {
     appSetting: appSettingConfig,
-    resetSettings,
-    updateProvider,
+    saveSettings,
     initialize,
   };
 });

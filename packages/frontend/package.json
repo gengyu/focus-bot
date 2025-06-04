@@ -29,7 +29,8 @@
     "vue-easy-lightbox": "^1.19.0",
     "vue-router": "^4.5.1",
     "vue-sonner": "^1.3.2",
-    "vue3-toastify": "^0.2.8"
+    "vue3-toastify": "^0.2.8",
+    "lodash": "^4.17.21"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.1.5",

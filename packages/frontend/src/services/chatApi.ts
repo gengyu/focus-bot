@@ -51,27 +51,6 @@ export class ChatAPI {
     return res.data;
   }
 
-  // async parseFile(file: File): Promise<any> {
-  //   // 文件解析API
-  //   const formData = new FormData();
-  //   formData.append('file', file);
-  //
-  //   try {
-  //     const response = await fetch(`${API_BASE_URL}/chat/parse-file`, {
-  //       method: 'POST',
-  //       body: formData,
-  //     });
-  //
-  //     if (!response.ok) {
-  //       throw new Error(`文件解析失败: ${response.statusText}`);
-  //     }
-  //
-  //     return await response.json();
-  //   } catch (error) {
-  //     console.error('文件解析请求失败:', error);
-  //     throw error;
-  //   }
-  // }
 
   async getChatHistory(chatId: DialogId): Promise<ChatMessage[]> {
     const req = {method: 'getChatHistory', payload: {chatId}};
@@ -94,13 +73,6 @@ export class ChatAPI {
     if (!res.success) throw new Error(`获取对话列表失败: ${res.error}`);
     return res.data;
   }
-
-  // async parseFile(filePath: string): Promise<string> {
-  //   const req = {method: 'parse', payload: {filePath}};
-  //   const res = await this.fileParserTransport.invokeDirect(req);
-  //   if (!res.success) throw new Error(`解析文件失败: ${res.error}`);
-  //   return res.data;
-  // }
 
 }
 

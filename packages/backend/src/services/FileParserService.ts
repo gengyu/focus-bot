@@ -8,6 +8,7 @@ import csvParser from 'csv-parser';
 import cheerio from 'cheerio';
 import xml2js from 'xml2js';
 import mammoth from 'mammoth';
+//@ts-ignore
 import {fileTypeFromFile} from 'file-type';
 import {Readable} from 'stream';
 import {promisify} from 'util';

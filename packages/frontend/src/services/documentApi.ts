@@ -14,26 +14,31 @@ export interface ChatResponse {
   sources: string[];
 }
 
-export class DocumentsApi {
+export class DocumentApi {
   private transport = new TransportAdapter(TransportType.HTTP, {
     serverUrl: API_BASE_URL,
     prefix: 'fileParser'
   });
 
 
-  async searchDocuments(kbId: string, query: string): Promise<Document[]> {
-    const req: TransportRequest = { method: 'searchDocuments', payload: { id: kbId, query } };
+  /**
+   * 搜索文档
+   * @param query
+   * @param documents
+   */
+  async searchDocuments( query: string, documents: KnowledgeDocument[]): Promise<Document[]> {
+    const req: TransportRequest = { method: 'searchDocuments', payload: { documents, query } };
     const res = await this.transport.invokeDirect(req);
     if (!res.success) throw new Error(`搜索文档失败: ${res.error}`);
     return res.data;
   }
 
-  async uploadDocuments(kbId: string, files: File[]): Promise<KnowledgeDocument[]> {
+  async uploadDocuments(files: File[]): Promise<KnowledgeDocument[]> {
     const formData = new FormData();
     files.forEach(file => {
       formData.append('files', file);
     });
-    formData.append('id', kbId);
+
     const req: TransportRequest = { method: 'upload/documents', payload: formData };
     const res = await this.transport.invokeDirect(req);
     if (!res.success) throw new Error(`上传文档失败: ${res.error}`);
@@ -43,4 +48,4 @@ export class DocumentsApi {
 
 }
 
-export const documentsApi = new DocumentsApi();
+export const documentApi = new DocumentApi();

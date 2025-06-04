@@ -1,3 +1,5 @@
+import {KnowledgeBase} from "./knowledge";
+
 export type ModelId = string;
 export type ProviderId = string;
 
@@ -13,7 +15,7 @@ export interface Model {
   providerId: ProviderId;
   name: string;
   description: string;
-  size: number;
+  size: number | string;
   enabled: boolean;
 }
 
@@ -51,6 +53,7 @@ export interface SearchEngineConfig {
 export interface AppSetting {
   providers: ProviderConfig[];
   searchEngines: SearchEngineConfig[];
+  knowledgeBases: KnowledgeBase[];
 }
 
 

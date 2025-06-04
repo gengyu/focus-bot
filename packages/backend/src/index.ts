@@ -6,9 +6,8 @@ import bodyParser from 'koa-bodyparser';
 import { router as decoratorRouter, registerControllers } from './decorators/decorators.ts';
 import { ChatController } from './routes/chat';
 import { ConfigController } from './routes/config';
-import { FileParserController } from './routes/fileParser';
+import { DcoumentController } from './routes/fileparser.route.ts';
 // import {RAGController} from './routes/rag.routes';
-import {KnowledgeController} from './routes/knowledge.routes';
 
 const app = new Koa();
 
@@ -28,7 +27,7 @@ healthRouter.get('/health', (ctx) => {
 });
 
 // 注册路由
-registerControllers([ChatController, ConfigController, FileParserController, KnowledgeController]);
+registerControllers([ChatController, ConfigController, DcoumentController]);
 app.use(healthRouter.routes()).use(healthRouter.allowedMethods());
 app.use(decoratorRouter.routes()).use(decoratorRouter.allowedMethods());
 // app.use(ragRouter.routes()).use(ragRouter.allowedMethods());

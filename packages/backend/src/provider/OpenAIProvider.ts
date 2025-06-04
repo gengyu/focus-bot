@@ -2,10 +2,10 @@ import OpenAI from 'openai';
 import {LLMProvider, ProviderResponseChunk} from "./LLMProvider";
 import {type ChatCompletionMessageParam} from "openai/resources";
 import {type ChatMessage, ProviderConfig} from "../../../../share/type";
+import type {Message} from "ollama";
+import {formatMessage} from './formatMessage';
 
-// import { Ollama } from "ollama";
-
-// const ollama = new Ollama();
+ 
 
 export class OpenAIProvider implements LLMProvider {
 	private openai: OpenAI;
@@ -17,65 +17,6 @@ export class OpenAIProvider implements LLMProvider {
 		this.openai = new OpenAI({
 			apiKey: this.config.apiKey,
 			baseURL: this.config.apiUrl
-		});
-	}
-
-	formatMessage(messages: ChatMessage[]): Array<ChatCompletionMessageParam> {
-		return messages.map((message) => {
-			// 处理包含图片的消息
-			if (message.images && message.images.length > 0) {
-				const content: any[] = [];
-				
-				// 如果有文本内容，添加文本部分
-				if (typeof message.content === 'string') {
-					content.push({
-						type: 'text',
-						text: message.content
-					});
-				}
-				
-				// 添加所有图片
-				message.images.forEach(image => {
-					let imageUrl = '';
-					if (typeof image === 'string') {
-						imageUrl = image;
-					} else if (image instanceof Uint8Array) {
-						// 处理二进制图片数据 - 这里可能需要转换为 base64 或其他格式
-						// 这部分需要根据实际需求实现
-					} else if ('url' in image) {
-						imageUrl = image.url || '';
-					} else if ('path' in image) {
-						imageUrl = image.path || '';
-					}
-					
-					if (imageUrl) {
-						content.push({
-							type: 'image_url',
-							image_url: {
-								url: imageUrl
-							}
-						});
-					}
-				});
-				
-				return {
-					role: message.role,
-					content: content
-				};
-			}
-			
-			// 处理包含文件的消息
-			if (message.files) {
-				// 这里可以根据需要处理文件
-				// 目前 OpenAI API 可能不直接支持文件附件，可能需要特殊处理
-				// 例如将文件内容作为文本添加，或者上传文件后获取 URL
-			}
-			
-			// 默认处理纯文本消息
-			return {
-				role: message.role,
-				content: message.content
-			};
 		});
 	}
 
@@ -105,9 +46,11 @@ export class OpenAIProvider implements LLMProvider {
 		}
 	}
 
-	async* streamChat(messages: ChatMessage[], modelId: string, signal?: AbortSignal) {
+	async* streamChat(chatMessages: ChatMessage[], modelId: string, signal?: AbortSignal) {
 		// as ChatCompletionMessageParam[]
-		const msgs  = messages.map((msg) => {
+		const messages: Message[] = formatMessage(chatMessages);
+		console.log(messages);
+		const msgs  = chatMessages.map((msg) => {
 			return {
 				role: msg.role,
 				content: msg.content,
@@ -147,7 +90,8 @@ export class OpenAIProvider implements LLMProvider {
 			// const tags = await ollama.tags();
 			console.log('📦 Local model list:');
 			// return [];
-			return this.openai.models.list()
+			const modelsPage = await this.openai.models.list({stream: false});
+		 	return modelsPage.data.map((model) => model.id);
 		} catch (error) {
 			console.error('Ollama API Error:', error);
 			throw new Error('Failed to get models from Ollama');
@@ -156,16 +100,3 @@ export class OpenAIProvider implements LLMProvider {
 }
 
 
-// async function test(){
-//   try {
-//
-//     const open = new OpenAIProvider({} as ProviderConfig);
-//     const res = await open.chat([{role: 'user', content: 'hello'}])
-//     console.log(res, 333);
-//   }catch (e) {
-//     console.log(e);
-//   }
-//
-// }
-//
-// test();

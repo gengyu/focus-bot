@@ -6,7 +6,7 @@
       <div v-for="(provider, idx) in  appSetting.providers" :key="provider.id"
            @click="handlerSelectProvider(idx)"
            :class="['cursor-pointer flex items-center px-4 py-2 rounded-lg mb-2 transition-all duration-200 ease-in-out',
-          selectedProviderIdx === idx ? 'bg-primary shadow-md transform scale-102' :
+          selectedProviderIdx === idx ? 'bg-gray-100 shadow-md transform scale-102' :
           'hover:bg-base-200 hover:shadow-md']">
         <span class="font-medium text-[15px]">{{ provider.name }}</span>
         <span class="ml-auto " @click.stop>
@@ -137,7 +137,7 @@
       <!-- 操作按钮 -->
       <div class="flex justify-end mt-6">
         <button @click="resetSettings" class="btn btn-outline mr-2">重置</button>
-        <button @click="saveSettings" class="btn btn-primary">保存设置</button>
+        <button @click="handleSaveSettings" class="btn btn-primary">保存设置</button>
       </div>
     </div>
   </div>
@@ -181,7 +181,7 @@ const getDefaultApiUrl = (providerId: string): string => {
   }
 };
 
-const {appSetting, resetSettings, updateProvider} = useAppSettingStore();
+const {appSetting, resetSettings, saveSettings} = useAppSettingStore();
 
 
 const selectedProviderIdx = ref(0);
@@ -189,10 +189,24 @@ const selectedProviderIdx = ref(0);
 const currentProvider = ref<ProviderConfig>(appSetting.providers[selectedProviderIdx.value])
 
 
-const handlerSelectProvider = (idx) => {
+const handlerSelectProvider = (idx: number) => {
   selectedProviderIdx.value = idx;
   currentProvider.value = appSetting.providers[selectedProviderIdx.value];
 }
+const updateProvider = async (providerId: string, newProvider: Partial<ProviderConfig>) => {
+
+  appSetting.providers = appSetting.providers?.map((provider: ProviderConfig) => {
+    if (provider.id === providerId) {
+      return {
+        ...provider,
+        ...newProvider,
+        providerId,
+      };
+    }
+    return provider;
+  });
+  await saveSettings();
+};
 
 // 关闭启用服务商方法
 const hanlderProviderEnabled = (providerId: ProviderId, value: boolean) => {
@@ -201,7 +215,7 @@ const hanlderProviderEnabled = (providerId: ProviderId, value: boolean) => {
   });
 }
 
-const saveSettings = () => {
+const handleSaveSettings = () => {
   if (!currentProvider.value) return;
   updateProvider(currentProvider.value.id, {
     apiKey: currentProvider.value.apiKey,

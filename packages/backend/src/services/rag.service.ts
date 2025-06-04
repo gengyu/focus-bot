@@ -1,10 +1,4 @@
-import {IndexFlatL2} from 'faiss-node';
-import {pipeline} from '@xenova/transformers';
-import {LLMProvider} from '../provider/LLMProvider';
-import {ChatMessage} from '../../../../share/type';
-import {SearchService} from './SearchService';
-import {Document} from '../types/rag.types';
-import {KnowledgeService} from "./knowledge.service";
+import {DocumentService} from "./DocumentService.ts";
 
 // Document 接口已移至 rag.types.ts
 
@@ -24,7 +18,7 @@ export class RAGService {
 
   // private readonly searchService: SearchService;
 
-  private readonly knowledgeService: KnowledgeService;
+  private readonly documentService: DocumentService;
 
 
   /**
@@ -33,7 +27,7 @@ export class RAGService {
   constructor() {
 
     // this.searchService = new SearchService();
-    this.knowledgeService = new KnowledgeService();
+    this.documentService = new DocumentService();
   }
 
 
@@ -46,15 +40,16 @@ export class RAGService {
    */
   async ragPipeline(knowledgeBaseId: string, query: string): Promise<{ answer: string; sources: string[] }> {
     // 1. 获取相关文档
-    const relevantDocs = await this.knowledgeService.search(query, knowledgeBaseId, 3);
+    const relevantDocs = await this.documentService.retrieveRelevantDocs(query, [], 3);
+
 
     // 2. 构建提示词
-    const context = relevantDocs.map(result => result.document.text).join('\n\n');
+    const context = relevantDocs.map(result => result.content).join('\n\n');
     const prompt = `基于以下上下文回答问题。如果上下文中没有相关信息，请说明无法回答。\n\n上下文：\n${context}\n\n问题：${query}`;
 
     return {
       answer: prompt,
-      sources: relevantDocs.map(result => result.document.text) // 返回引用的文档内容
+      sources: relevantDocs.map(result => result.content) // 返回引用的文档内容
     };
   }
 } // end of RAGService class

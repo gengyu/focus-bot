@@ -2,16 +2,18 @@ import {FileParserService} from '../services/FileParserService';
 
 import {ResultHelper} from "../routes/routeHelper.ts";
 import {Body, Controller, Post, Upload} from "../decorators/decorators.ts";
-import {type} from "node:os";
-import iconv  from  'iconv-lite'; // 需要安装 iconv-lite
-import multer  from "@koa/multer";
+import multer from "@koa/multer";
+import {DocumentService} from "../services/DocumentService.ts";
+import {KnowledgeDocument} from "../../../../share/knowledge.ts";
 
 @Controller('/invoke/fileParser')
-export class FileParserController {
+export class DcoumentController {
   private fileParserService: FileParserService;
+  private documentService: DocumentService;
 
   constructor() {
     this.fileParserService = FileParserService.getInstance();
+    this.documentService = new DocumentService();
   }
 
   @Post('/parse')
@@ -24,15 +26,8 @@ export class FileParserController {
     }
   }
 
-  @Post('/upload/documents')
-  @Upload('files', {multiple: true})
-  async uploadDocuments(
-    @Body('id') id: string,
-    @Body('files') files: Array<multer.File>,
-    @Body() filename: string
-  ){
 
-  }
+
 
   @Post('/upload')
   @Upload('file')
@@ -44,6 +39,32 @@ export class FileParserController {
       return ResultHelper.success(result);
     } catch (error) {
       return ResultHelper.fail((error as Error).message, null);
+    }
+  }
+
+  @Post('/upload/documents')
+  @Upload('files', {multiple: true})
+  async uploadDocuments(@Body('files') files: Array<multer.File>,) {
+    try {
+      const documents = await this.documentService.uploadDocuments( files);
+      return ResultHelper.success(documents);
+    } catch (err: any) {
+      return ResultHelper.fail(err.message, null);
+    }
+  }
+
+
+  @Post('/searchDocuments')
+  async searchDocuments(@Body('query') query: string, @Body('documents') documents: KnowledgeDocument[]) {
+    try {
+      if (!query) {
+        return ResultHelper.fail('搜索关键词不能为空', null);
+      }
+
+      const results = await this.documentService.retrieveRelevantDocs(query, documents);
+      return ResultHelper.success(results);
+    } catch (err: any) {
+      return ResultHelper.fail(err.message, null);
     }
   }
 }

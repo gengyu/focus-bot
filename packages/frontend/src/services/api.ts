@@ -35,7 +35,7 @@ export class ConfigAPI {
         return res.data;
     }
 
-    async saveModelConfig(config: AppSetting): Promise<void> {
+    async saveAppSetting(config: AppSetting): Promise<void> {
         const req = {method: 'saveAppSetting', payload: config};
         const res = await transport.invokeDirect(req);
         if (!res.success) throw new Error(`保存模型配置失败: ${res.error}`);
