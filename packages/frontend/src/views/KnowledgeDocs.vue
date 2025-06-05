@@ -22,7 +22,9 @@
               multiple
               accept=".pdf,.doc,.docx,.txt"
           >
-          <button @click="() => fileInput?.click()">
+          <button 
+              @click="() => fileInput?.click()"
+              class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition-colors">
              选择文件
           </button>
         </div>
@@ -32,21 +34,31 @@
       <div class="mb-4">
         <div class="flex space-x-2 items-center">
           <div class="flex-1">
-            <Input v-model:model-value="searchQuery" @input="searchDocuments"></Input>
+            <Input v-model:model-value="searchQuery" @input="searchDocuments" placeholder="搜索文档..."></Input>
           </div>
         </div>
       </div>
 
       <div class="flex-1 overflow-y-auto">
-        <div class="space-y-2">
+        <div v-if="documents && documents.length > 0" class="space-y-2">
           <div v-for="doc in documents" :key="doc.id"
-               class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+               class="flex justify-between items-center p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
             <div class="flex items-center space-x-4">
               <span class="text-gray-600">{{ doc.name }}</span>
               <span class="text-sm text-gray-500">{{ formatFileSize(doc.size) }}</span>
               <span class="text-sm text-gray-500">{{ formatDate(doc.createdAt) }}</span>
             </div>
+            <div class="flex space-x-2">
+              <button 
+                @click="deleteDocument(doc.id)"
+                class="text-red-500 hover:text-red-700 transition-colors">
+                删除
+              </button>
+            </div>
           </div>
+        </div>
+        <div v-else class="text-center py-8">
+          <p class="text-gray-600">暂无文档，请上传文档</p>
         </div>
       </div>
     </div>
@@ -71,7 +83,7 @@
               <div class="flex space-x-4 text-sm text-gray-500">
                 <span>{{ formatFileSize(doc.size) }}</span>
                 <span>{{ formatDate(doc.createdAt) }}</span>
-                <span>{{ doc.score }}</span>
+                <span>相关度: {{ (doc.score * 100).toFixed(2) }}%</span>
               </div>
               <p v-if="doc.content" class="mt-2 text-gray-700 line-clamp-3">
                 {{ doc.content }}
@@ -108,25 +120,22 @@ const hasSearched = ref(false);
 const {appSetting, saveSettings} = useAppSettingStore()
 
 const documents = computed(() => {
-  return appSetting.knowledgeBases.find(kb => kb.id === route.query.id)?.documents;
+  return appSetting.knowledgeBases.find(kb => kb.id === route.query.id)?.documents || [];
 });
 
 
 // 搜索文档
 const searchDocuments = debounce(async () => {
-
-  console.log(3333)
   if (!searchQuery.value.trim() || !route.query.id) {
     searchResults.value = []
     return;
-
   }
 
   isLoading.value = true;
   hasSearched.value = true;
 
   try {
-    searchResults.value = await documentApi.searchDocuments(searchQuery.value,documents.value) as any;
+    searchResults.value = await documentApi.searchDocuments(searchQuery.value, documents.value) as any;
   } catch (error) {
     console.error('搜索文档失败:', error);
     searchResults.value = [];
@@ -155,29 +164,19 @@ const formatDate = (date: string) => {
 };
 
 
-const showUploadModal = ref(false);
 const uploadedFiles = ref<File[]>([]);
 const fileInput = ref<HTMLInputElement | null>(null);
 
-// 打开上传模态框
-const openUploadModal = () => {
-
-  showUploadModal.value = true;
-  uploadedFiles.value = [];
-};
-
 // 上传文件
 const uploadFiles = async () => {
-
   try {
-   const documents =  await documentApi.uploadDocuments(route.query.id as string, uploadedFiles.value);
-    console.log(documents,333)
-    showUploadModal.value = false;
+   const documents =  await documentApi.uploadDocuments(uploadedFiles.value);
     const knowledgeBase = appSetting.knowledgeBases.find(item => item.id === route.query.id);
-    knowledgeBase.documents = knowledgeBase.documents || [];
-    knowledgeBase.documents.splice(0, 0, ...documents);
-    await saveSettings()
-    // await fetchKnowledgeBases();
+    if (knowledgeBase) {
+      knowledgeBase.documents = knowledgeBase.documents || [];
+      knowledgeBase.documents.splice(0, 0, ...documents);
+      await saveSettings();
+    }
   } catch (error) {
     console.error('上传文件失败:', error);
   }
@@ -187,12 +186,29 @@ const uploadFiles = async () => {
 const handleFileUpload = (event: Event) => {
   const input = event.target as HTMLInputElement;
   if (input.files) {
-    uploadedFiles.value = [...uploadedFiles.value, ...Array.from(input.files)];
+    uploadedFiles.value = [...Array.from(input.files)];
+    uploadFiles();
+    // 清空文件输入框，以便可以重复上传相同文件
+    input.value = '';
   }
-  uploadFiles();
 };
-const removeFile =  (index: number) => {
-  uploadedFiles.value.splice(index, 1);
+
+// 删除文档
+const deleteDocument = async (docId: string) => {
+  if (!confirm('确定要删除这个文档吗？')) return;
+  
+  try {
+    const knowledgeBase = appSetting.knowledgeBases.find(kb => kb.id === route.query.id);
+    if (knowledgeBase && knowledgeBase.documents) {
+      const docIndex = knowledgeBase.documents.findIndex(doc => doc.id === docId);
+      if (docIndex !== -1) {
+        knowledgeBase.documents.splice(docIndex, 1);
+        await saveSettings();
+      }
+    }
+  } catch (error) {
+    console.error('删除文档失败:', error);
+  }
 };
 
 </script>
