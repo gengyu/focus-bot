@@ -8,6 +8,7 @@ export enum ProviderIdEnum{
   Aliyun = 'aliyun',
   Gemini = 'gemini',
   Ollama = 'ollama',
+  langchain = 'langchain',
 }
 
 export interface Model {

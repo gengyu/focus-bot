@@ -86,8 +86,8 @@ importers:
         specifier: ^13.0.1
         version: 13.0.1
       langchain:
-        specifier: ^0.3.26
-        version: 0.3.26(@langchain/core@0.3.55(openai@4.98.0(zod@3.24.4)))(axios@1.9.0)(cheerio@1.0.0)(openai@4.98.0(zod@3.24.4))
+        specifier: ^0.3.27
+        version: 0.3.27(@langchain/core@0.3.55(openai@4.98.0(zod@3.24.4)))(axios@1.9.0)(cheerio@1.0.0)(openai@4.98.0(zod@3.24.4))
       mammoth:
         specifier: ^1.9.0
         version: 1.9.0
@@ -209,6 +209,9 @@ importers:
       katex:
         specifier: ^0.16.22
         version: 0.16.22
+      lodash:
+        specifier: ^4.17.21
+        version: 4.17.21
       loglevel:
         specifier: ^1.9.2
         version: 1.9.2
@@ -3014,8 +3017,8 @@ packages:
   kuler@2.0.0:
     resolution: {integrity: sha512-Xq9nH7KlWZmXAtodXDDRE7vs6DU1gTU8zYDHDiWLSip45Egwq3plLHzPn27NgvzL2r1LMPC1vdqh98sQxtqj4A==}
 
-  langchain@0.3.26:
-    resolution: {integrity: sha512-W/9phB4wiAnj+PnpMWmv/ptIp7i5ygY2aK8yjKlxccHPbaNeMoy7njzFz8d0/xfcPyA3MvG4AuZnJ1j3/E2/Ig==}
+  langchain@0.3.27:
+    resolution: {integrity: sha512-XfOuXetMSpkS11Mt6YJkDmvuSGTMPUsks5DJz4RCZ3y2dcbLkOe5kecjx2SWVJYqQIqcMMwsjsve3/ZjnRe7rQ==}
     engines: {node: '>=18'}
     peerDependencies:
       '@langchain/anthropic': '*'
@@ -7776,7 +7779,7 @@ snapshots:
 
   kuler@2.0.0: {}
 
-  langchain@0.3.26(@langchain/core@0.3.55(openai@4.98.0(zod@3.24.4)))(axios@1.9.0)(cheerio@1.0.0)(openai@4.98.0(zod@3.24.4)):
+  langchain@0.3.27(@langchain/core@0.3.55(openai@4.98.0(zod@3.24.4)))(axios@1.9.0)(cheerio@1.0.0)(openai@4.98.0(zod@3.24.4)):
     dependencies:
       '@langchain/core': 0.3.55(openai@4.98.0(zod@3.24.4))
       '@langchain/openai': 0.5.10(@langchain/core@0.3.55(openai@4.98.0(zod@3.24.4)))
