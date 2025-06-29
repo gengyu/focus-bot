@@ -1,7 +1,7 @@
 import OpenAI from 'openai';
 import {LLMProvider, ProviderResponseChunk} from "./LLMProvider";
 import {type ChatCompletionMessageParam} from "openai/resources";
-import {type ChatMessage, ProviderConfig} from "../../../../share/type";
+import {type ChatMessage, Model, ProviderConfig} from "../../../../share/type";
 import type {Message} from "ollama";
 import {formatMessage} from './formatMessage';
 
@@ -91,7 +91,14 @@ export class OpenAIProvider implements LLMProvider {
 			console.log('📦 Local model list:');
 			// return [];
 			const modelsPage = await this.openai.models.list({stream: false});
-		 	return modelsPage.data.map((model) => model.id);
+		 	return modelsPage.data.map((model)=>{
+				 return {
+					 id: model.id,
+					 name: model.id,
+					 description: model.object,
+					 enabled: true,
+				 } as Model;
+			});
 		} catch (error) {
 			console.error('Ollama API Error:', error);
 			throw new Error('Failed to get models from Ollama');
