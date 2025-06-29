@@ -20,7 +20,7 @@
               @change="handleFileUpload"
               class="hidden"
               multiple
-              accept=".pdf,.doc,.docx,.txt"
+              accept=".pdf,.doc,.docx,.txt,.md"
           >
           <button 
               @click="() => fileInput?.click()"

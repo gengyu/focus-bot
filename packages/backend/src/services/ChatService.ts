@@ -6,7 +6,7 @@ import {ChatHistoryService} from "./ChatHistoryService";
 import {ReadableStream} from "node:stream/web";
 import {Singleton} from "../decorators/Singleton";
 import {OllamaAIProvider} from "../provider/OllamaAIProvider.ts";
-import {LangChainProvider} from "../provider/LangChainProvider";
+// import {LangChainProvider} from "../provider/LangChainProvider";
 import {RAGService} from './rag.service';
 import {SearchService} from './SearchService';
 import {ChatOptions} from "../../../../share/type.ts";
@@ -21,7 +21,7 @@ export class ChatService {
     openai: (config: ProviderConfig) => new OpenAIProvider(config),
     ollama: (config: ProviderConfig) => new OllamaAIProvider(config),
     aliyun: (config: ProviderConfig) => new OpenAIProvider(config),
-    langchain: (config: ProviderConfig) => new LangChainProvider(config),
+    // langchain: (config: ProviderConfig) => new LangChainProvider(config),
     // 如需支持 GeminiProvider，请实现对应 Provider 并在 providerFactory 注册
     // gemini: (config: ProviderConfig) => new GeminiProvider(config), // 需要实现 GeminiProvider
   };
