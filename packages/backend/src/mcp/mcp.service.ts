@@ -149,6 +149,12 @@ export class FileConfigService implements IConfigService {
     try {
       await this.persistenceService.initialize();
       const config = await this.persistenceService.loadData();
+      
+      // 如果配置文件不存在，返回默认配置
+      if (!config) {
+        return this.getDefaultConfig();
+      }
+      
       const validation = this.validateConfig(config);
 
       if (!validation.isValid) {
@@ -162,6 +168,15 @@ export class FileConfigService implements IConfigService {
       }
       throw new Error(`Failed to load config: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
+  }
+
+  private getDefaultConfig(): MCPConfig {
+    return {
+      serverUrl: 'http://localhost:5000',
+      transport: 'http',
+      debug: false,
+      mcpServers: {}
+    };
   }
 
   async getConfigList(): Promise<MCPConfigListItem[]> {
