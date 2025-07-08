@@ -9,6 +9,8 @@ import {
 import {PersistenceService} from "../services/PersistenceService.ts";
 import {StatusService} from "./statusService.ts";
 import path from "path";
+import { MCPClient } from '../../../mcp-core/src/core/MCPClient';
+import { StdioTransport } from '../../../mcp-core/src/transports/StdioTransport';
 
 export class MCPService {
   private servers: Map<string, ChildProcess> = new Map();
@@ -71,7 +73,7 @@ export class MCPService {
 export class FileConfigService implements IConfigService {
   private runningMCPs: Set<string> = new Set();
   private autoStartEnabled: boolean = true;
-  private mcpProcesses: Map<string, Client> = new Map();
+  private mcpProcesses: Map<string, MCPClient> = new Map();
   private persistenceService: PersistenceService;
   private statusService: StatusService;
 
@@ -79,8 +81,6 @@ export class FileConfigService implements IConfigService {
     this.persistenceService = new PersistenceService({
       dataDir: options?.dataDir || path.join(process.cwd(), 'data'),
       configFileName: 'config.json',
-      backupInterval: options?.backupInterval ?? 3600000, // 默认1小时
-      maxBackups: options?.maxBackups ?? 24 // 默认24个备份
     });
 
     this.statusService = new StatusService();
@@ -147,7 +147,6 @@ export class FileConfigService implements IConfigService {
 
   async loadConfig(): Promise<MCPConfig> {
     try {
-      await this.persistenceService.initialize();
       const config = await this.persistenceService.loadData();
       
       // 如果配置文件不存在，返回默认配置
@@ -268,7 +267,7 @@ export class FileConfigService implements IConfigService {
   private async startMCPProcess(id: string, serverConfig: { command: string; args?: string[] }): Promise<void> {
     console.log(`Starting MCP server: id, ${JSON.stringify(serverConfig)}`)
 
-    const transport = new StdioClientTransport({
+    const transport = new StdioTransport({
       command: serverConfig.command,
       args: serverConfig.args,
       stderr: 'pipe'
@@ -279,7 +278,7 @@ export class FileConfigService implements IConfigService {
       return;
     }
 
-    const client = new Client({
+    const client = new MCPClient({
         name: "example-client",
         version: "1.0.0"
       },

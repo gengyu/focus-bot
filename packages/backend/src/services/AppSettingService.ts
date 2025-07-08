@@ -13,8 +13,6 @@ export class AppSettingService {
     this.persistenceService = new PersistenceService<AppSetting>({
       dataDir: options?.dataDir || path.join(process.cwd(), 'data'),
       configFileName: 'settting.json',
-      backupInterval: options?.backupInterval ?? 3600000, // 默认1小时
-      maxBackups: options?.maxBackups ?? 24 // 默认24个备份
     });
 
   }
@@ -27,7 +25,9 @@ export class AppSettingService {
   async getAppSetting(): Promise<AppSetting> {
     try {
       const setting = await this.persistenceService.loadData() ?? {
-        providers: []
+        providers: [],
+        searchEngines: [],
+        knowledgeBases: []
       };
 
       // 解密所有provider的apiKey

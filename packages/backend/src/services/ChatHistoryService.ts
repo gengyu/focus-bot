@@ -17,8 +17,6 @@ export class ChatHistoryService {
     this.persistenceService = new PersistenceService({
       dataDir: options?.dataDir || path.join(process.cwd(), 'data'),
       configFileName: 'chat_history.json',
-      backupInterval: options?.backupInterval ?? 3600000, // 默认1小时
-      maxBackups: options?.maxBackups ?? 24 // 默认24个备份
     });
   }
 
