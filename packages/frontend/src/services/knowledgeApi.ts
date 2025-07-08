@@ -42,8 +42,36 @@ export interface SearchResult {
     documentId: string;
     documentName: string;
     chunkIndex: number;
+    startChar: number;
+    endChar: number;
     [key: string]: any;
   };
+}
+
+export interface SearchResponse {
+  query: string;
+  totalResults: number;
+  results: SearchResult[];
+  searchOptions: {
+    topK: number;
+    similarityThreshold: number;
+    includeMetadata: boolean;
+    highlightMatches: boolean;
+  };
+}
+
+export interface UploadResponse {
+  totalFiles: number;
+  successCount: number;
+  failureCount: number;
+  results: Array<{
+    fileName: string;
+    documentId?: string;
+    success: boolean;
+    chunksCreated: number;
+    error?: string;
+    message?: string;
+  }>;
 }
 
 export interface ChatResponse {
@@ -55,7 +83,7 @@ export interface ChatResponse {
 export class KnowledgeApi {
   private transport = new TransportAdapter(TransportType.HTTP, {
     serverUrl: API_BASE_URL,
-    prefix: 'knowledge'
+    prefix: 'api/knowledge'
   });
 
   /**
@@ -98,22 +126,7 @@ export class KnowledgeApi {
       chunkSize?: number;
       chunkOverlap?: number;
     }
-  ): Promise<{
-    success: boolean;
-    results: Array<{
-      fileName: string;
-      documentId: string;
-      success: boolean;
-      chunksCreated: number;
-      error?: string;
-      message?: string;
-    }>;
-    summary: {
-      total: number;
-      success: number;
-      failed: number;
-    };
-  }> {
+  ): Promise<UploadResponse> {
     const formData = new FormData();
     files.forEach(file => {
       formData.append('files', file);
@@ -140,10 +153,11 @@ export class KnowledgeApi {
     query: string,
     options?: {
       topK?: number;
-      threshold?: number;
+      similarityThreshold?: number;
       includeMetadata?: boolean;
+      highlightMatches?: boolean;
     }
-  ): Promise<SearchResult[]> {
+  ): Promise<SearchResponse> {
     const req: TransportRequest = {
       method: 'search',
       payload: {
@@ -162,7 +176,7 @@ export class KnowledgeApi {
    */
   async deleteDocument(namespaceId: string, documentId: string): Promise<boolean> {
     const req: TransportRequest = {
-      method: 'delete/document',
+      method: 'document/delete',
       payload: { namespaceId, documentId }
     };
     const res = await this.transport.invokeDirect(req);
@@ -176,10 +190,23 @@ export class KnowledgeApi {
   async deleteKnowledgeBase(namespaceId: string): Promise<boolean> {
     const req: TransportRequest = {
       method: 'delete',
-      payload: { namespaceId }
+      payload: { id: namespaceId }
     };
     const res = await this.transport.invokeDirect(req);
     if (!res.success) throw new Error(`删除知识库失败: ${res.error}`);
+    return res.data;
+  }
+
+  /**
+   * 更新知识库配置
+   */
+  async updateKnowledgeBaseConfig(namespaceId: string, config: any): Promise<any> {
+    const req: TransportRequest = {
+      method: 'config/update',
+      payload: { id: namespaceId, config }
+    };
+    const res = await this.transport.invokeDirect(req);
+    if (!res.success) throw new Error(`更新配置失败: ${res.error}`);
     return res.data;
   }
 

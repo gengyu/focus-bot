@@ -21,14 +21,13 @@ const routes: RouteRecordRaw[] = [
         meta: {
             rememberChildRoute: true
         },
-        component: () => import('@/views/KnowledgeView.vue'),
-        children: [
-            {
-                path: 'docs',
-                name: 'KnowledgeDocs',
-                component: () => import('@/views/KnowledgeDocs.vue')
-            }
-        ]
+        component: () => import('@/views/KnowledgeView.vue')
+    },
+    {
+        path: '/knowledge/:id',
+        name: 'KnowledgeDocs',
+        component: () => import('@/views/KnowledgeDocs.vue'),
+        props: true
     },
     {
         path: '/profile',
