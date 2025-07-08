@@ -2,6 +2,11 @@ packages:
   - packages/*
 ignoredBuiltDependencies:
   - '@tailwindcss/oxide'
+  - esbuild
+
+# 特殊的包处理  pnpm rebuild better-sqlite3
+onlyBuiltDependencies:
+  - '@tailwindcss/oxide'
   - better-sqlite3
   - esbuild
   - faiss-node
