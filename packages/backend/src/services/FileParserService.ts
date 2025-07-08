@@ -2,6 +2,14 @@ import fs from 'fs';
 import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
 
+// LangChain imports - 使用兼容的导入路径
+import { RecursiveCharacterTextSplitter } from 'langchain/text_splitter';
+import { Document } from 'langchain/document';
+
+// 注意：某些LangChain加载器可能需要额外配置或不同的导入路径
+// 如果遇到导入问题，将回退到传统解析器
+
+// Legacy parsers for fallback
 import pdfParse from 'pdf-parse';
 import ExcelJS from 'exceljs';
 import csvParser from 'csv-parser';
@@ -19,18 +27,56 @@ import exifParser from 'exif-parser';
 import ColorThief from 'colorthief';
 import {FileMetadata, MessageFile} from "../../../../share/type.ts";
 
+// 文档分块配置
+export interface ChunkingOptions {
+  chunkSize?: number;
+  chunkOverlap?: number;
+  separators?: string[];
+  keepSeparator?: boolean;
+}
+
+// 解析结果接口
+export interface ParseResult {
+  content: string;
+  documents: Document[];
+  metadata: FileMetadata;
+  chunks?: Document[];
+}
+
+// 支持的文档加载器类型
+export enum LoaderType {
+  PDF = 'pdf',
+  DOCX = 'docx',
+  CSV = 'csv',
+  TEXT = 'text',
+  JSON = 'json',
+  HTML = 'html',
+  MARKDOWN = 'markdown',
+  UNSTRUCTURED = 'unstructured'
+}
+
 
 
 export class FileParserService {
   private static instance: FileParserService;
   private metadataCache: Map<string, { metadata: FileMetadata; timestamp: number }>;
   private contentCache: Map<string, { content: string; timestamp: number }>;
+  private documentCache: Map<string, { documents: Document[]; timestamp: number }>;
   private readonly CACHE_TTL = 5 * 60 * 1000; // 缓存有效期5分钟
   private readonly MAX_CACHE_SIZE = 100; // 最大缓存条目数
+  
+  // 默认分块配置
+  private readonly defaultChunkingOptions: ChunkingOptions = {
+    chunkSize: 1000,
+    chunkOverlap: 200,
+    separators: ['\n\n', '\n', ' ', ''],
+    keepSeparator: false
+  };
 
   private constructor() {
     this.metadataCache = new Map();
     this.contentCache = new Map();
+    this.documentCache = new Map();
   }
 
   public static getInstance(): FileParserService {
@@ -152,13 +198,358 @@ export class FileParserService {
   }
 
   /**
-   * 解析文件内容
+   * 使用 LangChain 解析文档并分块
+   * @param filePath 文件路径
+   * @param chunkingOptions 分块选项
+   * @returns 解析结果，包含原始内容、文档对象和分块
+   */
+  public async parseDocumentWithLangChain(
+    filePath: string, 
+    chunkingOptions?: ChunkingOptions
+  ): Promise<ParseResult> {
+    if (!fs.existsSync(filePath)) {
+      throw new Error('文件不存在');
+    }
+
+    const stats = fs.statSync(filePath);
+    const cacheKey = `${filePath}_${stats.mtimeMs}`;
+    const cachedDoc = this.documentCache.get(cacheKey);
+    
+    if (cachedDoc && Date.now() - cachedDoc.timestamp < this.CACHE_TTL) {
+      const metadata = await this.getFileMetadata(filePath);
+      const content = cachedDoc.documents.map(doc => doc.pageContent).join('\n');
+      
+      // 重新分块（如果需要）
+      const chunks = await this.chunkDocuments(cachedDoc.documents, chunkingOptions);
+      
+      return {
+        content,
+        documents: cachedDoc.documents,
+        metadata,
+        chunks
+      };
+    }
+
+    this.cleanCache(this.documentCache);
+
+    try {
+      const extension = path.extname(filePath).toLowerCase();
+      let documents: Document[] = [];
+      
+      // 使用 LangChain 加载器
+      switch (extension) {
+        case '.pdf':
+          documents = await this.loadWithPDFLoader(filePath);
+          break;
+        case '.docx':
+          documents = await this.loadWithDocxLoader(filePath);
+          break;
+        case '.csv':
+          documents = await this.loadWithCSVLoader(filePath);
+          break;
+        case '.json':
+          documents = await this.loadWithJSONLoader(filePath);
+          break;
+        case '.txt':
+        case '.md':
+        case '.js':
+        case '.ts':
+        case '.tsx':
+        case '.jsx':
+        case '.css':
+        case '.scss':
+        case '.less':
+          documents = await this.loadWithTextLoader(filePath);
+          break;
+        case '.html':
+        case '.htm':
+          documents = await this.loadHTMLAsDocument(filePath);
+          break;
+        default:
+          // 尝试作为文本文件加载
+          try {
+            documents = await this.loadWithTextLoader(filePath);
+          } catch (e) {
+            // 回退到传统解析方法
+            const content = await this.parseFileTraditional(filePath);
+            documents = [new Document({ 
+              pageContent: content, 
+              metadata: { source: filePath } 
+            })];
+          }
+      }
+
+      // 缓存文档
+      this.documentCache.set(cacheKey, {
+        documents,
+        timestamp: Date.now()
+      });
+
+      // 获取元数据
+      const metadata = await this.getFileMetadata(filePath);
+      
+      // 合并内容
+      const content = documents.map(doc => doc.pageContent).join('\n');
+      
+      // 分块处理
+      const chunks = await this.chunkDocuments(documents, chunkingOptions);
+
+      return {
+        content: this.formatContent(content),
+        documents,
+        metadata,
+        chunks
+      };
+    } catch (error) {
+      console.error(`LangChain 解析失败，回退到传统方法: ${error}`);
+      
+      // 回退到传统解析方法
+      const content = await this.parseFileTraditional(filePath);
+      const metadata = await this.getFileMetadata(filePath);
+      const documents = [new Document({ 
+        pageContent: content, 
+        metadata: { source: filePath } 
+      })];
+      
+      const chunks = await this.chunkDocuments(documents, chunkingOptions);
+      
+      return {
+        content: this.formatContent(content),
+        documents,
+        metadata,
+        chunks
+      };
+    }
+  }
+
+  /**
+   * 文档分块处理
+   * @param documents 文档数组
+   * @param chunkingOptions 分块选项
+   * @returns 分块后的文档数组
+   */
+  public async chunkDocuments(
+    documents: Document[], 
+    chunkingOptions?: ChunkingOptions
+  ): Promise<Document[]> {
+    const options = { ...this.defaultChunkingOptions, ...chunkingOptions };
+    
+    const textSplitter = new RecursiveCharacterTextSplitter({
+      chunkSize: options.chunkSize!,
+      chunkOverlap: options.chunkOverlap!,
+      separators: options.separators,
+      keepSeparator: options.keepSeparator
+    });
+
+    const chunks: Document[] = [];
+    
+    for (const doc of documents) {
+      const splitDocs = await textSplitter.splitDocuments([doc]);
+      chunks.push(...splitDocs);
+    }
+
+    return chunks;
+  }
+
+  /**
+   * 使用 PDF 加载器 - 暂时禁用，使用传统解析器
+   */
+  private async loadWithPDFLoader(filePath: string): Promise<Document[]> {
+    // 暂时使用传统PDF解析器
+    const content = await this.parsePDF(filePath);
+    return [new Document({
+      pageContent: content,
+      metadata: {
+        source: filePath,
+        type: 'pdf',
+        loader: 'legacy'
+      }
+    })];
+  }
+
+  /**
+   * 使用 DOCX 加载器 - 暂时禁用，使用传统解析器
+   */
+  private async loadWithDocxLoader(filePath: string): Promise<Document[]> {
+    // 暂时使用传统DOCX解析器
+    const content = await this.parseDocx(filePath);
+    return [new Document({
+      pageContent: content,
+      metadata: {
+        source: filePath,
+        type: 'docx',
+        loader: 'legacy'
+      }
+    })];
+  }
+
+  /**
+   * 使用 CSV 加载器 - 暂时禁用，使用传统解析器
+   */
+  private async loadWithCSVLoader(filePath: string): Promise<Document[]> {
+    // 暂时使用传统CSV解析器
+    const content = await this.parseCSV(filePath);
+    return [new Document({
+      pageContent: content,
+      metadata: {
+        source: filePath,
+        type: 'csv',
+        loader: 'legacy'
+      }
+    })];
+  }
+
+  /**
+   * 使用文本加载器
+   */
+  private async loadWithTextLoader(filePath: string): Promise<Document[]> {
+    // 使用传统文本解析器
+    const content = await this.parseText(filePath);
+    return [new Document({
+      pageContent: content,
+      metadata: {
+        source: filePath,
+        type: 'text',
+        loader: 'legacy'
+      }
+    })];
+  }
+
+  /**
+   * 使用 JSON 加载器
+   */
+  private async loadWithJSONLoader(filePath: string): Promise<Document[]> {
+    const loader = new JSONLoader(filePath);
+    return await loader.load();
+  }
+
+  /**
+   * 加载 HTML 文档
+   */
+  private async loadHTMLAsDocument(filePath: string): Promise<Document[]> {
+    const html = await fs.promises.readFile(filePath, 'utf-8');
+    const $ = cheerio.load(html);
+    // 移除脚本和样式
+    $('script, style').remove();
+    const content = $('body').text().trim();
+    
+    return [new Document({ 
+      pageContent: content, 
+      metadata: { 
+        source: filePath,
+        type: 'html',
+        title: $('title').text() || path.basename(filePath)
+      } 
+    })];
+  }
+
+  /**
+   * 传统文件解析方法（保持向后兼容）
+   * @param filePath 文件路径
+   * @returns 解析后的文本内容
+   */
+  private async parseFileTraditional(filePath: string): Promise<string> {
+    const extension = path.extname(filePath).toLowerCase();
+    let content = '';
+
+    switch (extension) {
+      case '.pdf':
+        content = await this.parsePDF(filePath);
+        break;
+      case '.docx':
+        content = await this.parseWord(filePath);
+        break;
+      case '.doc':
+        content = await this.parseDoc(filePath);
+        break;
+      case '.xlsx':
+      case '.xls':
+        content = await this.parseExcel(filePath);
+        break;
+      case '.csv':
+        content = await this.parseCSV(filePath);
+        break;
+      case '.html':
+      case '.htm':
+        content = await this.parseHTML(filePath);
+        break;
+      case '.xml':
+        content = await this.parseXML(filePath);
+        break;
+      case '.pptx':
+      case '.ppt':
+        content = await this.parsePPT(filePath);
+        break;
+      case '.jpg':
+      case '.jpeg':
+      case '.png':
+      case '.gif':
+      case '.webp':
+      case '.bmp':
+      case '.tiff':
+      case '.svg':
+        content = await this.parseImage(filePath);
+        break;
+      case '.js':
+      case '.ts':
+      case '.tsx':
+      case '.jsx':
+      case '.css':
+      case '.scss':
+      case '.less':
+      case '.json':
+      case '.md':
+      case '.txt':
+        content = await this.parseTextFile(filePath);
+        break;
+      default:
+        // 尝试作为文本文件解析
+        try {
+          content = await this.parseTextFile(filePath);
+        } catch (e) {
+          throw new Error('不支持的文件格式');
+        }
+    }
+
+    return content;
+  }
+
+  /**
+   * 解析文件内容（保持原有接口兼容性）
    * @param filePath 文件路径
    * @returns 解析后的文本内容和元信息
    */
   public async parseFile(filePath: string): Promise<string>;
   public async parseFile(filePath: string, includeMetadata: boolean): Promise<MessageFile>;
   public async parseFile(filePath: string, includeMetadata: boolean = false): Promise<string | MessageFile> {
+    try {
+      // 优先使用 LangChain 解析
+      const parseResult = await this.parseDocumentWithLangChain(filePath);
+      
+      if (includeMetadata) {
+        return {
+          content: parseResult.content,
+          metadata: parseResult.metadata,
+          url: await this.imageToBase64Node(filePath)
+        };
+      }
+      
+      return parseResult.content;
+    } catch (error) {
+      console.warn(`LangChain 解析失败，使用传统方法: ${error}`);
+      
+      // 回退到传统解析方法
+      return this.parseFileWithTraditionalMethod(filePath, includeMetadata);
+    }
+  }
+
+  /**
+   * 传统解析方法（作为回退方案）
+   */
+  private async parseFileWithTraditionalMethod(
+    filePath: string, 
+    includeMetadata: boolean = false
+  ): Promise<string | MessageFile> {
     if (!fs.existsSync(filePath)) {
       throw new Error('文件不存在');
     }

@@ -1,7 +1,10 @@
 packages:
   - packages/*
-
 ignoredBuiltDependencies:
+  - '@tailwindcss/oxide'
+  - better-sqlite3
   - esbuild
+  - faiss-node
+  - protobufjs
   - sharp
   - vue-demi

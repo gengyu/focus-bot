@@ -86,7 +86,7 @@ importers:
         specifier: ^13.0.1
         version: 13.1.1
       langchain:
-        specifier: ^0.3.27
+        specifier: ^0.3.29
         version: 0.3.29(@langchain/core@0.3.62(openai@4.104.0(zod@3.25.75)))(axios@1.10.0)(cheerio@1.1.0)(openai@4.104.0(zod@3.25.75))
       mammoth:
         specifier: ^1.9.0
