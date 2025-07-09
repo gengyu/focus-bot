@@ -2,7 +2,6 @@ packages:
   - packages/*
 ignoredBuiltDependencies:
 
-
 # 特殊的包处理  pnpm rebuild better-sqlite3
 onlyBuiltDependencies:
   - '@tailwindcss/oxide'

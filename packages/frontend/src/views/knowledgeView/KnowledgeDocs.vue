@@ -165,16 +165,16 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, onMounted } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import { useAppSettingStore } from '../../store/appSettingStore.ts'
-import { knowledgeApi } from '../../services/knowledgeApi.ts'
-import type { KnowledgeBaseDetail, SearchResult, SearchResponse } from '../../services/knowledgeApi.ts'
-import { debounce } from 'lodash'
+import {computed, onMounted, ref} from 'vue'
+import {useRouter} from 'vue-router'
+import {useAppSettingStore} from '../../store/appSettingStore.ts'
+import type {KnowledgeBaseDetail, SearchResponse, SearchResult} from '../../services/knowledgeApi.ts'
+import {knowledgeApi} from '../../services/knowledgeApi.ts'
+import {debounce} from 'lodash'
 
 
 const router = useRouter()
-const appSettingStore = useAppSettingStore()
+const {appSettings} = useAppSettingStore()
 
 const props = defineProps<{
    knowledgeId: string
@@ -187,7 +187,8 @@ const uploading = ref(false)
 
 // 从appSetting中获取知识库基本信息
 const knowledgeBaseInfo = computed(() => {
-  return appSettingStore.appSettings.knowledgeBases.find(item=> item.id === props.knowledgeId)
+  console.log(appSettings)
+  return appSettings.knowledgeBases.find(item=> item.id === props.knowledgeId)
 })
 
 // 搜索相关
@@ -331,11 +332,7 @@ const locateInDocument = (result: SearchResult) => {
 }
 
 onMounted(async () => {
-  // 确保appSetting已初始化
-  if (!appSettingStore.appSettings.knowledgeBases) {
-    await appSettingStore.initialize()
-  }
-  
+
   // 仍然需要加载详细信息用于文档操作
   loadKnowledgeBase()
 })

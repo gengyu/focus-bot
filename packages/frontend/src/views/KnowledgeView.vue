@@ -96,6 +96,7 @@ const createKnowledgeBase = async () => {
     documentCount: 0,
     chunkCount: 0,
     config: {},
+    documents:[],
   } as KnowledgeBaseStats);
 
   saveSettings();
