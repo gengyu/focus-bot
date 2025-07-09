@@ -33,7 +33,9 @@ export interface KnowledgeBaseStats {
   name: string;
   documentCount: number;
   chunkCount: number;
-  config: any;
+  description: string;
+  config?: any;
+  KnowledgeBaseDetail?: KnowledgeBaseDetail
 }
 
 export interface KnowledgeBaseDetail {

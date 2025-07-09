@@ -1,10 +1,9 @@
 import {defineStore} from 'pinia';
 import {reactive, type Ref, ref} from "vue";
-import {type ChatMessage, type DialogId} from "../../../../share/type.ts";
-import {chatAPI} from "../services/chatApi.ts";
-import {generateUUID4} from "../utils/uuid.ts";
 import type {ChatOptions} from "../../../../share/type.ts";
-import {getChatHistory} from "../services/api.ts";
+import {type ChatMessage, type DialogId} from "../../../../share/type.ts";
+import {generateUUID4} from "../utils/uuid.ts";
+import {getChatHistory, sendChatMessage} from "../services/api.ts";
 
 // 创建单例实例
 // const contextManager = new ContextManager();
@@ -109,7 +108,7 @@ export const useMessageStore = defineStore<string, {
     messages.value[dialogId].push(userMessage);
 
     // 调用API发送消息
-    const [abort, readableStream] = chatAPI.sendMessage(userMessage, chatOptions, resendId);
+    const [abort, readableStream] = sendChatMessage(userMessage, chatOptions, resendId);
     messageReaders.set(dialogId, abort);
     const [assistantStream1, assistantStream2] = readableStream.tee();
     updateMessage(assistantStream1, dialogId);

@@ -172,18 +172,22 @@ import { knowledgeApi } from '../../services/knowledgeApi.ts'
 import type { KnowledgeBaseDetail, SearchResult, SearchResponse } from '../../services/knowledgeApi.ts'
 import { debounce } from 'lodash'
 
-const route = useRoute()
+
 const router = useRouter()
 const appSettingStore = useAppSettingStore()
 
-const knowledgeBaseId = computed(() => route.params.id as string)
+const props = defineProps<{
+   knowledgeId: string
+}>()
+
+// const knowledgeBaseId = computed(() => route.params.id as string)
 const knowledgeBase = ref<KnowledgeBaseDetail | null>(null)
 const loading = ref(false)
 const uploading = ref(false)
 
 // 从appSetting中获取知识库基本信息
 const knowledgeBaseInfo = computed(() => {
-  return appSettingStore.getKnowledgeBase(knowledgeBaseId.value)
+  return appSettingStore.appSettings.knowledgeBases.find(item=> item.id === props.knowledgeId)
 })
 
 // 搜索相关
@@ -202,7 +206,7 @@ const fileInput = ref<HTMLInputElement | null>(null)
 const loadKnowledgeBase = async () => {
   try {
     loading.value = true
-    knowledgeBase.value = await knowledgeApi.getKnowledgeBaseDetail(knowledgeBaseId.value)
+    knowledgeBase.value = await knowledgeApi.getKnowledgeBaseDetail(props.knowledgeId)
   } catch (error) {
     console.error('加载知识库详情失败:', error)
   } finally {
@@ -223,7 +227,7 @@ const searchDocuments = debounce(async () => {
 
   try {
     const response: SearchResponse = await knowledgeApi.searchKnowledgeBase(
-      knowledgeBaseId.value,
+      props.knowledgeId,
       searchQuery.value,
       {
         topK: 10,
@@ -270,7 +274,7 @@ const handleFileUpload = async (event: Event) => {
     const files = Array.from(input.files)
     
     const response = await knowledgeApi.uploadDocuments(
-      knowledgeBaseId.value,
+      props.knowledgeId,
       files,
       {
         chunkSize: 1000,
@@ -297,7 +301,7 @@ const deleteDocument = async (docId: string) => {
   if (!confirm('确定要删除这个文档吗？')) return
   
   try {
-    await knowledgeApi.deleteDocument(knowledgeBaseId.value, docId)
+    await knowledgeApi.deleteDocument(props.knowledgeId, docId)
     // 重新加载知识库详情
     await loadKnowledgeBase()
   } catch (error) {

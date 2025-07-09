@@ -1,8 +1,7 @@
 import {defineStore} from 'pinia';
-import {onMounted, type Ref, ref} from 'vue';
+import {type Ref, ref} from 'vue';
 import type {ProviderConfig} from '../../../../share/type';
-import type {KnowledgeBase} from '../../../../share/knowledge';
-import {configAPI, getAppSetting, saveAppSetting} from "../services/api.ts";
+import {getAppSetting, saveAppSetting} from "../services/api.ts";
 import {toast} from "vue3-toastify";
 import log from "loglevel";
 import type {AppSettings} from "../../../../share/appSettings.ts";

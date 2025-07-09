@@ -1,7 +1,6 @@
 import {defineStore} from 'pinia';
 import {ref, type Ref} from "vue";
 import type {Conversation, Dialog, DialogId, Model} from "../../../../share/type.ts";
-import {chatAPI} from "../services/chatApi.ts";
 import {useMessageStore} from "./messageStore.ts";
 import {generateUUID} from "../utils/uuid.ts";
 import {useAppSettingStore} from "./appSettingStore.ts";
@@ -92,7 +91,7 @@ export const useConversationStore = defineStore<string, {
     if (!dialog) return;
     dialog.model = model;
     // 保存到存储
-    await chatAPI.saveDialogList(conversation.value);
+    await saveDialogList(conversation.value);
 
   }
 
@@ -103,7 +102,7 @@ export const useConversationStore = defineStore<string, {
    */
   const setActiveDialog = async (dailogId: string) => {
     conversation.value.activeDialogId = dailogId;
-    await chatAPI.saveDialogList(conversation.value);
+    await saveDialogList(conversation.value);
     await messaageStore.refreshChatHistory(conversation.value.activeDialogId);
   }
 
@@ -122,7 +121,7 @@ export const useConversationStore = defineStore<string, {
       conversation.value.activeDialogId = conversation.value.dialogs[0]?.id;
     }
 
-    await chatAPI.saveDialogList(conversation.value);
+    await saveDialogList(conversation.value);
 
   }
 
@@ -139,7 +138,7 @@ export const useConversationStore = defineStore<string, {
       }
       return item;
     });
-    await chatAPI.saveDialogList(conversation.value);
+    await saveDialogList(conversation.value);
   }
 
   // createDialog, deleteDialog, updateDialog

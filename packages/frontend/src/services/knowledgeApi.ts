@@ -1,6 +1,6 @@
-import { API_BASE_URL } from './api';
-import { TransportAdapter, type TransportRequest, TransportType } from "../transports";
-import type { KnowledgeBase, KnowledgeDocument } from "../../../../share/knowledge.ts";
+import {API_BASE_URL} from './api';
+import {TransportAdapter, type TransportRequest, TransportType} from "../transports";
+import type {KnowledgeBase} from "../../../../share/knowledge.ts";
 
 export interface CreateKnowledgeBaseRequest {
   name: string;
