@@ -1,9 +1,11 @@
 import {defineStore} from 'pinia';
-import {type Ref, ref} from 'vue';
-import type {AppSetting, ProviderConfig} from '../../../../share/type';
-import {configAPI} from "../services/api.ts";
+import {onMounted, type Ref, ref} from 'vue';
+import type {ProviderConfig} from '../../../../share/type';
+import type {KnowledgeBase} from '../../../../share/knowledge';
+import {configAPI, getAppSetting, saveAppSetting} from "../services/api.ts";
 import {toast} from "vue3-toastify";
 import log from "loglevel";
+import type {AppSettings} from "../../../../share/appSettings.ts";
 
 // 默认供应商配置
 
@@ -79,7 +81,7 @@ const getDefaultProviders = (): ProviderConfig[] => {
 };
 
 export const useAppSettingStore = defineStore<string, {
-  appSetting: Ref<AppSetting>,
+  appSettings: Ref<AppSettings>,
 
   // updateProvider(providerId: string, newProvider: Partial<ProviderConfig>): Promise<void>
   // providerConfig: Ref<ProviderConfig>,
@@ -87,7 +89,7 @@ export const useAppSettingStore = defineStore<string, {
   initialize: () => Promise<void>
   saveSettings: () => Promise<void>
 }>('provider', () => {
-  const appSettingConfig = ref<AppSetting>({
+  const appSettingConfig = ref<AppSettings>({
     providers: [],
     searchEngines: [],
     knowledgeBases: []
@@ -98,23 +100,25 @@ export const useAppSettingStore = defineStore<string, {
       // 初始化供应商列表
       const defaultProviders = getDefaultProviders();
 
-
       // 加载用户配置
-      const config = await configAPI.getModelConfig();
-      appSettingConfig.value.knowledgeBases = config.knowledgeBases;
+      const config = await getAppSetting();
+      appSettingConfig.value.knowledgeBases = config.knowledgeBases || [];
       appSettingConfig.value.providers = config.providers && config.providers.length > 0 ? config.providers : defaultProviders;
+      appSettingConfig.value.searchEngines = config.searchEngines || [];
 
     } catch (error) {
-
       log.error("Failed to load settings:", error);
       toast.error('加载设置失败');
     }
   }
 
+  initialize();
+
   // 保存模型
   const saveSettings = async () => {
     try {
-      await configAPI.saveAppSetting(appSettingConfig.value);
+      await saveAppSetting(appSettingConfig.value);
+      await initialize();
       toast.success('设置已保存');
     } catch (error) {
       log.error("Failed to save settings:", error);
@@ -123,9 +127,76 @@ export const useAppSettingStore = defineStore<string, {
   };
 
 
+  // // 知识库管理方法
+  // const addKnowledgeBase = async (knowledgeBase: KnowledgeBase) => {
+  //   try {
+  //     if (!appSettingConfig.value.knowledgeBases) {
+  //       appSettingConfig.value.knowledgeBases = [];
+  //     }
+      
+  //     // 检查是否已存在
+  //     const existingIndex = appSettingConfig.value.knowledgeBases.findIndex(kb => kb.id === knowledgeBase.id);
+  //     if (existingIndex >= 0) {
+  //       appSettingConfig.value.knowledgeBases[existingIndex] = knowledgeBase;
+  //     } else {
+  //       appSettingConfig.value.knowledgeBases.push(knowledgeBase);
+  //     }
+      
+  //     await saveSettings();
+  //   } catch (error) {
+  //     log.error("Failed to add knowledge base:", error);
+  //     toast.error('添加知识库失败');
+  //     throw error;
+  //   }
+  // };
+
+  // const removeKnowledgeBase = async (knowledgeBaseId: string) => {
+  //   try {
+  //     if (!appSettingConfig.value.knowledgeBases) {
+  //       return;
+  //     }
+      
+  //     appSettingConfig.value.knowledgeBases = appSettingConfig.value.knowledgeBases.filter(
+  //       kb => kb.id !== knowledgeBaseId
+  //     );
+      
+  //     await saveSettings();
+  //   } catch (error) {
+  //     log.error("Failed to remove knowledge base:", error);
+  //     toast.error('删除知识库失败');
+  //     throw error;
+  //   }
+  // };
+
+  // const updateKnowledgeBase = async (knowledgeBase: KnowledgeBase) => {
+  //   try {
+  //     if (!appSettingConfig.value.knowledgeBases) {
+  //       appSettingConfig.value.knowledgeBases = [];
+  //     }
+      
+  //     const index = appSettingConfig.value.knowledgeBases.findIndex(kb => kb.id === knowledgeBase.id);
+  //     if (index >= 0) {
+  //       appSettingConfig.value.knowledgeBases[index] = knowledgeBase;
+  //       await saveSettings();
+  //     }
+  //   } catch (error) {
+  //     log.error("Failed to update knowledge base:", error);
+  //     toast.error('更新知识库失败');
+  //     throw error;
+  //   }
+  // };
+
+  // const getKnowledgeBase = (knowledgeBaseId: string): KnowledgeBase | undefined => {
+  //   return appSettingConfig.value.knowledgeBases?.find(kb => kb.id === knowledgeBaseId);
+  // };
+
   return {
-    appSetting: appSettingConfig,
+    appSettings: appSettingConfig,
     saveSettings,
     initialize,
+    // addKnowledgeBase,
+    // removeKnowledgeBase,
+    // updateKnowledgeBase,
+    // getKnowledgeBase,
   };
 });

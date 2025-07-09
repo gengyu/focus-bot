@@ -11,8 +11,8 @@ export class PersistenceService<T = any> {
   private tableName: string;
 
   constructor(options: PersistenceOptions) {
-    const dataDir = options.dataDir || path.join(process.cwd(), 'data');
-    const dbPath = path.join(dataDir, options.configFileName.replace(/\.json$/, '.sqlite3'));
+    // const dataDir = options.dataDir || path.join(process.cwd(), 'data');
+    const dbPath = path.join(process.cwd(), 'data','database.sqlite3');
     this.tableName = options.configFileName.replace(/\.json$/, '');
     this.db = new Database(dbPath);
     this.initialize();
@@ -22,6 +22,8 @@ export class PersistenceService<T = any> {
     // Table: key (TEXT PRIMARY KEY), value (TEXT)
     this.db.prepare(
       `CREATE TABLE IF NOT EXISTS ${this.tableName} (key TEXT PRIMARY KEY, value TEXT NOT NULL)`
+
+
     ).run();
   }
 

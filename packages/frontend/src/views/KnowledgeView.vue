@@ -77,7 +77,7 @@
   </div>
 
   <!-- 创建知识库模态框 -->
-  <div v-if="showCreateModal"
+  <div v-if="false"
        class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
     <div class="bg-white rounded-lg p-6 w-96">
       <h2 class="text-xl font-bold mb-4">创建知识库</h2>
@@ -116,21 +116,61 @@
     </div>
   </div>
 
+  <Modal v-model:modelValue="showCreateModal"
+   title="创建知识库" @confirm="createKnowledgeBase">
+    <div class="space-y-4">
+      <div>
+        <label class="block text-sm font-medium text-gray-700">名称</label>
+        <input
+            v-model="newKnowledgeBase.name"
+            type="text"
+            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+        >
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700">描述</label>
+        <textarea
+            v-model="newKnowledgeBase.description"
+            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+            rows="3"
+        ></textarea>
+      </div>
+    </div>
+    
+    <template #footer>
+      <div class="flex justify-end space-x-2">
+        <Button type="button"
+            @click="showCreateModal = false"
+            class="px-4 py-2 text-gray-700 bg-gray-100 rounded hover:bg-gray-200"
+        >
+          取消
+        </Button>
+        <Button type="submit"
+            @click="createKnowledgeBase"
+            class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+        >
+          创建
+        </Button>
+      </div>
+    </template>
+
+  </Modal>
+
 
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { useAppSettingStore } from '@/store/appSettingStore.ts'
-import { knowledgeApi } from '@/services/knowledgeApi.ts'
+import { useAppSettingStore } from '../store/appSettingStore'
+import { knowledgeApi } from '../services/knowledgeApi'
 import type { KnowledgeBase } from '../../../../share/knowledge'
-import type { CreateKnowledgeBaseRequest, KnowledgeBaseStats } from '@/services/knowledgeApi'
+import type { CreateKnowledgeBaseRequest } from '../services/knowledgeApi'
+import {Modal, Button} from "../components/ui";
 
 const router = useRouter()
-const appSetting = useAppSettingStore()
+const appSettingStore = useAppSettingStore()
 
-const knowledgeBases = ref<KnowledgeBaseStats[]>([])
 const loading = ref(false)
 const showCreateModal = ref(false)
 const newKnowledgeBase = ref<CreateKnowledgeBaseRequest>({
@@ -138,24 +178,29 @@ const newKnowledgeBase = ref<CreateKnowledgeBaseRequest>({
   description: ''
 })
 
-const loadKnowledgeBases = async () => {
-  try {
-    loading.value = true
-    knowledgeBases.value = await knowledgeApi.getKnowledgeBases()
-  } catch (error) {
-    console.error('加载知识库列表失败:', error)
-  } finally {
-    loading.value = false
-  }
-}
+// 从appSetting中获取知识库列表
+const knowledgeBases = computed(() => {
+  return (appSettingStore.appSettings.knowledgeBases || []).map((kb: KnowledgeBase) => ({
+    id: kb.id,
+    name: kb.name,
+    description: kb.description,
+    documentCount: kb.documentCount,
+    chunkCount: kb.documents?.reduce((total: number, doc: any) => total + (doc.chunks?.length || 0), 0) || 0,
+    createdAt: kb.createdAt
+  }))
+})
 
 const createKnowledgeBase = async () => {
   if (!newKnowledgeBase.value.name) return
   
   try {
     loading.value = true
-    await knowledgeApi.createKnowledgeBase(newKnowledgeBase.value)
-    await loadKnowledgeBases() // 重新加载列表
+    // 调用API创建知识库
+    const result = await knowledgeApi.createKnowledgeBase(newKnowledgeBase.value)
+    
+    // 创建成功后，知识库会自动添加到appSetting中（通过后端的AppSettingService）
+    // 重新初始化appSetting以获取最新数据
+    await appSettingStore.initialize()
     
     showCreateModal.value = false
     newKnowledgeBase.value = { name: '', description: '' }
@@ -170,8 +215,11 @@ const viewKnowledgeBase = (id: string) => {
   router.push(`/knowledge/${id}`)
 }
 
-onMounted(() => {
-  loadKnowledgeBases()
+onMounted(async () => {
+  // 确保appSetting已初始化
+  if (!appSettingStore.appSettings.knowledgeBases) {
+    await appSettingStore.initialize()
+  }
 })
 </script>
 

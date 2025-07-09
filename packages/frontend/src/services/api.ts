@@ -1,8 +1,11 @@
 import type {MCPConfig} from '../types/config';
 import {TransportAdapter, TransportType} from "../transports";
-import {type AppSetting,type ProviderId} from "../../../../share/type.ts";
+import {type Model, type ProviderId} from "../../../../share/type.ts";
+import type {AppSettings} from "../../../../share/appSettings.ts";
 
 export const API_BASE_URL = 'http://localhost:3001';
+
+
 
 export interface Capability {
     name: string;
@@ -17,69 +20,70 @@ export interface ConfigListItem {
 
 
 const transport = new TransportAdapter(TransportType.HTTP, {
-    prefix: 'config',
+    prefix: '',
     serverUrl: API_BASE_URL
 });
 
+
+
+const callAPI = async <T>(req: { method: string; payload: any }): Promise<T> => {
+    const res = await transport.invokeDirect(req);
+    if (!res.success) throw new Error(`请求失败: ${res.error}`);
+    return res.data;
+}
+
+// 获取应用配置
+export const getAppSetting = async (): Promise<AppSettings> =>   callAPI<AppSettings>({ method: '/config/getAppSetting', payload: {} });
+
+// 保存应用配置
+export const saveAppSetting = async (config: AppSettings): Promise<void> => callAPI<void>({ method: '/config/saveAppSetting', payload: config });
+
+// 获取模型配置
+export const getModels = async (providerId: ProviderId): Promise<Model[]> => callAPI<Model[]>({ method: '/config/getModels', payload: {providerId} });
+
+ 
+ 
 export class ConfigAPI {
-    async getModelConfig(): Promise<AppSetting> {
-        const req = {method: 'getAppSetting', payload: {}};
+    private async callAPI<T>(req: { method: string; payload: any }): Promise<T> {
         const res = await transport.invokeDirect(req);
-        if (!res.success) throw new Error(`获取模型配置失败: ${res.error}`);
-        return res.data;
-    }
-    async getModels(providerId: ProviderId): Promise<AppSetting> {
-        const req = {method: 'getModels', payload: {providerId}};
-        const res = await transport.invokeDirect(req);
-        if (!res.success) throw new Error(`获取模型配置失败: ${res.error}`);
+        if (!res.success) throw new Error(`请求失败: ${res.error}`);
         return res.data;
     }
 
-    async saveAppSetting(config: AppSetting): Promise<void> {
-        const req = {method: 'saveAppSetting', payload: config};
-        const res = await transport.invokeDirect(req);
-        if (!res.success) throw new Error(`保存模型配置失败: ${res.error}`);
+    async getModelConfig(): Promise<AppSettings> {
+        return this.callAPI({ method: 'getAppSetting', payload: {} });
+    }
+
+    async getModels(providerId: ProviderId): Promise<AppSettings> {
+        return this.callAPI({ method: 'getModels', payload: { providerId } });
+    }
+
+    async saveAppSetting(config: AppSettings): Promise<void> {
+        return this.callAPI({ method: 'saveAppSetting', payload: config });
     }
 
     async getConfigList(): Promise<ConfigListItem[]> {
-        const req = {method: 'list', payload: {}};
-        const res = await transport.invokeDirect(req);
-        if (!res.success) throw new Error(`获取配置列表失败: ${res.error}`);
-        return res.data;
+        return this.callAPI({ method: 'list', payload: {} });
     }
 
     async getConfigById(id: string): Promise<MCPConfig> {
-        const req = {method: 'getConfigById', payload: {id}};
-        const res = await transport.invokeDirect(req);
-        if (!res.success) throw new Error(`获取配置详情失败: ${res.error}`);
-        return res.data;
+        return this.callAPI({ method: 'getConfigById', payload: { id } });
     }
 
     async toggleMCPStatus(id: string): Promise<boolean> {
-        const req = {method: 'toggleMCPStatus', payload: {id}};
-        const res = await transport.invokeDirect(req);
-        if (!res.success) throw new Error(`切换MCP状态失败: ${res.error}`);
-        return res.data.isRunning;
+        return this.callAPI({ method: 'toggleMCPStatus', payload: { id } });
     }
 
     async capabilities(id: string): Promise<Capability[]> {
-        const req = {method: 'capabilities', payload: {id}};
-        const res = await transport.invokeDirect(req);
-        if (!res.success) throw new Error(`获取服务器能力列表失败: ${res.error}`);
-        return res.data;
+        return this.callAPI({ method: 'capabilities', payload: { id } });
     }
 
     async saveConfig(config: MCPConfig): Promise<void> {
-        const req = {method: 'saveConfig', payload: {config}};
-        const res = await transport.invokeDirect(req);
-        if (!res.success) throw new Error(`保存配置失败: ${res.error}`);
+        return this.callAPI({ method: 'saveConfig', payload: { config } });
     }
 
     async loadConfig(): Promise<MCPConfig> {
-        const req = {method: 'loadConfig', payload: {}};
-        const res = await transport.invokeDirect(req);
-        if (!res.success) throw new Error(`加载配置失败: ${res.error}`);
-        return res.data;
+        return this.callAPI({ method: 'loadConfig', payload: {} });
     }
 }
 

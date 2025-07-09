@@ -17,4 +17,39 @@ export interface KnowledgeDocument {
   content?: string;
   createdAt: string;
   type: string;
+  chunks?: Array<any>; // 文档的分块信息
+}
+
+
+
+export interface CreateKnowledgeBaseRequest {
+  name: string;
+  description?: string;
+  config?: any;
+}
+
+export interface KnowledgeBaseStats {
+  id: string;
+  name: string;
+  documentCount: number;
+  chunkCount: number;
+  config: any;
+}
+
+export interface KnowledgeBaseDetail {
+  id: string;
+  stats: {
+    documentCount: number;
+    chunkCount: number;
+    config: any;
+  };
+  documents: Array<{
+    id: string;
+    name: string;
+    type: string;
+    size: number;
+    chunks: number;
+    addedAt: string;
+    lastModified: string;
+  }>;
 }

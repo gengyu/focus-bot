@@ -24,8 +24,9 @@ export class RAGService {
   async ragPipeline(knowledgeBaseId: string, query: string): Promise<{ answer: string; sources: string[] }> {
     try {
       // 检查知识库是否存在
-      const knowledgeBases = this.knowledgeService.getAllKnowledgeBases();
-      if (!knowledgeBases.includes(knowledgeBaseId)) {
+      const knowledgeBases = await this.knowledgeService.getAllKnowledgeBases();
+      const knowledgeBaseExists = knowledgeBases.some(kb => kb.id === knowledgeBaseId);
+      if (!knowledgeBaseExists) {
         return {
           answer: '指定的知识库不存在',
           sources: []

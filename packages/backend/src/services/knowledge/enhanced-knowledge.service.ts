@@ -1,6 +1,7 @@
 import { FileParserService, ChunkingOptions, ParseResult } from '../FileParserService.ts';
 import { VectorStoreService } from './vector-store.service.ts';
-import { KnowledgeDocument } from '../../../../../share/knowledge.ts';
+import { KnowledgeDocument, KnowledgeBase } from '../../../../../share/knowledge.ts';
+import { AppSettingService } from '../AppSettingService.ts';
 import { Document } from 'langchain/document';
 import { RecursiveCharacterTextSplitter } from 'langchain/text_splitter';
 import { 
@@ -21,12 +22,14 @@ import { Singleton } from '../../decorators/Singleton';
 export class EnhancedKnowledgeService {
   private vectorStoreService: VectorStoreService;
   private fileParserService: FileParserService;
+  private appSettingService: AppSettingService;
   private knowledgeBases: Map<string, KnowledgeBaseConfig> = new Map();
   private documents: Map<string, Map<string, EnhancedKnowledgeDocument>> = new Map();
 
   constructor() {
     this.vectorStoreService = new VectorStoreService();
     this.fileParserService = FileParserService.getInstance();
+    this.appSettingService = new AppSettingService();
   }
 
   /**
@@ -34,6 +37,8 @@ export class EnhancedKnowledgeService {
    */
   async createKnowledgeBase(
     namespaceId: string,
+    name: string,
+    description: string = '',
     config: Partial<KnowledgeBaseConfig> = {}
   ): Promise<void> {
     const defaultConfig: KnowledgeBaseConfig = {
@@ -47,6 +52,18 @@ export class EnhancedKnowledgeService {
     const finalConfig = { ...defaultConfig, ...config };
     this.knowledgeBases.set(namespaceId, finalConfig);
     this.documents.set(namespaceId, new Map());
+
+    // 保存到AppSetting
+    const knowledgeBase: KnowledgeBase = {
+      id: namespaceId,
+      name,
+      description,
+      documentCount: 0,
+      createdAt: new Date().toISOString(),
+      documents: []
+    };
+    
+    await this.appSettingService.addKnowledgeBase(knowledgeBase);
   }
 
   /**
@@ -57,6 +74,10 @@ export class EnhancedKnowledgeService {
       await this.vectorStoreService.removeNamespace(namespaceId);
       this.knowledgeBases.delete(namespaceId);
       this.documents.delete(namespaceId);
+      
+      // 从AppSetting中删除
+      await this.appSettingService.removeKnowledgeBase(namespaceId);
+      
       return true;
     } catch (error) {
       console.error(`删除知识库失败: ${error}`);
@@ -151,6 +172,9 @@ export class EnhancedKnowledgeService {
         }
       };
       namespaceDocuments.set(document.id, enhancedDoc);
+
+      // 更新AppSetting中的知识库信息
+      await this.updateKnowledgeBaseInAppSetting(namespaceId);
 
       console.log(`文档 ${document.name} 已添加到知识库 ${namespaceId}，创建了 ${enhancedChunks.length} 个分块`);
 
@@ -268,6 +292,9 @@ export class EnhancedKnowledgeService {
         namespaceDocuments.delete(documentId);
       }
 
+      // 更新AppSetting中的知识库信息
+      await this.updateKnowledgeBaseInAppSetting(namespaceId);
+
       return true;
     } catch (error) {
       console.error(`删除文档失败: ${error}`);
@@ -307,8 +334,50 @@ export class EnhancedKnowledgeService {
   /**
    * 获取所有知识库
    */
-  getAllKnowledgeBases(): string[] {
+  async getAllKnowledgeBases(): Promise<KnowledgeBase[]> {
+    return await this.appSettingService.getKnowledgeBases();
+  }
+
+  /**
+   * 获取所有知识库ID
+   */
+  getAllKnowledgeBaseIds(): string[] {
     return Array.from(this.knowledgeBases.keys());
+  }
+
+  /**
+   * 更新AppSetting中的知识库信息
+   */
+  private async updateKnowledgeBaseInAppSetting(namespaceId: string): Promise<void> {
+    try {
+      const knowledgeBase = await this.appSettingService.getKnowledgeBase(namespaceId);
+      if (!knowledgeBase) {
+        return;
+      }
+
+      // 获取当前文档列表
+      const documents = this.getDocuments(namespaceId);
+      const knowledgeDocuments: KnowledgeDocument[] = documents.map(doc => ({
+        id: doc.id,
+        name: doc.name,
+        path: doc.path,
+        size: doc.size || 0,
+        content: doc.content,
+        createdAt: doc.metadata?.addedAt || new Date().toISOString(),
+        type: doc.type || 'unknown'
+      }));
+
+      // 更新知识库信息
+      const updatedKnowledgeBase: KnowledgeBase = {
+        ...knowledgeBase,
+        documentCount: documents.length,
+        documents: knowledgeDocuments
+      };
+
+      await this.appSettingService.updateKnowledgeBase(updatedKnowledgeBase);
+    } catch (error) {
+      console.error('更新知识库信息失败:', error);
+    }
   }
 
   /**

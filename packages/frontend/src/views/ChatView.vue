@@ -183,10 +183,10 @@ import {useConversationStore} from "../store/conversationStore.ts";
 import {toast} from "vue3-toastify";
 
 
-const {appSetting} = useAppSettingStore();
+const {appSettings} = useAppSettingStore();
 
 const models = computed<Model[]>(() => {
-  const models = appSetting?.providers?.filter(provider => provider.enabled) || []
+  const models = appSettings?.providers?.filter(provider => provider.enabled) || []
   return models.flatMap(provider => provider.models) || [];
 });
 

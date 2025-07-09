@@ -49,7 +49,7 @@ export const useConversationStore = defineStore<string, {
         (dialog) => dialog.id == conversation.value.activeDialogId
       );
       if (dialog && !dialog.model) {
-        const defaultModel = appSettingStore.appSetting?.providers?.[0].models?.[0];
+        const defaultModel = appSettingStore.appSettings?.providers?.[0].models?.[0];
         defaultModel && updateModel(defaultModel);
       }
     }
@@ -90,7 +90,7 @@ export const useConversationStore = defineStore<string, {
 
   const createDialog = async () => {
     const dialogId: DialogId = generateUUID();
-    const model = appSettingStore.appSetting?.providers?.[0]?.models?.[0];
+    const model = appSettingStore.appSettings?.providers?.[0]?.models?.[0];
     conversation.value.dialogs.unshift({
       id: dialogId,
       title: '新会话',

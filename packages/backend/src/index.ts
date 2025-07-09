@@ -8,6 +8,7 @@ import { ChatController } from './routes/chat';
 import { ConfigController } from './routes/config';
 import { DcoumentController } from './routes/fileparser.route.ts';
 import { KnowledgeController } from './routes/knowledge.route.ts';
+import { MigrationService } from './services/MigrationService.ts';
 // import {RAGController} from './routes/rag.routes';
 
 const app = new Koa();
@@ -37,10 +38,30 @@ app.use(decoratorRouter.routes()).use(decoratorRouter.allowedMethods());
 // 静态文件服务
 // app.use(require('koa-static')(path.join(process.cwd(), 'data')));
 
-// 启动服务器
-console.log('running on import.meta.env.PROD', process.env.PROD);
+// 数据迁移和启动服务器
+async function startServer() {
+  try {
+    // 执行数据迁移
+    const migrationService = new MigrationService();
+    if (migrationService.needsMigration()) {
+      console.log('检测到需要数据迁移，开始执行...');
+      await migrationService.runMigrations();
+      console.log('数据迁移完成');
+    } else {
+      console.log('数据已是最新版本，跳过迁移');
+    }
 
-app.listen(process.env.PROD || 3001);
-console.log('running on http://localhost:3001');
+    // 启动服务器
+    console.log('running on import.meta.env.PROD', process.env.PROD);
+    app.listen(process.env.PROD || 3001);
+    console.log('running on http://localhost:3001');
+  } catch (error) {
+    console.error('服务启动失败:', error);
+    process.exit(1);
+  }
+}
+
+// 启动应用
+startServer();
 
 export const viteNodeApp = app;

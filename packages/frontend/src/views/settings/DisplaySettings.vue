@@ -53,8 +53,8 @@
 
 <script setup lang="ts">
 import { ref, onMounted, watch } from 'vue';
-import { Switch } from '@/components/ui';
-import { themeManager } from '@/utils/theme';
+import { Switch } from '../components/ui';
+import { themeManager } from '../utils/theme';
 
 const currentTheme = ref(themeManager.getTheme());
 const followSystem = ref(!localStorage.getItem('theme'));
@@ -77,13 +77,6 @@ watch(followSystem, (value) => {
 
 onMounted(() => {
   // 监听主题变化
-  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
-    if (followSystem.value) {
-      const theme = e.matches ? 'dark' : 'light';
-      themeManager.setTheme(theme);
-      currentTheme.value = theme;
-    }
-  });
 });
 </script>
 

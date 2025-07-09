@@ -3,7 +3,7 @@
     <!-- 左侧服务商抽屉导航 -->
     <div class="w-56 border-r pr-4 overflow-y-auto">
       <!-- 启用按钮 -->
-      <div v-for="(provider, idx) in  appSetting.providers" :key="provider.id"
+      <div v-for="(provider, idx) in  appSettings.providers" :key="provider.id"
            @click="handlerSelectProvider(idx)"
            :class="['cursor-pointer flex items-center px-4 py-2 rounded-lg mb-2 transition-all duration-200 ease-in-out',
           selectedProviderIdx === idx ? 'bg-gray-100 shadow-md transform scale-102' :
@@ -108,7 +108,7 @@
             <div v-for="model in currentProvider.models" :key="model.id"
                  class="flex items-center justify-between p-2 bg-base-200 rounded-lg">
               <div class="flex items-center space-x-4">
-                <input type="checkbox"          autocomplete="off" v-model="model.enabled" class="checkbox checkbox-sm"/>
+                <input type="checkbox" autocomplete="off" v-model="model.enabled" class="checkbox checkbox-sm"/>
                 <div>
                   <div class="font-medium">{{ model.name }}</div>
                   <div class="text-sm text-gray-500">{{ model.description }}</div>
@@ -118,14 +118,7 @@
             </div>
             <!-- 添加新模型按钮 -->
             <button
-                @click="addNewModel({
-                id: 'new-model-' + Date.now(),
-                name: '新模型',
-                description: '自定义模型',
-                size: '未知',
-                enabled: true,
-                providerId: currentProvider.id,
-              })"
+                @click="addNewModel"
                 class="btn btn-sm btn-outline w-full mt-2"
             >
               添加新模型
@@ -136,7 +129,6 @@
       <div v-else class="text-gray-400 text-center mt-20">请选择左侧服务商</div>
       <!-- 操作按钮 -->
       <div class="flex justify-end mt-6">
-        <button @click="resetSettings" class="btn btn-outline mr-2">重置</button>
         <button @click="handleSaveSettings" class="btn btn-primary">保存设置</button>
       </div>
     </div>
@@ -144,15 +136,14 @@
 </template>
 
 <script setup lang="ts">
-import {ref} from 'vue';
+import {ref, watch} from 'vue';
 import {Combobox, ComboboxButton, ComboboxInput, ComboboxOption, ComboboxOptions, Switch} from '@headlessui/vue';
 import {ArrowPathIcon, ChevronUpDownIcon} from '@heroicons/vue/20/solid';
 // import { useToast } from 'vue-toastification';
 import {toast} from 'vue-sonner'
 import type {Model, ProviderConfig, ProviderId} from "../../../../../share/type.ts";
-import {useAppSettingStore} from '@/store/appSettingStore.ts';
-import log from "loglevel";
-import {configAPI} from "@/services/api.ts";
+import {useAppSettingStore} from '../../store/appSettingStore.ts';
+import {getModels} from "../../services/api.ts";
 
 
 const showPassword = ref(false);
@@ -181,21 +172,27 @@ const getDefaultApiUrl = (providerId: string): string => {
   }
 };
 
-const {appSetting, resetSettings, saveSettings} = useAppSettingStore();
+const {appSettings, saveSettings} = useAppSettingStore();
 
 
 const selectedProviderIdx = ref(0);
 
-const currentProvider = ref<ProviderConfig>(appSetting.providers[selectedProviderIdx.value])
+const currentProvider = ref<ProviderConfig>(appSettings.providers[selectedProviderIdx.value])
+if (!currentProvider.value) {watch(() => appSettings.providers, () => {
+    if (!currentProvider.value) {
+      currentProvider.value = appSettings.providers[selectedProviderIdx.value];
+    }
+  }, {once: true});
+}
 
 
 const handlerSelectProvider = (idx: number) => {
   selectedProviderIdx.value = idx;
-  currentProvider.value = appSetting.providers[selectedProviderIdx.value];
+  currentProvider.value = appSettings.providers[selectedProviderIdx.value];
 }
 const updateProvider = async (providerId: string, newProvider: Partial<ProviderConfig>) => {
 
-  appSetting.providers = appSetting.providers?.map((provider: ProviderConfig) => {
+  appSettings.providers = appSettings.providers?.map((provider: ProviderConfig) => {
     if (provider.id === providerId) {
       return {
         ...provider,
@@ -226,133 +223,16 @@ const handleSaveSettings = () => {
 }
 
 
-// const currentProvider = computed(() => providers.value[selectedProviderIdx.value]);
-// ... existing code ...
-// const providers = ref<Provider[]>([]);
-
-// 从后端获取模型列表
-const fetchModels = async (providerId: string, provider?: ProviderConfig) => {
-  try {
-    if (!provider) throw new Error('未找到服务商');
-    const apiUrl = provider.apiUrl;
-    const apiKey = provider.apiKey;
-    let models = [];
-    switch (providerId) {
-      case 'ollama': {
-        // Ollama 本地API: /api/tags
-        const resp = await fetch(apiUrl.replace(/\/v1(\/)*?/, '') + '/api/tags');
-        if (!resp.ok) throw new Error('Ollama 获取模型失败');
-        const data = await resp.json();
-        models = (data.models || data.tags || []).map((item: any) => ({
-          id: item.name || item.tag,
-          name: item.name || item.tag,
-          description: 'Ollama 本地模型',
-          size: item.size || '未知',
-          enabled: true
-        }));
-        break;
-      }
-      case 'openai': {
-        // OpenAI: /models 需鉴权
-        const resp = await fetch(apiUrl.replace(/\/$/, '') + '/models', {
-          headers: {'Authorization': `Bearer ${apiKey}`}
-        });
-        if (!resp.ok) throw new Error('OpenAI 获取模型失败');
-        const data = await resp.json();
-        models = (data.data || []).map((item: any) => ({
-          id: item.id,
-          name: item.id,
-          description: 'OpenAI 模型',
-          size: '-',
-          enabled: true
-        }));
-        break;
-      }
-      case 'gemini': {
-        // Gemini: /v1/models 需鉴权
-        const resp = await fetch(apiUrl.replace(/\/$/, '') + '/v1/models', {
-          headers: apiKey ? {'x-goog-api-key': apiKey} : {}
-        });
-        if (!resp.ok) throw new Error('Gemini 获取模型失败');
-        const data = await resp.json();
-        models = (data.models || []).map((item: any) => ({
-          id: item.name,
-          name: item.displayName || item.name,
-          description: item.description || 'Gemini 模型',
-          size: '-',
-          enabled: true
-        }));
-        break;
-      }
-      case 'kimi': {
-        // Kimi: /models 需鉴权
-        const resp = await fetch(apiUrl.replace(/\/$/, '') + '/models', {
-          headers: apiKey ? {'Authorization': `Bearer ${apiKey}`} : {}
-        });
-        if (!resp.ok) throw new Error('Kimi 获取模型失败');
-        const data = await resp.json();
-        models = (data.data || []).map((item: any) => ({
-          id: item.id,
-          name: item.name || item.id,
-          description: item.description || 'Kimi 模型',
-          size: '-',
-          enabled: true
-        }));
-        break;
-      }
-      case 'doubao': {
-        // 豆包: /models 需鉴权
-        const resp = await fetch(apiUrl.replace(/\/$/, '') + '/models', {
-          headers: apiKey ? {'Authorization': `Bearer ${apiKey}`} : {}
-        });
-        if (!resp.ok) throw new Error('豆包 获取模型失败');
-        const data = await resp.json();
-        models = (data.data || []).map((item: any) => ({
-          id: item.id,
-          name: item.name || item.id,
-          description: item.description || '豆包模型',
-          size: '-',
-          enabled: true
-        }));
-        break;
-      }
-      case 'aliyun': {
-        // 阿里云千问: /models 需鉴权
-        const resp = await fetch(apiUrl.replace(/\/$/, '') + '/models', {
-          headers: apiKey ? {'Authorization': `Bearer ${apiKey}`} : {}
-        });
-        if (!resp.ok) throw new Error('阿里云千问 获取模型失败');
-        const data = await resp.json();
-        models = (data.data || data.models || []).map((item: any) => ({
-          id: item.id,
-          name: item.name || item.id,
-          description: item.description || '通义千问模型',
-          size: '-',
-          enabled: true
-        }));
-        break;
-      }
-      default:
-        throw new Error('暂不支持该服务商');
-    }
-    return models;
-  } catch (error: any) {
-    log.error("Failed to fetch model list:", error);
-    toast.error('获取模型列表失败: ' + error.message);
-    return [];
-  }
-};
-
 // 刷新当前供应商的模型列表
 const refreshModels = async () => {
   const providerId = currentProvider.value?.id;
 
   if (!providerId) return;
-  const models: Model[] = await configAPI.getModels(providerId);
+  const models: Model[] = await getModels(providerId);
   if (models.length > 0) {
     currentProvider.value.models = models.map(model => ({
       ...model,
-      providerId:  providerId,
+      providerId: providerId,
       enabled: true
     }));
     // await saveSettings();
@@ -361,22 +241,16 @@ const refreshModels = async () => {
 };
 
 // 添加新模型
-const addNewModel = async (model: Model) => {
+const addNewModel = async () => {
   if (!currentProvider.value) return;
-  try {
-    const response = await fetch(`/api/providers/${currentProvider.value.id}/models`, {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify(model)
-    });
-    if (!response.ok) throw new Error('添加模型失败');
-    currentProvider.value.models.push({...model, enabled: true});
-    await saveSettings();
-    toast.success('模型添加成功');
-  } catch (error) {
-    log.error("Failed to add model:", error);
-    toast.error('添加模型失败');
-  }
+  currentProvider.value.models.push({
+    id: 'new-model-' + Date.now(),
+    name: '新模型',
+    description: '自定义模型',
+    size: '未知',
+    enabled: true,
+    providerId: currentProvider.value.id,
+  });
 };
 
 

@@ -52,7 +52,7 @@ export class HTTPTransport implements Transport {
       }
       
       const method = this.config.prefix ? `${this.config.prefix}/${request.method}` : request.method;
-      const response = await this.client.post('/invoke/' + method, data, {headers});
+      const response = await this.client.post('/invoke' + method, data, {headers});
 
       return {
         success: response.data.code === 0,

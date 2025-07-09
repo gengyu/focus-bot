@@ -7,11 +7,11 @@
                      class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600 transition-colors">
           返回
         </router-link>
-        <div v-if="knowledgeBase">
-          <h1 class="text-2xl font-bold text-gray-900">{{ knowledgeBase.id }}</h1>
+        <div v-if="knowledgeBaseInfo">
+          <h1 class="text-2xl font-bold text-gray-900">{{ knowledgeBaseInfo.name }}</h1>
           <div class="flex items-center space-x-4 text-sm text-gray-500 mt-1">
-            <span>{{ knowledgeBase.stats.documentCount }} 个文档</span>
-            <span>{{ knowledgeBase.stats.chunkCount }} 个片段</span>
+            <span>{{ knowledgeBaseInfo.documentCount }} 个文档</span>
+            <span>{{ knowledgeBaseInfo.documents?.reduce((total: number, doc: any) => total + (doc.chunks?.length || 0), 0) || 0 }} 个片段</span>
           </div>
         </div>
       </div>
@@ -167,17 +167,24 @@
 <script setup lang="ts">
 import { computed, ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { knowledgeApi } from '@/services/knowledgeApi'
-import type { KnowledgeBaseDetail, SearchResult, SearchResponse } from '@/services/knowledgeApi'
+import { useAppSettingStore } from '../../store/appSettingStore.ts'
+import { knowledgeApi } from '../../services/knowledgeApi.ts'
+import type { KnowledgeBaseDetail, SearchResult, SearchResponse } from '../../services/knowledgeApi.ts'
 import { debounce } from 'lodash'
 
 const route = useRoute()
 const router = useRouter()
+const appSettingStore = useAppSettingStore()
 
 const knowledgeBaseId = computed(() => route.params.id as string)
 const knowledgeBase = ref<KnowledgeBaseDetail | null>(null)
 const loading = ref(false)
 const uploading = ref(false)
+
+// 从appSetting中获取知识库基本信息
+const knowledgeBaseInfo = computed(() => {
+  return appSettingStore.getKnowledgeBase(knowledgeBaseId.value)
+})
 
 // 搜索相关
 const searchQuery = ref('')
@@ -319,7 +326,13 @@ const locateInDocument = (result: SearchResult) => {
   console.log('定位到文档:', result.metadata.documentName, '位置:', result.metadata.startChar, '-', result.metadata.endChar)
 }
 
-onMounted(() => {
+onMounted(async () => {
+  // 确保appSetting已初始化
+  if (!appSettingStore.appSettings.knowledgeBases) {
+    await appSettingStore.initialize()
+  }
+  
+  // 仍然需要加载详细信息用于文档操作
   loadKnowledgeBase()
 })
 

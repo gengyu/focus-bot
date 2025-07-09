@@ -32,34 +32,26 @@ export class KnowledgeController {
   @Post('/create')
   async createKnowledgeBase(
     @Body('name') name: string,
-    @Body('description') description?: string,
-    @Body('config') config?: any
+    @Body('description') description?: string
   ) {
     try {
-      if (!name || name.trim().length === 0) {
+      if (!name) {
         return ResultHelper.fail('知识库名称不能为空', null);
       }
 
-      // 生成知识库ID
-      const namespaceId = `kb_${name.replace(/[^a-zA-Z0-9_-]/g, '_')}_${Date.now()}`;
+      const namespaceId = `kb_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
       
-      // 创建知识库
-      await this.knowledgeService.createKnowledgeBase(namespaceId, {
-        name,
-        description,
-        ...config
-      });
-
+      await this.knowledgeService.createKnowledgeBase(namespaceId, name, description || '');
+      
       return ResultHelper.success({
         id: namespaceId,
         name,
-        description,
-        createdAt: new Date().toISOString(),
+        description: description || '',
         documentCount: 0,
-        config: this.knowledgeService.getKnowledgeBaseStats(namespaceId).config
+        createdAt: new Date().toISOString()
       });
     } catch (error) {
-      return ResultHelper.fail(`创建知识库失败: ${(error as Error).message}`, null);
+      return ResultHelper.fail(`创建知识库失败: ${error instanceof Error ? error.message : '未知错误'}`, null);
     }
   }
 
@@ -69,21 +61,23 @@ export class KnowledgeController {
   @Get('/list')
   async getKnowledgeBases() {
     try {
-      const knowledgeBases = this.knowledgeService.getAllKnowledgeBases();
-      const result = knowledgeBases.map(id => {
-        const stats = this.knowledgeService.getKnowledgeBaseStats(id);
+      const knowledgeBases = await this.knowledgeService.getAllKnowledgeBases();
+      const result = knowledgeBases.map(kb => {
+        const stats = this.knowledgeService.getKnowledgeBaseStats(kb.id);
         return {
-          id,
-          name: id, // 可以从配置中获取实际名称
-          documentCount: stats.documentCount,
+          id: kb.id,
+          name: kb.name,
+          description: kb.description,
+          documentCount: kb.documentCount,
           chunkCount: stats.chunkCount,
+          createdAt: kb.createdAt,
           config: stats.config
         };
       });
       
       return ResultHelper.success(result);
     } catch (error) {
-      return ResultHelper.fail(`获取知识库列表失败: ${(error as Error).message}`, null);
+      return ResultHelper.fail(`获取知识库列表失败: ${error instanceof Error ? error.message : '未知错误'}`, null);
     }
   }
 

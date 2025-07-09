@@ -1,16 +1,18 @@
 import {PersistenceOptions, PersistenceService} from './PersistenceService.ts';
 import path from "path";
-import {AppSetting, ProviderConfig} from "../../../../share/type";
+import {ProviderConfig} from "../../../../share/type";
+import {KnowledgeBase} from "../../../../share/knowledge";
 import {Singleton} from '../decorators/Singleton';
 import { CryptoUtil } from '../utils/CryptoUtil';
+import {AppSettings} from "../../../../share/appSettings.ts";
 
 @Singleton()
 export class AppSettingService {
 
-  private persistenceService: PersistenceService<AppSetting>;
+  private persistenceService: PersistenceService<AppSettings>;
 
   constructor(options?: PersistenceOptions) {
-    this.persistenceService = new PersistenceService<AppSetting>({
+    this.persistenceService = new PersistenceService<AppSettings>({
       dataDir: options?.dataDir || path.join(process.cwd(), 'data'),
       configFileName: 'settting.json',
     });
@@ -22,7 +24,7 @@ export class AppSettingService {
     return config?.providers;
   }
 
-  async getAppSetting(): Promise<AppSetting> {
+  async getAppSetting(): Promise<AppSettings> {
     try {
       const setting = await this.persistenceService.loadData() ?? {
         providers: [],
@@ -54,10 +56,10 @@ export class AppSettingService {
     }
   }
 
-  async saveAppSetting(configs: AppSetting): Promise<void> {
+  async saveAppSetting(configs: AppSettings): Promise<void> {
     try {
       // 深拷贝配置对象，避免修改原始数据
-      const configsToSave:AppSetting = JSON.parse(JSON.stringify(configs));
+      const configsToSave:AppSettings = JSON.parse(JSON.stringify(configs));
 
       configsToSave.providers.forEach((provider) => {
         // 加密apiKey
@@ -71,6 +73,11 @@ export class AppSettingService {
         })
       })
 
+      // 确保knowledgeBases字段存在
+      if (!configsToSave.knowledgeBases) {
+        configsToSave.knowledgeBases = [];
+      }
+
       await this.persistenceService.saveData(configsToSave);
     } catch (error) {
       if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
@@ -78,6 +85,83 @@ export class AppSettingService {
       }
       throw new Error(`保存应用设置失败: ${error instanceof Error ? error.message : '未知错误'}`);
     }
+  }
+
+  /**
+   * 获取知识库列表
+   */
+  async getKnowledgeBases(): Promise<KnowledgeBase[]> {
+    const setting = await this.getAppSetting();
+    return setting.knowledgeBases || [];
+  }
+
+  /**
+   * 添加知识库
+   */
+  async addKnowledgeBase(knowledgeBase: KnowledgeBase): Promise<void> {
+    const setting = await this.getAppSetting();
+    if (!setting.knowledgeBases) {
+      setting.knowledgeBases = [];
+    }
+    
+    // 检查是否已存在相同ID的知识库
+    const existingIndex = setting.knowledgeBases.findIndex(kb => kb.id === knowledgeBase.id);
+    if (existingIndex >= 0) {
+      // 更新现有知识库
+      setting.knowledgeBases[existingIndex] = knowledgeBase;
+    } else {
+      // 添加新知识库
+      setting.knowledgeBases.push(knowledgeBase);
+    }
+    
+    await this.saveAppSetting(setting);
+  }
+
+  /**
+   * 删除知识库
+   */
+  async removeKnowledgeBase(knowledgeBaseId: string): Promise<boolean> {
+    const setting = await this.getAppSetting();
+    if (!setting.knowledgeBases) {
+      return false;
+    }
+    
+    const initialLength = setting.knowledgeBases.length;
+    setting.knowledgeBases = setting.knowledgeBases.filter(kb => kb.id !== knowledgeBaseId);
+    
+    if (setting.knowledgeBases.length < initialLength) {
+      await this.saveAppSetting(setting);
+      return true;
+    }
+    
+    return false;
+  }
+
+  /**
+   * 更新知识库
+   */
+  async updateKnowledgeBase(knowledgeBase: KnowledgeBase): Promise<boolean> {
+    const setting = await this.getAppSetting();
+    if (!setting.knowledgeBases) {
+      return false;
+    }
+    
+    const index = setting.knowledgeBases.findIndex(kb => kb.id === knowledgeBase.id);
+    if (index >= 0) {
+      setting.knowledgeBases[index] = knowledgeBase;
+      await this.saveAppSetting(setting);
+      return true;
+    }
+    
+    return false;
+  }
+
+  /**
+   * 获取单个知识库
+   */
+  async getKnowledgeBase(knowledgeBaseId: string): Promise<KnowledgeBase | undefined> {
+    const setting = await this.getAppSetting();
+    return setting.knowledgeBases?.find(kb => kb.id === knowledgeBaseId);
   }
 }
 
