@@ -5,6 +5,7 @@ import {chatAPI} from "../services/chatApi.ts";
 import {useMessageStore} from "./messageStore.ts";
 import {generateUUID} from "../utils/uuid.ts";
 import {useAppSettingStore} from "./appSettingStore.ts";
+import {getDialogList, saveDialogList} from "../services/api.ts";
 
 // 创建单例实例
 
@@ -40,10 +41,33 @@ export const useConversationStore = defineStore<string, {
   const messaageStore = useMessageStore();
   const appSettingStore = useAppSettingStore();
 
+  /**
+   * 创建新对话
+   * @returns 新对话对象
+   */
+
+  const createDialog = async () => {
+    const dialogId: DialogId = generateUUID();
+    const model = appSettingStore.appSettings?.providers?.[0]?.models?.[0];
+    conversation.value.dialogs.unshift({
+      id: dialogId,
+      title: '新会话',
+      timestamp: Date.now(),
+      conversationId: conversation.value.id,
+      model,
+    })
+    conversation.value.activeDialogId = dialogId;
+    await saveDialogList(conversation.value);
+    return dialogId;
+  }
+
   const initialize = async () => {
-    const dialogState = await chatAPI.getDialogList()
+    const dialogState = await getDialogList()
     conversation.value.dialogs = dialogState.dialogs || []
     conversation.value.activeDialogId = dialogState.activeDialogId ?? '';
+    if( conversation.value.dialogs.length <=0){
+      conversation.value.activeDialogId = await createDialog();
+    }
     if (conversation.value.activeDialogId) {
       const dialog = conversation.value.dialogs.find(
         (dialog) => dialog.id == conversation.value.activeDialogId
@@ -53,6 +77,7 @@ export const useConversationStore = defineStore<string, {
         defaultModel && updateModel(defaultModel);
       }
     }
+
     await messaageStore.refreshChatHistory(dialogState.activeDialogId);
   }
 
@@ -83,25 +108,7 @@ export const useConversationStore = defineStore<string, {
   }
 
 
-  /**
-   * 创建新对话
-   * @returns 新对话对象
-   */
 
-  const createDialog = async () => {
-    const dialogId: DialogId = generateUUID();
-    const model = appSettingStore.appSettings?.providers?.[0]?.models?.[0];
-    conversation.value.dialogs.unshift({
-      id: dialogId,
-      title: '新会话',
-      timestamp: Date.now(),
-      conversationId: conversation.value.id,
-      model,
-    })
-    conversation.value.activeDialogId = dialogId;
-    await chatAPI.saveDialogList(conversation.value);
-    return dialogId;
-  }
 
   /**
    * 删除对话

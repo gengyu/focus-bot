@@ -33,7 +33,8 @@
                 'hover:bg-[#e0e7ef] hover:text-[#2563eb] hover:font-semibold': conversation.activeDialogId !== chat.id
               }"
             >
-              <div class="flex-1 flex items-center shrink-0 text-ellipsis overflow-hidden" @click="handlerSelectChat(chat.id)">
+              <div class="flex-1 flex items-center shrink-0 text-ellipsis overflow-hidden"
+                   @click="handlerSelectChat(chat.id)">
                 <input v-if="isEditing && chat.id == editDialog.id"
                        v-model="editDialog.title"
                        @blur="saveTitle()"
@@ -173,7 +174,7 @@
 
 <script setup lang="ts">
 import ChatWindow from '../components/ChatWindow.vue';
-import {computed, nextTick, onMounted,onBeforeUnmount, ref} from 'vue';
+import {computed, nextTick, onMounted, onBeforeUnmount, ref} from 'vue';
 import {Listbox, ListboxButton, ListboxOption, ListboxOptions} from '@headlessui/vue'
 import {CheckIcon, ChevronUpDownIcon} from '@heroicons/vue/20/solid'
 import {useAppSettingStore} from "../store/appSettingStore.js";
@@ -190,7 +191,10 @@ const models = computed<Model[]>(() => {
   return models.flatMap(provider => provider.models) || [];
 });
 
-const {conversation, updateModel, setActiveDialog, createDialog, deleteDialog, updateDialog} = useConversationStore();
+const {
+  conversation, updateModel, setActiveDialog, createDialog, deleteDialog, updateDialog,
+  initialize,
+} = useConversationStore();
 
 
 // 设置 model
@@ -202,23 +206,13 @@ const selectedModel = ref<Model>(models.value[0] ? models.value[0] : {
   size: '',
   enabled: false,
 });
-onMounted(() => {
+onMounted(async () => {
+  await initialize()
   const activeDialog = conversation.dialogs.find(dialog => dialog.id === conversation.activeDialogId);
-  if(activeDialog?.model){
+  if (activeDialog?.model) {
     selectedModel.value = activeDialog?.model;
   }
 })
-
-
-
-// watch(() => conversation.activeDialogId, () => {
-//   const activeDialog = conversation.dialogs.find(dialog => dialog.id === conversation.activeDialogId);
-//   if (activeDialog?.model) {
-//     selectedModel.value = activeDialog.model!;
-//   } else {
-//     if (models.value.length > 0) selectedModel.value = models.value[0];
-//   }
-// });
 
 
 // 监听model变化，更新activeDialog.model
@@ -227,10 +221,10 @@ const handlerSelectModel = async () => {
 }
 
 const handlerSelectChat = async (dailogId: DialogId) => {
-  if(dailogId === conversation.activeDialogId) return;
+  if (dailogId === conversation.activeDialogId) return;
   await setActiveDialog(dailogId);
   const activeDialog = conversation.dialogs.find(dialog => dialog.id === conversation.activeDialogId);
-    if (activeDialog?.model) {
+  if (activeDialog?.model) {
     selectedModel.value = activeDialog.model!;
   } else {
     if (models.value.length > 0) selectedModel.value = models.value[0];
@@ -247,15 +241,15 @@ const messageContainer = ref<HTMLElement | undefined>(undefined);
 const isUserScrolling = ref(false);
 const isAutoScrolling = ref(false);
 
-const handlerScroll = (arg?:{force:boolean}) => {
-  if(arg?.force){
+const handlerScroll = (arg?: { force: boolean }) => {
+  if (arg?.force) {
     isUserScrolling.value = false;
   }
 
   // 手动触发，不触发自动滚动
-  if(isUserScrolling.value) return;
+  if (isUserScrolling.value) return;
 
-  if (messageContainer.value ) {
+  if (messageContainer.value) {
     const container: HTMLElement = messageContainer.value;
     const documentHeight = container.scrollHeight;   // 获取页面总高度
     const scrollTop = container.scrollTop;  // 获取当前滚动距离
@@ -336,9 +330,6 @@ onMounted(() => {
     container.removeEventListener('scrollend', handleScrollEnd);
   });
 });
-
-
-
 
 
 // 计算分组的聊天列表

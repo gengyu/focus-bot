@@ -1,7 +1,14 @@
 import type {MCPConfig} from '../types/config';
 import {TransportAdapter, TransportType} from "../transports";
-import {type Model, type ProviderId} from "../../../../share/type.ts";
+import {
+    type ChatMessage,
+    type Conversation,
+    type DialogId,
+    type Model,
+    type ProviderId
+} from "../../../../share/type.ts";
 import type {AppSettings} from "../../../../share/appSettings.ts";
+import log from "loglevel";
 
 export const API_BASE_URL = 'http://localhost:3001';
 
@@ -40,6 +47,14 @@ export const saveAppSetting = async (config: AppSettings): Promise<void> => call
 
 // 获取模型配置
 export const getModels = async (providerId: ProviderId): Promise<Model[]> => callAPI<Model[]>({ method: '/config/getModels', payload: {providerId} });
+
+
+
+export const saveDialogList = async (dialog: Conversation) =>    callAPI({ method: '/chat/saveDialogList', payload: dialog })
+
+export const getDialogList = async () =>    callAPI<Conversation>({ method: '/chat/getDialogList',payload: {}})
+
+export const getChatHistory = async (chatId: DialogId): Promise<ChatMessage[]> =>    callAPI<ChatMessage[]>({ method: '/chat/getChatHistory', payload: {chatId} })
 
  
  

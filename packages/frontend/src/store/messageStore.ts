@@ -4,6 +4,7 @@ import {type ChatMessage, type DialogId} from "../../../../share/type.ts";
 import {chatAPI} from "../services/chatApi.ts";
 import {generateUUID4} from "../utils/uuid.ts";
 import type {ChatOptions} from "../../../../share/type.ts";
+import {getChatHistory} from "../services/api.ts";
 
 // 创建单例实例
 // const contextManager = new ContextManager();
@@ -122,7 +123,7 @@ export const useMessageStore = defineStore<string, {
    */
   const refreshChatHistory = async (dialogId: DialogId) => {
     if (messages.value[dialogId]) return;
-    messages.value[dialogId] = await chatAPI.getChatHistory(dialogId);
+    messages.value[dialogId] = await getChatHistory(dialogId);
   }
 
   return {
