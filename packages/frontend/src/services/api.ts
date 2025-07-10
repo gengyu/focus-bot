@@ -9,6 +9,7 @@ import {
 	type ProviderId
 } from "../../../../share/type.ts";
 import type {AppSettings} from "../../../../share/appSettings.ts";
+import type {KnowledgeDocument} from "../../../../share/knowledge.ts";
 
 export const API_BASE_URL = 'http://localhost:3001';
 
@@ -31,13 +32,13 @@ const transport = new TransportAdapter(TransportType.HTTP, {
 });
 
 
-const callAPI = async <T>(req: { method: string; payload: any }): Promise<T> => {
+export const callAPI = async <T>(req: { method: string; payload: any }): Promise<T> => {
 	const res = await transport.invokeDirect(req);
 	if (!res.success) throw new Error(`请求失败: ${res.error}`);
 	return res.data;
 }
 
-const callStreamAPI = (req: {
+export const callStreamAPI = (req: {
 	method: string;
 	payload: any
 }): [abort: (reason?: any) => void, ReadableStream<ChatMessage>] => {
@@ -82,6 +83,19 @@ export const getChatHistory = async (chatId: DialogId): Promise<ChatMessage[]> =
 export const sendChatMessage = (message: ChatMessage, chatOptions: ChatOptions, resendId?: string) => {
 	return callStreamAPI({method: '/chat/sendMessage', payload: {message, chatOptions, resendId}})
 }
+
+
+// 上传文档
+export const fileParserUpload =(files: File[])=> {
+	const formData = new FormData();
+	files.forEach(file => {
+		formData.append('files', file);
+	});
+	return callAPI<KnowledgeDocument[]>({ method: '/fileParser/upload/documents', payload: formData })
+}
+
+
+
 
 
 export class ConfigAPI {

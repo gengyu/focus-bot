@@ -14,7 +14,7 @@ import path from "path";
  * 知识库控制器
  * 提供知识库的创建、文档上传、搜索等功能
  */
-@Controller('/api/knowledge')
+@Controller('/invoke/api/knowledge')
 export class KnowledgeController {
   private knowledgeService: EnhancedKnowledgeService;
   private documentService: DocumentService;
@@ -133,8 +133,8 @@ export class KnowledgeController {
       }
 
       // 确保知识库存在
-      const knowledgeBases = this.knowledgeService.getAllKnowledgeBases();
-      if (!knowledgeBases.includes(namespaceId)) {
+      const knowledgeBases =await this.knowledgeService.getAllKnowledgeBases();
+      if (!knowledgeBases.some(kb => kb.id === namespaceId)) {
         return ResultHelper.fail('知识库不存在', null);
       }
 
@@ -158,11 +158,11 @@ export class KnowledgeController {
             type: path.extname(file.originalname).toLowerCase().replace('.', ''),
             size: file.size,
             createdAt: new Date().toISOString(),
-            metadata: {
-              originalName: file.originalname,
-              mimeType: file.mimetype,
-              uploadedAt: new Date().toISOString()
-            }
+            // metadata: {
+            //   originalName: file.originalname,
+            //   mimeType: file.mimetype,
+            //   uploadedAt: new Date().toISOString()
+            // }
           };
 
           // 添加到知识库
@@ -229,8 +229,8 @@ export class KnowledgeController {
       }
 
       // 确保知识库存在
-      const knowledgeBases = this.knowledgeService.getAllKnowledgeBases();
-      if (!knowledgeBases.includes(namespaceId)) {
+      const knowledgeBases =  await this.knowledgeService.getAllKnowledgeBases();
+      if (!knowledgeBases.some(kb => kb.id === namespaceId)) {
         return ResultHelper.fail('知识库不存在', null);
       }
 

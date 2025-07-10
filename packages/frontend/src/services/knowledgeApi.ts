@@ -1,4 +1,4 @@
-import {API_BASE_URL} from './api';
+import {API_BASE_URL, callAPI} from './api';
 import {TransportAdapter, type TransportRequest, TransportType} from "../transports";
 import type {KnowledgeBase} from "../../../../share/knowledge.ts";
 
@@ -78,6 +78,30 @@ export interface ChatResponse {
   answer: string;
   sources: SearchResult[];
   context: string[];
+}
+
+// 创建文档
+export const knowledgeUploadDocuments =(
+  namespaceId: string,
+  files: File[],
+  options?: {
+    chunkSize?: number;
+    chunkOverlap?: number;
+  }
+)=> {
+  const formData = new FormData();
+  files.forEach(file => {
+    formData.append('files', file);
+  });
+  formData.append('namespaceId', namespaceId);
+  if (options?.chunkSize) {
+    formData.append('chunkSize', options.chunkSize.toString());
+  }
+  if (options?.chunkOverlap) {
+    formData.append('chunkOverlap', options.chunkOverlap.toString());
+  }
+
+  return callAPI({ method: '/api/knowledge/upload', payload: formData })
 }
 
 export class KnowledgeApi {

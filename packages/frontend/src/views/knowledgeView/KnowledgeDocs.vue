@@ -3,10 +3,10 @@
     <!-- 头部导航 -->
     <div class="flex justify-between items-center mb-6">
       <div class="flex items-center space-x-4">
-        <router-link to="/knowledge"
-                     class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600 transition-colors">
-          返回
-        </router-link>
+<!--        <router-link to="/knowledge"-->
+<!--                     class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600 transition-colors">-->
+<!--          返回-->
+<!--        </router-link>-->
         <div v-if="knowledgeBaseInfo">
           <h1 class="text-2xl font-bold text-gray-900">{{ knowledgeBaseInfo.name }}</h1>
           <div class="flex items-center space-x-4 text-sm text-gray-500 mt-1">
@@ -44,8 +44,8 @@
           <span class="ml-2 text-gray-600">加载中...</span>
         </div>
 
-        <div v-else-if="knowledgeBase && knowledgeBase.documents.length > 0" class="space-y-2 max-h-96 overflow-y-auto">
-          <div v-for="doc in knowledgeBase.documents" :key="doc.id"
+        <div v-else-if="knowledgeBaseInfo && knowledgeBaseInfo.documents.length > 0" class="space-y-2 max-h-96 overflow-y-auto">
+          <div v-for="doc in knowledgeBaseInfo.documents" :key="doc.id"
                class="flex justify-between items-center p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
             <div class="flex-1">
               <div class="font-medium text-gray-900">{{ doc.name }}</div>
@@ -168,13 +168,19 @@
 import {computed, onMounted, ref} from 'vue'
 import {useRouter} from 'vue-router'
 import {useAppSettingStore} from '../../store/appSettingStore.ts'
-import type {KnowledgeBaseDetail, SearchResponse, SearchResult} from '../../services/knowledgeApi.ts'
+import {
+  type KnowledgeBaseDetail,
+  knowledgeUploadDocuments,
+  type SearchResponse,
+  type SearchResult
+} from '../../services/knowledgeApi.ts'
 import {knowledgeApi} from '../../services/knowledgeApi.ts'
 import {debounce} from 'lodash'
+import {fileParserUpload, saveAppSetting} from "../../services/api.ts";
 
 
 const router = useRouter()
-const {appSettings} = useAppSettingStore()
+const {appSettings, saveSettings} = useAppSettingStore()
 
 const props = defineProps<{
    knowledgeId: string
@@ -274,19 +280,19 @@ const handleFileUpload = async (event: Event) => {
     uploading.value = true
     const files = Array.from(input.files)
     
-    const response = await knowledgeApi.uploadDocuments(
-      props.knowledgeId,
-      files,
-      {
-        chunkSize: 1000,
-        chunkOverlap: 200
-      }
-    )
-    
-    console.log('上传结果:', response)
+    const response = await fileParserUpload(files)
+
+    const knowledgeBase = appSettings.knowledgeBases.find(item=> item.id === props.knowledgeId);
+    if(knowledgeBase){
+      knowledgeBase.documents.push(...response);
+      // knowledgeBase.documents  = response
+      console.log('上传结果:', response)
+      saveSettings()
+    }
+
     
     // 重新加载知识库详情
-    await loadKnowledgeBase()
+    // await loadKnowledgeBase()
     
     // 清空文件输入框
     input.value = ''

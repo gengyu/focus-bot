@@ -14,10 +14,13 @@ export interface KnowledgeDocument {
   name: string;
   path: string;
   size: number,
-  content?: string;
   createdAt: string;
   type: string;
-  chunks?: Array<any>; // 文档的分块信息
+  metadata: {
+    originalName: string,
+    mimeType: string,
+    uploadedAt: string
+  }
 }
 
 
