@@ -7,8 +7,10 @@ import { LogManager } from './logging';
 import { PerformanceMonitorImpl } from './performance';
 import { ConfigManager } from './config';
 import { MemoryVectorCache } from './cache';
+import path from 'path';
 
 // 设置模型缓存目录
+env.cacheDir =  path.join(process.cwd(), '/data/.cache/')
 env.remoteHost = 'https://hf-mirror.com/';
 
 // 创建日志管理器实例

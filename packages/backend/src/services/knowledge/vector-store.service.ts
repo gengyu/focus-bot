@@ -1,9 +1,10 @@
 import { Document } from 'langchain/document';
 import { MemoryVectorStore } from 'langchain/vectorstores/memory';
-import { OpenAIEmbeddings } from '@langchain/openai';
 import { RecursiveCharacterTextSplitter } from 'langchain/text_splitter';
 import { DocumentChunk, RetrievalResult, HighlightMatch, SearchOptions } from './types';
 import { v4 as uuidv4 } from 'uuid';
+import { CustomEmbeddings } from './custom-embeddings';
+import { EmbeddingModel } from '../vectorization/types';
 
 /**
  * 基于 LangChain 的向量存储服务
@@ -11,20 +12,17 @@ import { v4 as uuidv4 } from 'uuid';
  */
 export class VectorStoreService {
   private vectorStores: Map<string, MemoryVectorStore> = new Map();
-  private embeddings: OpenAIEmbeddings;
+  private embeddings: CustomEmbeddings;
   private textSplitter: RecursiveCharacterTextSplitter;
   private documentChunks: Map<string, DocumentChunk[]> = new Map();
 
   constructor(
-    openaiApiKey?: string,
+    model?: EmbeddingModel,
     chunkSize: number = 1000,
     chunkOverlap: number = 200
   ) {
-    // 初始化嵌入模型
-    this.embeddings = new OpenAIEmbeddings({
-      openAIApiKey: openaiApiKey || process.env.OPENAI_API_KEY,
-      modelName: 'text-embedding-3-small', // 使用更高效的嵌入模型
-    });
+    // 初始化自定义嵌入模型
+    this.embeddings = new CustomEmbeddings(model);
 
     // 初始化文本分割器
     this.textSplitter = new RecursiveCharacterTextSplitter({
@@ -78,6 +76,7 @@ export class VectorStoreService {
           content: doc.pageContent,
           metadata: {
             ...doc.metadata,
+            source: doc.metadata.source || documentId,
             chunkIndex: i,
             startChar,
             endChar,

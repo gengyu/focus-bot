@@ -153,7 +153,14 @@ export class EnhancedKnowledgeService {
       });
 
       // 添加到向量存储
-      await this.vectorStoreService.addDocuments(namespaceId, enhancedChunks);
+      for (const chunk of enhancedChunks) {
+        await this.vectorStoreService.addDocument(
+          namespaceId,
+          chunk.metadata.documentId || document.id,
+          chunk.pageContent,
+          chunk.metadata
+        );
+      }
 
       // 更新文档记录
       const namespaceDocuments = this.documents.get(namespaceId)!;
@@ -364,7 +371,8 @@ export class EnhancedKnowledgeService {
         size: doc.size || 0,
         content: doc.content,
         createdAt: doc.metadata?.addedAt || new Date().toISOString(),
-        type: doc.type || 'unknown'
+        type: doc.type || 'unknown',
+        metadata: doc.metadata || {}
       }));
 
       // 更新知识库信息

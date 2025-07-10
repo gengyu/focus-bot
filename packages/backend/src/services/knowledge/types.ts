@@ -111,3 +111,26 @@ export interface BatchProcessResult {
  * 文档处理结果接口（向后兼容）
  */
 export interface DocumentProcessResult extends AddDocumentResult {}
+
+/**
+ * 知识库统计信息接口
+ */
+export interface KnowledgeBaseStats {
+  documentCount: number;
+  chunkCount: number;
+  totalSize: number;
+  lastUpdated?: string;
+}
+
+/**
+ * 格式化检索结果接口
+ */
+export interface FormattedRetrievalResult {
+  id: string;
+  title: string;
+  content: string;
+  score: number;
+  source: string;
+  highlights?: HighlightMatch[];
+  metadata?: Record<string, any>;
+}
