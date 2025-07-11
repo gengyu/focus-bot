@@ -122,6 +122,7 @@ export class VectorStoreService {
 
       const vectorStore = this.vectorStores.get(namespaceId);
       if (!vectorStore) {
+        console.error(`向量存储未找到: ${namespaceId}`);
         return [];
       }
 
@@ -282,6 +283,13 @@ export class VectorStoreService {
       chunkCount: chunks.length,
       hasVectorStore: this.vectorStores.has(namespaceId),
     };
+  }
+
+  /**
+   * 检查命名空间是否存在
+   */
+  hasNamespace(namespaceId: string): boolean {
+    return this.vectorStores.has(namespaceId);
   }
 
   /**

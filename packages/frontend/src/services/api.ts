@@ -10,6 +10,7 @@ import {
 } from "../../../../share/type.ts";
 import type {AppSettings} from "../../../../share/appSettings.ts";
 import type {KnowledgeDocument} from "../../../../share/knowledge.ts";
+import type {SearchResponse} from "./knowledgeApi.ts";
 
 export const API_BASE_URL = 'http://localhost:3001';
 
@@ -93,6 +94,21 @@ export const fileParserUpload =(files: File[])=> {
 	});
 	return callAPI<KnowledgeDocument[]>({ method: '/fileParser/upload/documents', payload: formData })
 }
+
+// 知识库搜索
+export const knowledgeSearch = (namespaceId: string,
+																query: string,
+																options?: {
+																	topK?: number;
+																	similarityThreshold?: number;
+																	includeMetadata?: boolean;
+																	highlightMatches?: boolean;
+																}) => callAPI<SearchResponse>({
+	method: '/api/knowledge/search', payload: {
+		namespaceId, query, options
+	}
+});
+
 
 
 

@@ -141,6 +141,33 @@ export class KnowledgeApi {
   }
 
   /**
+   * 删除知识库
+   */
+  async deleteKnowledgeBase(id: string): Promise<void> {
+    const req: TransportRequest = { method: 'delete', payload: { id } };
+    const res = await this.transport.invokeDirect(req);
+    if (!res.success) throw new Error(`删除知识库失败: ${res.error}`);
+  }
+
+  /**
+   * 更新知识库名称
+   */
+  async updateKnowledgeBaseName(id: string, name: string): Promise<void> {
+    const req: TransportRequest = { method: 'name/update', payload: { id, name } };
+    const res = await this.transport.invokeDirect(req);
+    if (!res.success) throw new Error(`更新知识库名称失败: ${res.error}`);
+  }
+
+  /**
+   * 删除知识库文档
+   */
+  async deleteKnowledgeBaseDocument(knowledgeBaseId: string, documentId: string): Promise<void> {
+    const req: TransportRequest = { method: 'document/delete', payload: { knowledgeBaseId, documentId } };
+    const res = await this.transport.invokeDirect(req);
+    if (!res.success) throw new Error(`删除文档失败: ${res.error}`);
+  }
+
+  /**
    * 上传文档到知识库
    */
   async uploadDocuments(
@@ -208,18 +235,18 @@ export class KnowledgeApi {
     return res.data;
   }
 
-  /**
-   * 删除知识库
-   */
-  async deleteKnowledgeBase(namespaceId: string): Promise<boolean> {
-    const req: TransportRequest = {
-      method: 'delete',
-      payload: { id: namespaceId }
-    };
-    const res = await this.transport.invokeDirect(req);
-    if (!res.success) throw new Error(`删除知识库失败: ${res.error}`);
-    return res.data;
-  }
+  // /**
+  //  * 删除知识库
+  //  */
+  // async deleteKnowledgeBase(namespaceId: string): Promise<boolean> {
+  //   const req: TransportRequest = {
+  //     method: 'delete',
+  //     payload: { id: namespaceId }
+  //   };
+  //   const res = await this.transport.invokeDirect(req);
+  //   if (!res.success) throw new Error(`删除知识库失败: ${res.error}`);
+  //   return res.data;
+  // }
 
   /**
    * 更新知识库配置

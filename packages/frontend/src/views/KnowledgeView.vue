@@ -33,7 +33,39 @@
              @click="viewKnowledgeBase(kb.id)">
           <div class="flex items-start justify-between">
             <div class="flex-1">
-              <h3 class="text-lg font-semibold text-gray-900 mb-2">{{ kb.name }}</h3>
+              <!-- 可编辑的知识库名称 -->
+              <div class="mb-2">
+                <h3 v-if="editingKnowledgeBaseId !== kb.id" 
+                    class="text-lg font-semibold text-gray-900 cursor-pointer hover:text-blue-600"
+                    @click.stop="startEditName(kb.id, kb.name)">{{ kb.name || '知识库' }}</h3>
+                <div v-else class="flex items-center space-x-2" @click.stop>
+                  <input 
+                    ref="nameInput"
+                    v-model="editingName"
+                    @keyup.enter="saveKnowledgeBaseName(kb.id)"
+                    @keyup.escape="cancelEditName"
+                    @blur="saveKnowledgeBaseName(kb.id)"
+                    class="text-lg font-semibold text-gray-900 border border-blue-300 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    type="text"
+                  />
+                  <button 
+                    @click="saveKnowledgeBaseName(kb.id)"
+                    class="p-1 text-green-600 hover:text-green-800 rounded"
+                  >
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                  </button>
+                  <button 
+                    @click="cancelEditName"
+                    class="p-1 text-red-600 hover:text-red-800 rounded"
+                  >
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                  </button>
+                </div>
+              </div>
               <div class="flex items-center space-x-4 text-sm text-gray-500 mb-4">
                 <span class="flex items-center">
                   <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -52,11 +84,13 @@
               </div>
             </div>
             <div class="flex items-center space-x-2">
-              <button class="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100"
-                      @click.stop="() => {}">
+              <!-- 删除按钮 -->
+              <button class="p-2 text-red-400 hover:text-red-600 rounded-lg hover:bg-red-50"
+                      @click.stop="deleteKnowledgeBase(kb.id, kb.name)"
+                      title="删除知识库">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"></path>
+                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
                 </svg>
               </button>
             </div>
@@ -78,35 +112,113 @@
 
 <script setup lang="ts">
 import {useAppSettingStore} from '../store/appSettingStore'
-
 import {generateUUID4} from "../utils/uuid.ts";
 import type {KnowledgeBaseStats} from "../../../../share/knowledge.ts";
-import {ref} from 'vue';
-import KnowledgeDocs from './knowledgeView/KnowledgeDocs.vue';
-
+import {ref, nextTick} from 'vue';
+import KnowledgeDocs from "./knowledgeView/KnowledgeDocs.vue";
+import {knowledgeApi} from '../services/knowledgeApi';
+import {toast} from 'vue3-toastify';
+import {debounce} from "lodash";
 
 const {appSettings, saveSettings} = useAppSettingStore()
 
-const createKnowledgeBase = async () => {
+const activeKnowledgeId = ref<string | null>(null)
+const editingKnowledgeBaseId = ref<string | null>(null)
+const editingName = ref('')
+const nameInput = ref<HTMLInputElement | null>(null)
 
-  appSettings.knowledgeBases.push({
+const createKnowledgeBase = () => {
+  const name = prompt('请输入知识库名称:')
+  if (!name) return
+
+  const newKnowledgeBase: KnowledgeBaseStats = {
     id: generateUUID4(),
-    name: '知识库',
-    description: '知识库',
+    name,
+    description: '',
     documentCount: 0,
     chunkCount: 0,
-    config: {},
-    documents:[],
-  } as KnowledgeBaseStats);
+    config: {
+      chunkSize: 1000,
+      chunkOverlap: 200,
+      embeddingModel: 'text-embedding-ada-002',
+      similarityThreshold: 0.7,
+      maxResults: 10
+    },
+    documents: []
+  }
 
-  saveSettings();
-
+  appSettings.knowledgeBases.push(newKnowledgeBase)
+  saveSettings()
 }
-
-const activeKnowledgeId= ref()
 
 const viewKnowledgeBase = (id: string) => {
   activeKnowledgeId.value = id
+}
+
+// 开始编辑知识库名称
+const startEditName = async (id: string, currentName: string) => {
+  editingKnowledgeBaseId.value = id
+  editingName.value = currentName
+  await nextTick()
+  nameInput.value?.focus()
+  nameInput.value?.select()
+}
+
+// 取消编辑
+const cancelEditName = () => {
+  editingKnowledgeBaseId.value = null
+  editingName.value = ''
+}
+
+// 保存知识库名称
+const saveKnowledgeBaseName = debounce(async (id: string) => {
+  if (!editingName.value.trim()) {
+    toast.error('知识库名称不能为空')
+    return
+  }
+
+  try {
+    // await knowledgeApi.updateKnowledgeBaseName(id, editingName.value.trim())
+    
+    // 更新本地数据
+    const kb = appSettings.knowledgeBases.find(kb => kb.id === id)
+    if (kb && kb.name !== editingName.value.trim()) {
+      kb.name = editingName.value.trim()
+      await saveSettings()
+    }
+    
+    // toast.success('知识库名称更新成功')
+    cancelEditName()
+  } catch (error) {
+    toast.error(`更新知识库名称失败: ${error}`)
+  }
+}, 100);
+
+// 删除知识库
+const deleteKnowledgeBase = async (id: string, name: string) => {
+  if (!confirm(`确定要删除知识库 "${name}" 吗？此操作不可撤销。`)) {
+    return
+  }
+
+  try {
+    await knowledgeApi.deleteKnowledgeBase(id)
+    
+    // 更新本地数据
+    const index = appSettings.knowledgeBases.findIndex(kb => kb.id === id)
+    if (index !== -1) {
+      appSettings.knowledgeBases.splice(index, 1)
+      await saveSettings()
+    }
+    
+    // 如果当前正在查看被删除的知识库，关闭详情页
+    if (activeKnowledgeId.value === id) {
+      activeKnowledgeId.value = null
+    }
+    
+    toast.success('知识库删除成功')
+  } catch (error) {
+    toast.error(`删除知识库失败: ${error}`)
+  }
 }
 
 </script>

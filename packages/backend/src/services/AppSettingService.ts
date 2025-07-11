@@ -163,6 +163,47 @@ export class AppSettingService {
     const setting = await this.getAppSetting();
     return setting.knowledgeBases?.find(kb => kb.id === knowledgeBaseId);
   }
+
+  /**
+   * 删除知识库
+   */
+  async deleteKnowledgeBase(knowledgeBaseId: string): Promise<void> {
+    const setting = await this.getAppSetting();
+    if (setting.knowledgeBases) {
+      setting.knowledgeBases = setting.knowledgeBases.filter(kb => kb.id !== knowledgeBaseId);
+      await this.saveAppSetting(setting);
+    }
+  }
+
+  /**
+   * 修改知识库名称
+   */
+  async updateKnowledgeBaseName(knowledgeBaseId: string, newName: string): Promise<void> {
+    const setting = await this.getAppSetting();
+    if (setting.knowledgeBases) {
+      const kb = setting.knowledgeBases.find(kb => kb.id === knowledgeBaseId);
+      if (kb) {
+        kb.name = newName;
+        await this.saveAppSetting(setting);
+      }
+    }
+  }
+
+  /**
+   * 从知识库中删除文档
+   */
+  async deleteKnowledgeBaseDocument(knowledgeBaseId: string, documentId: string): Promise<void> {
+    const setting = await this.getAppSetting();
+    if (setting.knowledgeBases) {
+      const kb = setting.knowledgeBases.find(kb => kb.id === knowledgeBaseId);
+      if (kb && kb.documents) {
+        kb.documents = kb.documents.filter(doc => doc.id !== documentId);
+        // 更新统计信息
+        kb.documentCount = kb.documents.length;
+        await this.saveAppSetting(setting);
+      }
+    }
+  }
 }
 
 

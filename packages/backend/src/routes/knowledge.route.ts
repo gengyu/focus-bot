@@ -311,6 +311,56 @@ export class KnowledgeController {
   }
 
   /**
+   * 删除知识库文档
+   */
+  @Post('/document/delete')
+  async deleteDocument(
+    @Body('knowledgeBaseId') namespaceId: string,
+    @Body('documentId') documentId: string
+  ) {
+    try {
+      if (!namespaceId || !documentId) {
+        return ResultHelper.fail('知识库ID和文档ID不能为空', null);
+      }
+
+      const success = await this.knowledgeService.removeDocument(namespaceId, documentId);
+      
+      if (success) {
+        return ResultHelper.success({ message: '文档删除成功' });
+      } else {
+        return ResultHelper.fail('文档删除失败', null);
+      }
+    } catch (error) {
+      return ResultHelper.fail(`删除文档失败: ${(error as Error).message}`, null);
+    }
+  }
+
+  /**
+   * 修改知识库名称
+   */
+  @Post('/name/update')
+  async updateKnowledgeBaseName(
+    @Body('id') namespaceId: string,
+    @Body('name') newName: string
+  ) {
+    try {
+      if (!namespaceId || !newName) {
+        return ResultHelper.fail('知识库ID和新名称不能为空', null);
+      }
+
+      const success = await this.knowledgeService.updateKnowledgeBaseName(namespaceId, newName);
+      
+      if (success) {
+        return ResultHelper.success({ message: '知识库名称更新成功', name: newName });
+      } else {
+        return ResultHelper.fail('知识库名称更新失败', null);
+      }
+    } catch (error) {
+      return ResultHelper.fail(`更新知识库名称失败: ${(error as Error).message}`, null);
+    }
+  }
+
+  /**
    * 更新知识库配置
    */
   @Post('/config/update')

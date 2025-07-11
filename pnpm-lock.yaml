@@ -19,6 +19,9 @@ importers:
       '@koa/multer':
         specifier: ^3.1.0
         version: 3.1.0(multer@2.0.1)
+      '@langchain/core':
+        specifier: ^0.3.29
+        version: 0.3.62(openai@4.104.0(zod@3.25.76))
       '@modelcontextprotocol/sdk':
         specifier: ^1.11.3
         version: 1.15.0

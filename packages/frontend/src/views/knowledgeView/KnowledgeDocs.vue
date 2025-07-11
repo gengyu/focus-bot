@@ -51,8 +51,8 @@
               <div class="font-medium text-gray-900">{{ doc.name }}</div>
               <div class="flex items-center space-x-4 text-sm text-gray-500 mt-1">
                 <span>{{ formatFileSize(doc.size) }}</span>
-                <span>{{ doc.chunks }} 个片段</span>
-                <span>{{ formatDate(doc.addedAt) }}</span>
+                <span>{{ doc.type }}</span>
+                <span>{{ formatDate(doc.createdAt) }}</span>
               </div>
             </div>
             <div class="flex space-x-2">
@@ -176,7 +176,8 @@ import {
 } from '../../services/knowledgeApi.ts'
 import {knowledgeApi} from '../../services/knowledgeApi.ts'
 import {debounce} from 'lodash'
-import {fileParserUpload, saveAppSetting} from "../../services/api.ts";
+import {fileParserUpload, knowledgeSearch, saveAppSetting} from "../../services/api.ts";
+import {toast} from 'vue3-toastify'
 
 
 const router = useRouter()
@@ -233,12 +234,12 @@ const searchDocuments = debounce(async () => {
   hasSearched.value = true
 
   try {
-    const response: SearchResponse = await knowledgeApi.searchKnowledgeBase(
+    const response: SearchResponse = await knowledgeSearch(
       props.knowledgeId,
       searchQuery.value,
       {
         topK: 10,
-        similarityThreshold: 0.3,
+        similarityThreshold: 0.01,
         includeMetadata: true,
         highlightMatches: true
       }
@@ -308,11 +309,25 @@ const deleteDocument = async (docId: string) => {
   if (!confirm('确定要删除这个文档吗？')) return
   
   try {
-    await knowledgeApi.deleteDocument(props.knowledgeId, docId)
+    await knowledgeApi.deleteKnowledgeBaseDocument(props.knowledgeId, docId)
+    
+    // 更新本地状态
+    const knowledgeBase = appSettings.knowledgeBases.find(kb => kb.id === props.knowledgeId)
+    if (knowledgeBase && knowledgeBase.documents) {
+      const index = knowledgeBase.documents.findIndex(doc => doc.id === docId)
+      if (index !== -1) {
+        knowledgeBase.documents.splice(index, 1)
+        knowledgeBase.documentCount = knowledgeBase.documents.length
+        await saveSettings()
+      }
+    }
+    
     // 重新加载知识库详情
     await loadKnowledgeBase()
+    toast.success('文档删除成功')
   } catch (error) {
     console.error('删除文档失败:', error)
+    toast.error(`删除文档失败: ${error}`)
   }
 }
 

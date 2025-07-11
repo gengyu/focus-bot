@@ -1,4 +1,4 @@
-import { Embeddings } from 'langchain/embeddings/base';
+import { Embeddings } from '@langchain/core/embeddings';
 import { Document } from 'langchain/document';
 import { vectorize } from '../vectorization/vectorizer';
 import { EmbeddingModel } from '../vectorization/types';

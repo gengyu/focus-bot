@@ -17,6 +17,7 @@
     "@focus-bot/core": "workspace:*",
     "@koa/cors": "^5.0.0",
     "@koa/multer": "^3.1.0",
+    "@langchain/core": "^0.3.29",
     "@modelcontextprotocol/sdk": "^1.11.3",
     "@pinecone-database/pinecone": "^6.0.0",
     "@types/better-sqlite3": "^7.6.13",
