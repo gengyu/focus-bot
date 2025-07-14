@@ -239,7 +239,7 @@ const searchDocuments = debounce(async () => {
       searchQuery.value,
       {
         topK: 10,
-        similarityThreshold: 0.01,
+        similarityThreshold: 0.3,
         includeMetadata: true,
         highlightMatches: true
       }

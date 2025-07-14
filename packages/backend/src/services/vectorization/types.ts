@@ -68,7 +68,8 @@ export interface EmbeddingModel {
   /** 最大token数 */
   maxTokens: number;
   /** 池化方法 */
-  pooling: 'mean' | 'max' | 'cls';
+  // pooling: 'mean' | 'max' | 'cls';
+  pooling: "none" | "mean" | "cls" | undefined;
   /** 是否归一化 */
   normalize: boolean;
 }

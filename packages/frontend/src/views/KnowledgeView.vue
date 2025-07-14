@@ -37,7 +37,7 @@
               <div class="mb-2">
                 <h3 v-if="editingKnowledgeBaseId !== kb.id" 
                     class="text-lg font-semibold text-gray-900 cursor-pointer hover:text-blue-600"
-                    @click.stop="startEditName(kb.id, kb.name)">{{ kb.name || '知识库' }}</h3>
+                    @click.stop="startEditName(kb.id, kb.name)">{{ kb.name }}</h3>
                 <div v-else class="flex items-center space-x-2" @click.stop>
                   <input 
                     ref="nameInput"
@@ -118,7 +118,6 @@ import {ref, nextTick} from 'vue';
 import KnowledgeDocs from "./knowledgeView/KnowledgeDocs.vue";
 import {knowledgeApi} from '../services/knowledgeApi';
 import {toast} from 'vue3-toastify';
-import {debounce} from "lodash";
 
 const {appSettings, saveSettings} = useAppSettingStore()
 
@@ -171,28 +170,28 @@ const cancelEditName = () => {
 }
 
 // 保存知识库名称
-const saveKnowledgeBaseName = debounce(async (id: string) => {
+const saveKnowledgeBaseName = async (id: string) => {
   if (!editingName.value.trim()) {
     toast.error('知识库名称不能为空')
     return
   }
 
   try {
-    // await knowledgeApi.updateKnowledgeBaseName(id, editingName.value.trim())
+    await knowledgeApi.updateKnowledgeBaseName(id, editingName.value.trim())
     
     // 更新本地数据
     const kb = appSettings.knowledgeBases.find(kb => kb.id === id)
-    if (kb && kb.name !== editingName.value.trim()) {
+    if (kb) {
       kb.name = editingName.value.trim()
       await saveSettings()
     }
     
-    // toast.success('知识库名称更新成功')
+    toast.success('知识库名称更新成功')
     cancelEditName()
   } catch (error) {
     toast.error(`更新知识库名称失败: ${error}`)
   }
-}, 100);
+}
 
 // 删除知识库
 const deleteKnowledgeBase = async (id: string, name: string) => {

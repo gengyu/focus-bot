@@ -14,7 +14,13 @@ export async function testVectorStoreService() {
     console.log('开始测试向量存储服务...');
     
     // 创建向量存储服务实例，使用默认模型
-    const vectorStore = new VectorStoreService(defaultModel);
+    const vectorStore = new VectorStoreService({
+      dimension: 384,
+      maxTokens: 256,
+      name: 'Xenova/bge-large-zh',
+      normalize: true,
+      pooling: 'mean'
+    });
     
     // 测试文档
     const testDocuments = [
@@ -70,6 +76,6 @@ export async function testVectorStoreService() {
 }
 
 // 如果直接运行此文件，执行测试
-// if (require.main === module) {
-//   testVectorStoreService();
-// }
+if (require.main === module) {
+  testVectorStoreService();
+}

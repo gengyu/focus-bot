@@ -6,6 +6,7 @@ import { ConsoleLogHandler } from './logging';
  */
 export const defaultModel: EmbeddingModel = {
   name: 'Xenova/all-MiniLM-L6-v2',
+  // name: 'Xenova/bge-large-zh',
   dimension: 384,
   maxTokens: 256,
   pooling: 'mean',

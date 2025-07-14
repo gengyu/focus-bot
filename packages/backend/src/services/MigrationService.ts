@@ -1,5 +1,5 @@
 import { PersistenceService } from './PersistenceService.ts';
-import {KnowledgeBase, KnowledgeBaseStats} from '../../../../share/knowledge';
+import { KnowledgeBaseInfo} from '../../../../share/knowledge';
 import path from 'path';
 import fs from 'fs';
 import { Singleton } from '../decorators/Singleton';
@@ -115,7 +115,7 @@ export class MigrationService {
     try {
       // 读取旧的知识库配置
       const knowledgeContent = fs.readFileSync(knowledgeConfigPath, 'utf-8');
-      const knowledgeBases: KnowledgeBaseStats[] = JSON.parse(knowledgeContent);
+      const knowledgeBases: KnowledgeBaseInfo[] = JSON.parse(knowledgeContent);
 
       // 获取当前应用设置
       const persistenceService = new PersistenceService<AppSettings>({

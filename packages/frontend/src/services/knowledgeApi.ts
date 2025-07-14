@@ -235,18 +235,18 @@ export class KnowledgeApi {
     return res.data;
   }
 
-  // /**
-  //  * 删除知识库
-  //  */
-  // async deleteKnowledgeBase(namespaceId: string): Promise<boolean> {
-  //   const req: TransportRequest = {
-  //     method: 'delete',
-  //     payload: { id: namespaceId }
-  //   };
-  //   const res = await this.transport.invokeDirect(req);
-  //   if (!res.success) throw new Error(`删除知识库失败: ${res.error}`);
-  //   return res.data;
-  // }
+  /**
+   * 删除知识库
+   */
+  async deleteKnowledgeBase(namespaceId: string): Promise<boolean> {
+    const req: TransportRequest = {
+      method: 'delete',
+      payload: { id: namespaceId }
+    };
+    const res = await this.transport.invokeDirect(req);
+    if (!res.success) throw new Error(`删除知识库失败: ${res.error}`);
+    return res.data;
+  }
 
   /**
    * 更新知识库配置

@@ -122,7 +122,6 @@ export class VectorStoreService {
 
       const vectorStore = this.vectorStores.get(namespaceId);
       if (!vectorStore) {
-        console.error(`向量存储未找到: ${namespaceId}`);
         return [];
       }
 

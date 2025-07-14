@@ -30,6 +30,7 @@ export class EnhancedKnowledgeService {
 
 	constructor() {
 		this.vectorStoreService = new VectorStoreService();
+
 		this.fileParserService = FileParserService.getInstance();
 		this.appSettingService = new AppSettingService();
 	}
@@ -55,7 +56,7 @@ export class EnhancedKnowledgeService {
 			// keepSeparator?: boolean;
 		};
 
-		const finalConfig  = chunkingOptions ? {
+		const finalConfig = chunkingOptions ? {
 			...defaultConfig,
 			...chunkingOptions
 		} : defaultConfig;

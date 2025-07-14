@@ -25,19 +25,15 @@ export interface KnowledgeDocument {
 
 
 
-export interface CreateKnowledgeBaseRequest {
-  name: string;
-  description?: string;
-  config?: any;
-}
 
-export interface KnowledgeBaseStats {
+export interface KnowledgeBaseInfo {
   id: string;
   name: string;
   documentCount: number;
   chunkCount: number;
   description: string;
   config?: any;
+  createdAt?: string;
   documents: Array<KnowledgeDocument>
 }
 
